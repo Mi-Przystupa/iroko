@@ -1,3 +1,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Design}
 \label{sec:design}
+
+Simple System
+In our initial simple TCPToken design, a centralized controller regulates all node traffic by provisioning end-hosts with tokens.
+These tokens act as the “currency” of the system. The total amount is fixed to the aggregate bandwidth available in the network and the traffic window size of sending end hosts is calculated based on the current token availability. If a node or switch is overburdened, it may notify the scheduler, which will adjust the traffic window of responsible sending nodes remotely. Any management or control operations such as token distribution and updates are priority-queued to guarantee a fast and low-latency response. In the case of an end-host requiring more bandwidth it can also notify the controller, which may comply based on priority and availability.
+Initially, the controller will compute optimal route configuration based on the topology and link bandwidth using a simple heuristic bin-packing approach. End-hosts will be initialized with a fixed low-to-medium bandwidth guarantee, which will be adjusted over time.
+
+Advanced System
+The aforementioned system is intended only as a proof of concept. It is still a  synchronous and reactive approach, dependent on notifications and requests by overburdened switches and underprovisioned hosts. 
+Ideally, all management in the TCPToken system should be asynchronous and preemptive. 
+1) Paying for traffic
+In a complete design, tokens will be used as a transport pass instead of simply acting as traffic shaping parameters. On a per-flow basis, nodes will be able to attach tokens to traffic as a form of payment. Enforcement is performed on the switch level, any flow that is not “paid” by a token will be dropped. Nodes may be handed different types of tokens to serve load-balancing and traffic shaping purposes. Applications operating on traditionally short-lived flows and bursts may sign their traffic with a different token type than long-lived permanent processes. Switches will forward traffic and balance flows accordingly with only minor interference from the central controller.
+
+2) Predicting traffic
+ML-based scheduling is an emerging research field, also known as Knowledge-Defined Networking. Datacenter traffic follows patterns, which can be predicted using statistical methods.
+Combined with using tokens as a traffic engineering enforcement, a preemptive scheduling strategy in datacenters may be feasible. 
+
+We do not intend to implement the advanced system for this project, but are using it as a guideline to motivate our research. Based on the experiences and knowledge gained from implementing the basic system, we will reevaluate the feasibility and practicality of the second concept.
+
+
+
+Fault-Tolerance and Scalability
+To handle fault-tolerance we plan to integrate a fallback-mechanism to conventional TCP, if the node has not received a TCPToken in a prefixed amount of time. End-hosts will only be marginally affected by a controller or link failure, as they are guaranteed a fixed amount of bandwidth based on their token availability.
+To avoid overburdening the controller, we envision a distributed hive of schedulers each managing their own region in the final design. Add ONOS CITATION In case of failure, a shadow node or neighbouring device may take over computation temporarily, until the main node has recovered. CITATION

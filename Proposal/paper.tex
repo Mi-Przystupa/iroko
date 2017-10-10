@@ -9,7 +9,7 @@
 
 \begin{document}
 
-\title{TCPTokens: Introducing Currency into Data Center Congestion Control}
+\title{TCPTokens: Introducing Currency into Datacenter Congestion Control}
 
 \author{Anand Jayarajan}
 \affiliation{%
@@ -36,16 +36,16 @@
 \email{fruffy@cs.ubc.ca}
 
 \begin{abstract}
-Datacenter networks have become a hotbed for research in the recent past. Many works have been published on improving the bisection bandwidth, reducing cost, and improving congestion control as well as latency. As a core contribution of this research, centralized scheduling has entered the stage as dominant strategy to manage flows. Benefitting from a global view and full control over the network, centralized schedulers are able to enforce fine-grained traffic control, frequently achieving near-optimal bandwidth optimization. However, modern congestion control algorithms and schedulers are still fundamentally reactive. Many algorithms are designed to only respond to packet loss or significant increase in latency, not to actively prevent it.
+Datacenter networks have become a hotbed for research in the recent past. Many works have been published on improving the  bisection bandwidth, reducing cost, and latency. As a core contribution of this research, centralized scheduling has entered the stage as dominant strategy to manage flows. Benefitting from a global view and full control over the network, centralized schedulers are able to enforce fine-grained traffic control, frequently achieving near-optimal bandwidth optimization. However, modern congestion control algorithms and schedulers are still fundamentally reactive. Many algorithms are designed to only respond to packet loss or significant increase in latency, not to actively prevent it.
 
 In this project, we plan to explore the opportunities of employing a preemptive and tightly controlling central network scheduler. Using tokens as a global tool to enforce traffic limiting and policies, the scheduler is able to proactively control the flow of traffic as well as respond to application requests. "Knowledge" and predictive analysis in networks is a growing trend in research which we intend to leverage in this system.
 
-We investigate the potential in such a new form of interactive congestion control and analyze it against to state-of-the-art solutions. Our tool of choice to model our system is Mininet, a rapid prototyping emulator for datacenter networks. We will compare our "TCPToken" system against established TCP-congestion systems such as Hedera and DCTCP. Based on the findings and measurement results, we will reassess the feasibility and prospect of a token-based, predictive congestion control algorithm.
+We investigate the potential in such a new form of interactive congestion control and analyze it against state-of-the-art solutions. Our tool of choice to model our system is Mininet, a rapid prototyping emulator for datacenter networks. We will compare our "TCPToken" system against established TCP-congestion systems such as Hedera and DCTCP. Based on the findings and measurement results, we will reassess the feasibility and prospects of a token-based, predictive congestion control algorithm.
 \end{abstract}
 
 
 
-\keywords{TCP, Congestion Control, SDN, Data center}
+\keywords{TCP, Congestion Control, SDN, Datacenter}
 
 
 \maketitle
@@ -58,6 +58,7 @@ We investigate the potential in such a new form of interactive congestion contro
 %\input{implementation}
 %\input{eval}
 %\input{timeline}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 \label{sec:intro}
@@ -69,22 +70,22 @@ TCP works well  in scenarios where many different distrustful participants compe
 
 Queueing has generally not been a dominating issue in wide-area and enterprise networks, as traffic is sufficiently distributed and diverse, with only few "hot" target hosts.~\cite{hedera, microte} Traffic optimization is a substantial challenge; network operators have no control over the individual network elements nor its participants. Under these conditions, TCP and its extensions can be considered a best-effort solution.
 
-Developments in the past decade have changed the general networking environment. Datacenters have emerged as an exciting new research frontier, posing novel design challenges and opportunities.
+Developments in the past decade have changed the general networking environment. Datacenters have emerged as an exciting new research frontier, posing novel design challenges and opportunities.Driven by minimization of costs and maximization of compute power, datacenters must  run at maximum utilization to achieve an optimal compute/cost ratio. Inefficient routing can quickly lead to bufferbloat~\cite{bufferbloat} and the eventual collapse of a high-load network, requiring more sophisticated approaches to solve congestion control. 
+On the other hand, operators now have the ability to freely control and adapt their network architecture, leading to highly customized systems and fine-grained optimization. As a result, Software-Defined Networking (SDN) has emerged as a new networking paradigm. 
 
-Driven by minimization of costs and maximization of compute power, data centers must  run at maximum utilization to achieve an optimal compute/cost ratio. Inefficient routing can quickly lead to bufferbloat~\cite{bufferbloat} and the eventual collapse of a high-load network, requiring more sophisticated approaches to solve congestion control. 
-On the other hand, operators now have the ability to freely control and adapt their network architecture, leading to highly customized systems and fine-grained optimization. As a result , Software-Defined Networking (SDN) has emerged as a new networking paradigm. Moving away from the principle of distributed communication and routing, SDN introduces the notion of "centralized management". A single controller with global knowledge is able to automatically modify and adapt the forwarding tables of all switches in the network, while notifying end hosts of changes in the network.
+Moving away from the principle of distributed communication and routing, SDN introduces the notion of "centralized management". A single controller with global knowledge is able to automatically modify and adapt the forwarding tables of all switches in the network, while notifying end hosts of changes in the network.
 These two new trends in system design facilitated impactful new innovation opportunities in the space of TCP congestion research. Traffic can now be managed in a  \textit{centralised} fashion based on \textit{global knowledge} of the entire topology and traffic patterns.
 
 A new line of centralised schedulers has emerged that  can achieve close to optimal bandwidth utilization.~\cite{hedera, fastpass, microte, b4, dionysus}
 However, these schedulers are still  \textit{reactive}  in nature. The central controller responds to changes in the network or requests by applications, which may cost valuable roundtrip latency. Often, short-term flows or bursts are unaccounted for, which causes undesirable packet loss and backpropagating congestion. 
 
-A much more desirable solution is a global, centralised arbiter which is able to predict and fairly distribute flows in the network before bursts or congestion occurs. By treating the network’s compute and forwarding power as a single finite resource, a controller acts like the OS scheduler distributing CPU time slices to processes. This design approach follows SDN’s aspiration of introducing operating systems abstractions to the networking domain space.
+A much more desirable solution is a global, centralised arbiter which is able to predict and fairly distribute flows in the network before bursts or congestion occur. By treating the network's compute and forwarding power as a single finite resource, a controller acts like the OS scheduler distributing CPU time slices to processes. This design approach follows SDN's aspiration of introducing operating systems abstractions to the networking domain space.
 
 In this project, we plan to explore the possibilities of a centralised, proactive flow scheduler. We ask ourselves the following research questions:
 \begin{enumerate}
-\item Is it possible to design a centralised token-based scheduling network?
-\item Is it possible to predict traffic and preemptively schedule flows and token distribution in a datacenter context?
-\item Using this approach, are we able to achieve better performance and utilization than existing solutions?
+	\item Is it possible to design a centralised token-based scheduling network?
+	\item Is it possible to predict traffic and preemptively schedule flows and token distribution in a datacenter context?
+	\item Using this approach, are we able to achieve better performance and utilization than existing solutions?
 \end{enumerate}
 
 In the scope of this course, we attempt to answer question one and design a simple token-based scheduler in Mininet. If successful, we will benchmark our results and evaluate the level of utilization compared to contemporary scheduling systems.
@@ -105,7 +106,7 @@ Recent proposals on decentralised scheduling like ExpressPass~\cite{expresspass}
 
 \subsection{Simple System}
 In our initial simple TCPToken design, a centralized controller regulates all node traffic by provisioning end-hosts with tokens.
-These tokens act as the "currency" of the system. The total amount is fixed to some factor of the aggregate bandwidth available in the network, and the traffic window size of sending end hosts is calculated based on the host’s current token availability. If a node or switch is overburdened, it may notify the scheduler, which will adjust the traffic window of responsible sending nodes remotely. Management and control operations including token distribution and updates are priority-queued to guarantee a fast and low-latency response. If an end-host requires more bandwidth, it can also notify the controller, which may comply based on priority and availability.
+These tokens act as the "currency" of the system. The total amount is fixed to some function of the bisection and aggregate bandwidths available in the network, and the traffic window size of sending end hosts is calculated based on the host's current token availability. If a node or switch is overburdened, it may notify the scheduler, which will adjust the traffic window of responsible sending nodes remotely. Management and control operations including token distribution and updates are priority-queued to guarantee a fast and low-latency response. If an end-host requires more bandwidth, it can also notify the controller, which may comply based on priority and availability.
 Initially, the controller will compute optimal route configuration based on the topology and link bandwidth using a simple heuristic bin-packing approach. End-hosts will be initialized with a fixed low-to-medium bandwidth guarantee that will be adjusted over time.
 
 \subsection{Advanced System}
@@ -163,14 +164,14 @@ The decentralized congestion control mechanism will be DCTCP~\cite{dctcp}, a sta
 \section{Timeline}
 \label{sec:timeline}
 \begin{itemize}
-\item \underline{October 15th:} Finalize draft and related work / background section.
-\item \underline{ October 22nd:} Iterate over literature and thoroughly analyze related work. Set up an initial prototyping environment in Mininet on which each team member can work on.
-\item \underline{October 30th:} Finalize the initial simple design and explore naive congestion modelling in Mininet. Integrate existing Mininet emulations of Hedera and DCTCP.
-\item \underline{November 12th:} Develop initial naive TCPTokens prototype involving controller and end-host design.
-\item \underline{November 19th:} Develop intelligent centralised congestion control heuristic.
-\item \underline{November 26th:} Run evaluations and microbenchmarks.
-\item \underline{December 3rd:} Iterate and improve the scheduler, explore topology and bandwidth constraints. Test at scale.
-\item \underline{December 10th:} Write report and prepare presentation.
+	\item \underline{October 15th:} Finalize draft and related work / background section.
+	\item \underline{ October 22nd:} Iterate over literature and thoroughly analyze related work. Set up an initial prototyping environment in Mininet on which each team member can work on.
+	\item \underline{October 30th:} Finalize the initial simple design and explore naive congestion modelling in Mininet. Integrate existing Mininet emulations of Hedera and DCTCP.
+	\item \underline{November 12th:} Develop initial naive TCPTokens prototype involving controller and end-host design.
+	\item \underline{November 19th:} Develop intelligent centralised congestion control heuristic.
+	\item \underline{November 26th:} Run evaluations and microbenchmarks.
+	\item \underline{December 3rd:} Iterate and improve the scheduler, explore topology and bandwidth constraints. Test at scale.
+	\item \underline{December 10th:} Write report and prepare presentation.
 \end{itemize}
 
 

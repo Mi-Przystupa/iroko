@@ -138,5 +138,10 @@ venv.bak/
 
 
 Mininet/oflops
-
 Mininet/openflow
+
+Hedera/client\.txt
+Hedera/server\.txt
+Hedera/tcp\.txt
+Hedera/results/
+.DS_Store

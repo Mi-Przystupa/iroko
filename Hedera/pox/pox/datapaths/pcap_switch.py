@@ -95,7 +95,7 @@ def _do_ctl2 (event):
     return "Error: " + str(e)
 
 
-def launch (address = '127.0.0.1', port = 6633, max_retry_delay = 16,
+def launch (address = '127.0.0.1', port = 6653, max_retry_delay = 16,
     dpid = None, ports = '', extra = None, ctl_port = None,
     __INSTANCE__ = None):
   """

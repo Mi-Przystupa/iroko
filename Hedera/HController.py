@@ -6,7 +6,7 @@
 import logging
 
 import sys
-sys.path.append('/home/ubuntu/hedera/')
+sys.path.append('./')
 
 from struct import pack
 from zlib import crc32

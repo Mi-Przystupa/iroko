@@ -817,7 +817,7 @@ def wrap_socket (new_sock):
   pcapfile = file(fname, "w")
   try:
     new_sock = OFCaptureSocket(new_sock, pcapfile,
-                               local_addrs=(None,None,6633))
+                               local_addrs=(None,None,6653))
   except Exception:
     import traceback
     traceback.print_exc()
@@ -831,7 +831,7 @@ class OpenFlow_01_Task (Task):
   """
   The main recoco thread for listening to openflow messages
   """
-  def __init__ (self, port = 6633, address = '0.0.0.0'):
+  def __init__ (self, port = 6653, address = '0.0.0.0'):
     Task.__init__(self)
     self.port = int(port)
     self.address = address
@@ -952,7 +952,7 @@ _set_handlers()
 # Used by the Connection class
 deferredSender = None
 
-def launch (port = 6633, address = "0.0.0.0"):
+def launch (port = 6653, address = "0.0.0.0"):
   if core.hasComponent('of_01'):
     return None
 

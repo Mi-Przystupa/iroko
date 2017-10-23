@@ -1,0 +1,1259 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"EPOLL",
+				"EPOLLONESHOT\tEPOLLONESHOT"
+			],
+			[
+				"print",
+				"printf\tprintf …"
+			],
+			[
+				"in6_",
+				"in6_memaddr\tin6_memaddr"
+			],
+			[
+				"WRITE",
+				"WRITE_CMD\tWRITE_CMD"
+			],
+			[
+				"ALLOC",
+				"ALLOC_CMD\tALLOC_CMD"
+			],
+			[
+				"GET",
+				"GET_CMD\tGET_CMD"
+			],
+			[
+				"remote",
+				"remoteAddr\tstruct in6_memaddr * remoteAddr"
+			],
+			[
+				"p",
+				"paddr\tuint64_t paddr"
+			],
+			[
+				"in6",
+				"in6_addr"
+			],
+			[
+				"NUM",
+				"NUM_ITERATIONS"
+			],
+			[
+				"NUM_",
+				"NUM_THREADS"
+			],
+			[
+				"ether",
+				"ether_frame\tunsigned char [65535] ether_frame"
+			],
+			[
+				"num",
+				"NUM_THREADS"
+			],
+			[
+				"MAP",
+				"MAP_SHARED"
+			],
+			[
+				"MAP_S",
+				"MAP_SHARED\tMAP_SHARED"
+			],
+			[
+				"pri",
+				"printf\tprintf …"
+			],
+			[
+				"EXIT",
+				"EXIT_FAILURE\tEXIT_FAILURE"
+			],
+			[
+				"tv",
+				"tv_nsec\t__syscall_slong_t tv_nsec"
+			],
+			[
+				"uin",
+				"uint8_t\tuint8_t"
+			],
+			[
+				"uint",
+				"uint32_t\tuint32_t"
+			],
+			[
+				"b",
+				"block_size\tint block_size"
+			],
+			[
+				"grep",
+				"grep_program"
+			],
+			[
+				"file",
+				"filename\tchar * filename"
+			],
+			[
+				"ip",
+				"ipv6Pointer"
+			],
+			[
+				"inter",
+				"interface_ep\tstruct ep_interface interface_ep"
+			],
+			[
+				"nt",
+				"ntohs"
+			],
+			[
+				"my",
+				"myAddr\tstruct in6_addr myAddr"
+			],
+			[
+				"re",
+				"retVal\tstruct in6_addr retVal"
+			],
+			[
+				"ho",
+				"hosts"
+			],
+			[
+				"serv",
+				"server_port\tchar [5] server_port"
+			],
+			[
+				"sr",
+				"src_addr\tstruct in6_addr src_addr"
+			],
+			[
+				"s6",
+				"s6_addr"
+			],
+			[
+				"config",
+				"configstruct\tstruct config configstruct"
+			],
+			[
+				"src",
+				"src_port\tchar [5] src_port"
+			],
+			[
+				"process",
+				"process_rx_release\tvoid process_rx_release(char *rx_ring)"
+			],
+			[
+				"send",
+				"sendmsg\tssize_t sendmsg(int __fd, const struct msghdr *__message, int __flags)"
+			],
+			[
+				"s",
+				"sin6_port"
+			],
+			[
+				"EX",
+				"EXIT_SUCCESS\tEXIT_SUCCESS"
+			],
+			[
+				"udp",
+				"udppacket"
+			],
+			[
+				"UD",
+				"UDP_HDRLEN"
+			],
+			[
+				"IP",
+				"IP6_HDRLEN"
+			],
+			[
+				"ET",
+				"ETH_HDRLEN"
+			],
+			[
+				"exit",
+				"exit_packetsock"
+			],
+			[
+				"HDR",
+				"IP6_HDRLEN\tIP6_HDRLEN"
+			],
+			[
+				"UDP",
+				"UDP_HDRLEN\tUDP_HDRLEN"
+			],
+			[
+				"IPH",
+				"IP6_HDRLEN\tIP6_HDRLEN"
+			],
+			[
+				"packet",
+				"packetinfo\tstruct udppacket packetinfo"
+			],
+			[
+				"sd",
+				"sd_send\tint sd_send"
+			],
+			[
+				"et",
+				"ether_type\tu_int16_t ether_type"
+			],
+			[
+				"sd_",
+				"sd_rcv\tint sd_rcv"
+			],
+			[
+				"MAP_",
+				"MAP_FIXED\tMAP_FIXED"
+			],
+			[
+				"epo",
+				"epoll_fd"
+			],
+			[
+				"SIG",
+				"SIGINT\tSIGINT"
+			],
+			[
+				"close",
+				"close_epoll\tvoid close_epoll()"
+			],
+			[
+				"size",
+				"sizeof\tsize_t sizeof(expression-or-type)"
+			],
+			[
+				"ui",
+				"uint16_t\tuint16_t"
+			],
+			[
+				"sin",
+				"sin6_family\tsa_family_t sin6_family"
+			],
+			[
+				"ip6_h",
+				"ip6_hdr\tip6_hdr"
+			],
+			[
+				"msg",
+				"msghdr"
+			],
+			[
+				"SOCK",
+				"SOCK_RAW\tSOCK_RAW"
+			],
+			[
+				"ETH_",
+				"ETH_HDRLEN\tETH_HDRLEN"
+			],
+			[
+				"target",
+				"targetIP\tstruct sockaddr_in6 * targetIP"
+			],
+			[
+				"init",
+				"initSockets\tstruct sockaddr_in6 * initSockets(struct addrinfo *p)"
+			],
+			[
+				"in",
+				"interface\tchar [20] interface"
+			],
+			[
+				"alloc",
+				"alloc_total\tuint64_t alloc_total"
+			],
+			[
+				"K",
+				"KCYN\tKCYN"
+			],
+			[
+				"RS",
+				"RESET"
+			],
+			[
+				"teh",
+				"the_page_table\tstruct page_table * the_page_table"
+			],
+			[
+				"AFI",
+				"AF_INET6\tAF_INET6"
+			],
+			[
+				"ad",
+				"in6_addr"
+			],
+			[
+				"app",
+				"appObject"
+			],
+			[
+				"page",
+				"page_table_flush\tvoid page_table_flush(struct page_table *pt)"
+			],
+			[
+				"IN",
+				"INET6_ADDRSTRLEN"
+			],
+			[
+				"PROT",
+				"PROT_NONE\tPROT_NONE"
+			],
+			[
+				"clos",
+				"disk_close\tvoid disk_close(struct disk *d)"
+			],
+			[
+				"mem",
+				"memList\tstruct in6_addr * memList"
+			],
+			[
+				"all",
+				"allocated"
+			],
+			[
+				"swap",
+				"swap_info\tint swap_info"
+			],
+			[
+				"P",
+				"Printf\tn int, err error ƒ"
+			],
+			[
+				"de",
+				"NewDecoder\t*gob.Decoder ƒ"
+			],
+			[
+				"De",
+				"DecodeBytes\t[]byte, error ƒ"
+			],
+			[
+				"int",
+				"int64_t\tint64_t"
+			],
+			[
+				"printf",
+				"printf\tprintf …"
+			],
+			[
+				"log",
+				"logName\tchar [256] logName"
+			],
+			[
+				"strnc",
+				"strncmp\tint strncmp(const char *__s1, const char *__s2, size_t __n)"
+			],
+			[
+				"mpack_read_bytes_",
+				"mpack_read_bytes_inplace\tconst char * mpack_read_bytes_inplace(mpack_reader_t *reader, size_t count)"
+			],
+			[
+				"mpac",
+				"mpack_print\tvoid mpack_print(const char *data, size_t len)"
+			],
+			[
+				"vc",
+				"printVC\tvoid printVC(struct vectorClock *vc)"
+			],
+			[
+				"vect",
+				"vectorClock\tvectorClock"
+			],
+			[
+				"preid",
+				"predict_proba"
+			],
+			[
+				"pre",
+				"predict_proba"
+			],
+			[
+				"require",
+				"requireReg\tint requireReg"
+			],
+			[
+				"PRINT",
+				"PRINTERROR\tPRINTERROR"
+			],
+			[
+				"lin",
+				"links\tstatement"
+			],
+			[
+				"n",
+				"n_classes\tstatement"
+			],
+			[
+				"X",
+				"X_shuffle\tstatement"
+			],
+			[
+				"si",
+				"sizeof\tsize_t sizeof(expression-or-type)"
+			],
+			[
+				"frame",
+				"frame_length"
+			],
+			[
+				"a",
+				"alloca\tvoid * alloca(size_t __size)"
+			],
+			[
+				"sub",
+				"subModel0\tstatement"
+			],
+			[
+				"subm",
+				"subModel1\tstatement"
+			],
+			[
+				"cur",
+				"currModul\tstatement"
+			],
+			[
+				"split",
+				"splitIndex0\tstatement"
+			],
+			[
+				"ge",
+				"getNodeByName\tfunction"
+			],
+			[
+				"dst",
+				"dst_mac\tuint8_t * dst_mac"
+			],
+			[
+				"AF_INET",
+				"AF_INET6\tAF_INET6"
+			],
+			[
+				"in6add",
+				"in6addr_any\tconst struct in6_addr in6addr_any"
+			],
+			[
+				"sin6",
+				"sin6_addr\tstruct in6_addr sin6_addr"
+			],
+			[
+				"INADD",
+				"INADDR_ANY\tINADDR_ANY"
+			],
+			[
+				"IN_A",
+				"INADDR_ANY\tINADDR_ANY"
+			],
+			[
+				"SOCK_D",
+				"SOCK_DGRAM\tSOCK_DGRAM"
+			],
+			[
+				"sockaddrin",
+				"sockaddr_in6\tsockaddr_in6"
+			],
+			[
+				"handle",
+				"handleClientRequests"
+			],
+			[
+				"receive",
+				"receiveBuffer"
+			],
+			[
+				"free",
+				"freeaddrinfo"
+			],
+			[
+				"la",
+				"lazyZero"
+			],
+			[
+				"add",
+				"s6_addr"
+			],
+			[
+				"intera",
+				"interactiveMode"
+			],
+			[
+				"str",
+				"strcmp"
+			],
+			[
+				"x",
+				"xterms\tstatement"
+			],
+			[
+				"t",
+				"startTerms"
+			],
+			[
+				"new",
+				"newAddr"
+			],
+			[
+				"Add",
+				"Address"
+			],
+			[
+				"ter",
+				"startTerms"
+			],
+			[
+				"set",
+				"setIP\tfunction"
+			],
+			[
+				"host",
+				"hostNum\tstatement"
+			],
+			[
+				"spl",
+				"splitResponse"
+			],
+			[
+				"rece",
+				"receiveBuffer"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "Packages/Makefile/Make.sublime-build",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"BlueBridge",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"BlueBridge",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					"Clean"
+				]
+			],
+			[
+				"Packages/Makefile/Make.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"BlueBridge",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					"Clean"
+				]
+			],
+			[
+				"Packages/Makefile/Make.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Make",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Make",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Makefile/Make.sublime-build",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					"Clean"
+				]
+			],
+			[
+				"Packages/Makefile/Make.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 112.0,
+		"last_filter": "disab",
+		"selected_items":
+		[
+			[
+				"disab",
+				"Package Control: Disable Package"
+			],
+			[
+				"install pa",
+				"Package Control: Install Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"sublemake",
+				"Sublemake: Show Error List"
+			],
+			[
+				"subl",
+				"Sublemake: Show Error List"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"suble",
+				"Sublemake: Show Error List"
+			],
+			[
+				"disable",
+				"Package Control: Disable Package"
+			],
+			[
+				"disa",
+				"Package Control: Disable Package"
+			],
+			[
+				"clan",
+				"Clang Format: Select Style"
+			],
+			[
+				"",
+				"EasyClangComplete: Clean current CMake cache"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"eas",
+				"EasyClangComplete: Settings"
+			],
+			[
+				"ana",
+				"Anaconda: Autoformat PEP8 Errors"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"remo",
+				"Package Control: Remove Package"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"enable ",
+				"Package Control: Enable Package"
+			],
+			[
+				"install p",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"git",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 476.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"make",
+			"import urllib.request,os,hashlib; h = 'df21e130d211cfc94d9b0905775a7c0f' + '1e3d39e33b79698005270310898eea76'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by) ",
+			"ls"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/fruffy/Projects/Iroko"
+	],
+	"file_history":
+	[
+		"/home/fruffy/UBC/Papers/Reading/Internet Computing/Reviews/i3.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/Xen.txt",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/softnet.sh",
+		"/home/fruffy/Projects/BlueBridge/.gitignore",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/optimise.sh",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/lib/api.c",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/lib/init.c",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/lib/core.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/baskerville.txt",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/udpsend.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/page_table.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/page_table.c",
+		"/home/fruffy/Projects/BlueBridge/bluebridge.sublime-project",
+		"/home/fruffy/Downloads/code/doodle/common/rss.h",
+		"/home/fruffy/Downloads/code/doodle/common/rss.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/bench.sh",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/test_rmem.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/dsm_wc.c",
+		"/home/fruffy/Projects/example.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/server_lib.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/server_lib.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/client_lib.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/client_lib.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/udpcooked.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/disk.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/network.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/network.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/config.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/utils.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/distmem_client.cnf",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/ryu-bluebridge.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/distmem_server.cnf",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/run-visual-demo.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/udpreceive.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/config.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/utils.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/rmem.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/disk.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/mem.h",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/mem.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/vmem/rmem.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/testing.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/bin/testing",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/bin/test_rmem",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/bin/userfaultfd_measure_pagefault",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/bin/dsm_wc",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/userfaultfd_measure_pagefault.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/applications/server.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/mininet/mininet/examples/natnet.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/mininet/mininet/examples/consoles.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/mininet/mininet/term.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/mininet/mininet/node.py",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/run-demo.py",
+		"/home/fruffy/Projects/BlueBridge/makefile",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/baskerville (copy).txt",
+		"/tmp/fz3temp-1/utils 2.h",
+		"/tmp/fz3temp-1/utils.h",
+		"/home/fruffy/Projects/Iroko/Hedera/hedera.py",
+		"/home/fruffy/Projects/Iroko/.gitignore",
+		"/home/fruffy/Projects/Iroko/.git/config",
+		"/home/fruffy/UBC/Teaching/CPSC210/Labs/Lab4_Marking/L4-ResourceFinderSolution/grading/lab4-gradingNotes.txt",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/generate.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/Makefile",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/disassemble.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/checksum.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/config/common_base",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/dpdkudpsend.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/l2fwd/main.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/lib/librte_mbuf/rte_mbuf.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/lib/librte_ether/rte_ethdev.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/mk/rte.vars.mk",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/default.mk",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/Makefile",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/main.c",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/examples/epserver/epserver.c",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/IOLite.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/ScoutPaths.txt",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/config.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/generate.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/common/rss.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/checksum.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/disassemble.h",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/udping/main.h",
+		"/tmp/fz3temp-1/config 2.c",
+		"/tmp/fz3temp-1/udpsend 2.c",
+		"/tmp/fz3temp-1/udpsend.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/dpdkudpreceive.c",
+		"/home/fruffy/Projects/dpdk/mk/rte.extapp.mk",
+		"/tmp/fz3temp-1/main.c",
+		"/home/fruffy/Downloads/code/doodle/udping/Makefile",
+		"/home/fruffy/Projects/BlueBridge/dpdk/examples/ipv4_multicast/main.c",
+		"/home/fruffy/Downloads/code/doodle/udping/main.c",
+		"/home/fruffy/Downloads/code/doodle/common/net.c",
+		"/home/fruffy/Projects/BlueBridge/dpdk/.gitignore",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/OS-Duality-Structures.txt",
+		"/home/fruffy/Downloads/code/doodle/kvapps/asynckvserver.c",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/examples/simplekvserver/simplekvserver.c",
+		"/tmp/fz3temp-1/config.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/lib/memcpy.c",
+		"/home/fruffy/Projects/BlueBridge/IPv6Addressing/ryu/ryu/tests/packet_data_generator/src/x.erl",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/mininet/1sw_demo.py",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/mininet/p4_mininet.py",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/targets/simple_router/simple_router.json",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/targets/simple_switch/simple_switch",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/targets/l2_switch/l2_switch.p4",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/targets/simple_router/simple_router",
+		"/home/fruffy/Projects/BlueBridge/tutorials/bmv2/targets/simple_router/simple_router.p4",
+		"/home/fruffy/UBC/Papers/Reading/Internet Computing/Reviews/End-To-End Effects.txt",
+		"/home/fruffy/UBC/Papers/Reading/Internet Computing/Reviews/RON.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/NucleusMultiprogramming.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/ProgramSemantics.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/ProtectionControlMultiCS.txt",
+		"/home/fruffy/UBC/Papers/Reading/Operating Systems/Reviews/VirtualMemoryProcessesMultiCS.txt",
+		"/home/fruffy/Downloads/code/doodle/jumbo-dpdk/main.c",
+		"/home/fruffy/Downloads/code/doodle/jumbo-dpdk/generate.c",
+		"/home/fruffy/Downloads/code/doodle/jumbo-dpdk/iovec.c",
+		"/home/fruffy/Downloads/code/tcp-mtcpdpdk/examples/asynckvserver/asynckvserver.c",
+		"/home/fruffy/Downloads/code/doodle/jumbo-linux/syncserver.c",
+		"/home/fruffy/Downloads/code/doodle/udping/generate.c",
+		"/home/fruffy/Dropbox/UBC/Papers/Reading/Operating Systems/Reviews/NucleusMultiprogramming.txt",
+		"/home/fruffy/Dropbox/UBC/Papers/Reading/Operating Systems/Reviews/ProgramSemantics.txt",
+		"/home/fruffy/Dropbox/UBC/Papers/Reading/Operating Systems/Reviews/ProtectionControlMultiCS.txt",
+		"/home/fruffy/Dropbox/UBC/Papers/Reading/Operating Systems/Reviews/VirtualMemoryProcessesMultiCS.txt",
+		"/usr/include/x86_64-linux-gnu/bits/epoll.h",
+		"/usr/include/x86_64-linux-gnu/sys/epoll.h",
+		"/tmp/fz3temp-1/distmem_server.cnf",
+		"/tmp/fz3temp-1/server.c",
+		"/tmp/fz3temp-1/testing.c"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 98.0,
+		"where_history":
+		[
+			"",
+			"/home/fruffy/UBC/Projects/Huawei/GoVector",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			".\n",
+			"myAddr",
+			"close_sockets",
+			"sendUDPIPv6Raw",
+			"receive_upd6_raw",
+			"sendUDPRaw",
+			"receiveUDPIPv6Raw",
+			"printf",
+			");\n",
+			"srand",
+			"txring_send",
+			"getns",
+			"get_ns",
+			"gent_ns",
+			");\n",
+			"distnen",
+			"pkts_burst",
+			"pdump",
+			"udp_",
+			"udp_packet",
+			"send_p",
+			"if_name",
+			"send_",
+			"send_dpdk",
+			"dpdk_se",
+			"l2fwd_pktmbuf_pool",
+			"send_dpdk",
+			"dpdk_send",
+			"construct_udp_response",
+			"construct_udp_p",
+			"construct_UDP_Pack",
+			"HEADER_PTR",
+			"send_dpdk",
+			"main_loop",
+			"flush_batched_pkts",
+			"dst_port",
+			"l2fwd_main_loop",
+			"main_",
+			"construct_udp_response",
+			"send_packet",
+			"send_single",
+			"get_packet_info",
+			"l2fwd",
+			"GetRSSCPUCore",
+			"queues",
+			"spinlock",
+			"init_",
+			"spinlock",
+			"floating",
+			"floating ",
+			"queue_id",
+			"SRC_PORT",
+			"MEMPOOL_CACHE_SIZE",
+			"MBUF_SIZE",
+			"rte_eth_rx_queue_setup",
+			"EAL",
+			"rte_eth_txconf",
+			"rte_eth_rxconf",
+			"port_stati",
+			"l2fwd_dst_p",
+			"rte_eth_dev_count",
+			"portmask",
+			"rte_eal_pci_probe",
+			"toepli",
+			"probe",
+			"toeplit",
+			"l2_len",
+			"rte_mbuf_l2_len",
+			"vlan",
+			"vlan.",
+			"rte_mbuf",
+			"ETH_RSS_IP",
+			"config",
+			".config",
+			"sendto",
+			"configst",
+			"packetinfo.device",
+			"sockadd",
+			"send_socket",
+			"init_send_socket",
+			"txr",
+			"tx_ring",
+			"tx_ring_send",
+			"\n    ",
+			"memcp",
+			"malloc",
+			"port",
+			"nto",
+			"ntoh",
+			"sin6",
+			"sin",
+			"toPointer",
+			"printn",
+			"printN",
+			"printn",
+			"rmem",
+			"fetch",
+			"checking",
+			"page_table_create",
+			"init)virt",
+			"isgraph",
+			"page_table",
+			"isword",
+			"isWord",
+			"grep",
+			"fstat",
+			"stat",
+			"grep",
+			"epoll_wait",
+			";\n",
+			"pollset",
+			"    if (sendto(sd_send, NULL, 0, MSG_DONTWAIT, (struct sockaddr *)NULL, sizeof(struct sockaddr_ll)) < 0)\n        RETURN_ERROR(-1, \"sendto failed!\\n\");",
+			"EPOLLOUT",
+			"write_value",
+			"client_send_resp",
+			"epoll_",
+			"sd_send",
+			"device",
+			"epoll_",
+			"epoll_wait",
+			"EPOLLIN",
+			"10000",
+			"tpacket_req",
+			"tpacket_hdr",
+			"tpacket3_hdr",
+			"tpacket_hdr",
+			"init_epoll",
+			"epoll_rc"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"send_udp6_raw",
+			"rcv_udp6_raw",
+			"send_udp_raw",
+			"receive_upd6_raw",
+			"getnsa",
+			"remoteAddr",
+			"mem",
+			"ring.",
+			"device",
+			"interface_ep->",
+			"packetframe",
+			"sd_rcv",
+			"ring",
+			"sd_rcv",
+			"interface_ep.",
+			"packetinfo->",
+			"receiveUDPIPv6Raw(receiveBuffer,BLOCK_SIZE, targetIP, NULL);\n//\tstrangeReceive(receiveBuffer, BLOCK_SIZE, targetIP, NULL);",
+			"//print_debug",
+			"//if (DEBUG) {\n",
+			"//print_debug",
+			"targetIP,",
+			"",
+			"p->sin6_family",
+			"p",
+			"sockaddr_in6",
+			"rmem",
+			"r->",
+			"```java",
+			"jvec",
+			"JVector",
+			" *",
+			"*",
+			"cvec",
+			"vcInfo",
+			"vectorInfo",
+			"vcLog",
+			"cLog",
+			"",
+			"args...",
+			"\t//sendUDPIPv6(sockfd, sendBuffer,BLOCK_SIZE, p,*toPointer);\n\tsendUDPIPv6Raw(sendBuffer,BLOCK_SIZE, p,*toPointer);\n",
+			"\t//sendUDP(sockfd, sendBuffer, BLOCK_SIZE, p);\n\tsendUDPIPv6(sendBuffer, BLOCK_SIZE, p);\n",
+			"\t//sendUDPIPv6(sock_fd, sendBuffer, BLOCK_SIZE, p);\n\tsendUDPIPv6Raw(sendBuffer, BLOCK_SIZE, p);\n",
+			"\t//sendUDP(sock_fd, sendBuffer, BLOCK_SIZE, p);\n\tsendUDPIPv6Raw(sendBuffer, BLOCK_SIZE, p);\n",
+			"\t//sendUDP(sock_fd, sendBuffer, BLOCK_SIZE, p);\n\tsendUDPRaw(sendBuffer, BLOCK_SIZE, p);\n",
+			"\t//sendUDP(sock_fd, sendBuffer, BLOCK_SIZE, p);\n\tsendUDPRaw(sendBuffer, BLOCK_SIZE, p);",
+			"sendUDP",
+			"sendUDPIPv6",
+			"sendUDP",
+			"sendUDPRaw(",
+			"sendUDPIPv6",
+			"sendUDP",
+			"packetinfo.",
+			"__u32",
+			"//print_debug",
+			"writeRemoteMem",
+			"freeRemoteMem",
+			"getRemoteMem",
+			"writeRemoteMem",
+			"freeRemoteMem",
+			"writeRemoteMem",
+			"allocateRemoteMem",
+			"freeMemory",
+			"writeMemory",
+			"subModel1",
+			"subModel0",
+			"getMemoryMod",
+			"sendUDPRaw",
+			"sendUDPIPv6Raw",
+			"sendUDPRaw",
+			"\"0\"",
+			"uint32_t",
+			"sockfd",
+			""
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 38.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.9o:///home/fruffy/UBC/Projects/Huawei/GoVector/GoVector/example":
+	{
+		"height": 335.0
+	},
+	"output.9o:///home/fruffy/UBC/Projects/Huawei/GoVector/GoVector/govec":
+	{
+		"height": 100.0
+	},
+	"output.9o:///home/fruffy/UBC/Projects/Huawei/GoVector/GoVector/test":
+	{
+		"height": 100.0
+	},
+	"output.CppBuilder":
+	{
+		"height": 100.0
+	},
+	"output.GoSublime-main-output":
+	{
+		"height": 100.0
+	},
+	"output.exec":
+	{
+		"height": 202.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.unsaved_changes":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "",
+	"project": "Iroko.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Projects/Huawei/CVector/cvector.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"$(MODULE).ko:"
+			]
+		],
+		"width": 816.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 266.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

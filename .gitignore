@@ -145,3 +145,9 @@ Hedera/server\.txt
 Hedera/tcp\.txt
 Hedera/results/
 .DS_Store
+
+Iroko/ecmp/client\.txt
+
+Iroko/ecmp/log/
+
+Iroko/ecmp/1

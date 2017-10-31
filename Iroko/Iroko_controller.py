@@ -186,14 +186,14 @@ class SimpleMonitor13(app_manager.RyuApp):
         #                  '-------- -------- -------- -------- '
         #                  '-------- -------- -------- ')
         for stat in sorted(body, key=attrgetter('port_no')):
-            if self.traffic_matrix == {}:
-                self.traffic_matrix = {(ev.msg.datapath.id, stat.port_no): (stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
-                                                                            stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)}
-            else:
-                self.traffic_matrix[(ev.msg.datapath.id, stat.port_no)] = (stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
-                                                                           stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)
+            # if self.traffic_matrix == {}:
+            #     self.traffic_matrix = {(ev.msg.datapath.id, stat.port_no): (stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
+            #                                                                 stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)}
+            # else:
+            #     self.traffic_matrix[(ev.msg.datapath.id, stat.port_no)] = (stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
+            #                                                                stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)
             self.logger.info(self.traffic_matrix)
-            # self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d %8d %8d',
-            #                  ev.msg.datapath.id, stat.port_no,
-            #                  stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
-            #                  stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)
+            self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d %8d %8d',
+                             ev.msg.datapath.id, stat.port_no,
+                             stat.rx_packets, stat.rx_bytes, stat.rx_errors, stat.rx_dropped,
+                             stat.tx_packets, stat.tx_bytes, stat.tx_errors, stat.tx_dropped)

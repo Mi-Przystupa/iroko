@@ -48,7 +48,8 @@ parser.add_argument('-t', '--time', dest='time', type=int, default=60,
                     help='Duration (sec) to run the experiment')
 args = parser.parse_args()
 
-MAX_QUEUE = 1
+MAX_QUEUE = 50
+
 
 class Fattree(Topo):
     """
@@ -388,16 +389,26 @@ def iperfTest(net, topo):
     """
     h001, h015, h016 = net.get(
         topo.HostList[0], topo.HostList[14], topo.HostList[15])
+
+    for edgeSwitchName in topo.EdgeSwitchList:
+        switch = net.get(edgeSwitchName)
+        print(switch)
+        for intf in switch.intfList():
+            print(intf)
+            switch.cmdPrint('dstat --net --time -N ' + str(intf) + '> ./tmp/dstat-' +
+                            str(edgeSwitchName) + '-' + str(intf) + '.txt &')
     serverPort = 5000
     clientPort = serverPort
     for i in range(len(topo.HostList) - 1):
-        h001.cmdPrint('iperf -s -u -i 1 -p ' + str(serverPort) + ' > iperf_server_differentPod_result_' + str(serverPort) + ' &')
+        h001.cmdPrint('iperf3 -s -i 1 -p ' + str(serverPort) + ' &')
         serverPort += 1
     sleep(2)
     for hostname in topo.HostList:
         host = net.get(hostname)
         if not(host == h001):
-            host.cmdPrint('iperf -c ' + h001.IP() + ' -u -t 20 -i 1 -b 10m -p ' + str(clientPort) + ' &')
+            sleep(1)
+            host.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 20 -i 1 -b 10m -p ' +
+                          str(clientPort) + ' > client_' + str(clientPort) + ' & ')
             clientPort += 1
     # iperf Server
     #h001.popen('iperf -s -u -i 1 > iperf_server_differentPod_result', shell=True)
@@ -440,10 +451,11 @@ def createTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10, bw
     hosts = []
     for hostname in topo.HostList:
         hosts.append(net.get(hostname))
-    trafficGen(args, hosts, net)
-
-    CLI(net)
+    # trafficGen(args, hosts, net)
+    iperfTest(net, topo)
+    # CLI(net)
     net.stop()
+    clean()
 
 
 def clean():
@@ -459,6 +471,7 @@ def clean():
             Popen('kill %d' % pid, shell=True).wait()
         except:
             pass
+    Popen('killall iperf3', shell=True).wait()
 
 
 if __name__ == '__main__':

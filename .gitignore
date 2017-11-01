@@ -153,3 +153,11 @@ Iroko/ecmp/log/
 Iroko/ecmp/1
 
 Iroko/ecmp/tmp/
+
+*.sublime-workspace
+
+*.sublime-project
+
+Iroko/ecmp/reports\.txt
+
+Iroko/ecmp/results\.txt

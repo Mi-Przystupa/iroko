@@ -23,6 +23,8 @@ from mininet.log import setLogLevel, info, warn, error, debug
 from mininet.link import Link, Intf, TCLink
 from mininet.topo import Topo
 from mininet.util import dumpNodeConnections
+from mininet.examples.consoles import ConsoleApp
+
 from time import sleep
 import multiprocessing
 from mininet.node import OVSKernelSwitch, CPULimitedHost
@@ -32,6 +34,8 @@ from mininet.util import custom
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 from monitor.monitor import monitor_devs_ng
+from monitor.monitor import monitor_qlen
+
 import os
 import logging
 
@@ -48,7 +52,7 @@ parser.add_argument('-t', '--time', dest='time', type=int, default=60,
                     help='Duration (sec) to run the experiment')
 args = parser.parse_args()
 
-MAX_QUEUE = 50
+MAX_QUEUE = 1
 
 
 class Fattree(Topo):
@@ -389,34 +393,55 @@ def iperfTest(net, topo):
     """
     h001, h015, h016 = net.get(
         topo.HostList[0], topo.HostList[14], topo.HostList[15])
-
+    bw = 10**6
     for edgeSwitchName in topo.EdgeSwitchList:
         switch = net.get(edgeSwitchName)
         print(switch)
         for intf in switch.intfList():
-            print(intf)
-            switch.cmdPrint('dstat --net --time -N ' + str(intf) + '> ./tmp/dstat-' +
-                            str(edgeSwitchName) + '-' + str(intf) + '.txt &')
+            if str(intf) != 'lo':
+                switch.cmdPrint('dstat --net --time -N ' + str(intf) + '> ./tmp/dstat-' +
+                                str(edgeSwitchName) + '-' + str(intf) + '.txt &')
+                # os.system('ovs-vsctl -- set Port ' + str(intf) + ' qos=@newqos -- --id=@newqos create QoS type=linux-htb other-config:max-rate=' +
+                #           str(bw) + ' queues=0=@q0 -- --id=@q0   create   Queue   other-config:min-rate=' + str(bw) + ' other-config:max-rate=' + str(bw))
+                # os.system('ovs-vsctl set Interface ' + str(intf) + ' ingress_policing_rate=' + str(bw))
+
     serverPort = 5000
     clientPort = serverPort
-    for i in range(len(topo.HostList) - 1):
-        h001.cmdPrint('iperf3 -s -i 1 -p ' + str(serverPort) + ' &')
-        serverPort += 1
-    sleep(2)
-    for hostname in topo.HostList:
-        host = net.get(hostname)
-        if not(host == h001):
-            sleep(1)
-            host.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 20 -i 1 -b 10m -p ' +
-                          str(clientPort) + ' > client_' + str(clientPort) + ' & ')
-            clientPort += 1
+    # for i in range(len(topo.HostList) - 1):
+    #     # h001.cmdPrint('xterm  -T \"server' + str(serverPort) +
+    #     #              '\" -e \"iperf3 -s -i 1 -p ' + str(serverPort) + '; bash\" &')
+    #     h001.cmdPrint('iperf3 -s -D -i 1 -p ' + str(serverPort) + ' --json')  # ' > ./tmp/server_' + str(serverPort) + '')
+    #     serverPort += 1
+
+    h001.cmdPrint('xterm  -T \"server' + str(serverPort) + '\" -e \"iperf3 -s -i 1 -p 5001; bash\" &')
+    h001.cmdPrint('xterm  -T \"server' + str(serverPort) + '\" -e \"iperf3 -s -i 1 -p 5002; bash\" &')
+    sleep(5)
+    h015.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 40 -i 1 -b 10m -p 5001 & ')
+    h016.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 40 -i 1 -b 10m -p 5002 & ')
+    # Input VPN-IDS
+
+    monitor = multiprocessing.Process(target=monitor_qlen, args=('3001-eth2', 0.01, './log/qlen.txt'))
+
+    monitor.start()
+
+    sleep(50)
+
+    monitor.terminate()
+    # for hostname in topo.HostList:
+    #     host = net.get(hostname)
+    #     if not(host == h001):
+    #         sleep(1)
+    #         host.cmdPrint('iperf3 -c ' + h001.IP() + ' -t 20 -i 1 -b 10m -p ' +
+    #                       str(clientPort) + ' & ')
+    #         clientPort += 1
+#    sleep(60)
     # iperf Server
-    #h001.popen('iperf -s -u -i 1 > iperf_server_differentPod_result', shell=True)
+    # h001.popen('iperf -s -u -i 1 > iperf_server_differentPod_result', shell=True)
     # iperf Server
-    #h015.popen('iperf -s -u -i 1 > iperf_server_samePod_result', shell=True)
+    # h015.popen('iperf -s -u -i 1 > iperf_server_samePod_result', shell=True)
     # iperf Client
-    #h016.cmdPrint('iperf -c ' + h001.IP() + ' -u -t 10 -i 1 -b 10m')
-    #h016.cmdPrint('iperf -c ' + h015.IP() + ' -u -t 10 -i 1 -b 10m')
+    # h016.cmdPrint('iperf -c ' + h001.IP() + ' -u -t 10 -i 1 -b 10m')
+    # h016.cmdPrint('iperf -c ' + h015.IP() + ' -u -t 10 -i 1 -b 10m')
 
 
 def pingTest(net):
@@ -452,8 +477,10 @@ def createTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10, bw
     for hostname in topo.HostList:
         hosts.append(net.get(hostname))
     # trafficGen(args, hosts, net)
+    # app = ConsoleApp(net, width=4)
     iperfTest(net, topo)
-    # CLI(net)
+    # app.mainloop()
+    CLI(net)
     net.stop()
     clean()
 
@@ -472,6 +499,7 @@ def clean():
         except:
             pass
     Popen('killall iperf3', shell=True).wait()
+    Popen('killall xterm', shell=True).wait()
 
 
 if __name__ == '__main__':

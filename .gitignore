@@ -34,6 +34,8 @@ __pycache__/
 # C extensions
 *.so
 
+**/*.o
+
 # Distribution / packaging
 .Python
 build/
@@ -161,3 +163,5 @@ Iroko/ecmp/tmp/
 Iroko/ecmp/reports\.txt
 
 Iroko/ecmp/results\.txt
+
+lodgen

@@ -6,7 +6,7 @@
 import logging
 
 import sys
-sys.path.append('./')
+
 
 from struct import pack
 from zlib import crc32
@@ -23,11 +23,12 @@ from pox.lib.packet.tcp import tcp
 from util import buildTopo, getRouting
 from DemandEstimation import demand_estimation
 from threading import Timer, Lock
-
+sys.path.append('./')
 log = core.getLogger()
 
 # Number of bytes to send for packet_ins
 MISS_SEND_LEN = 2000
+
 
 class Switch(EventMixin):
     def __init__(self):
@@ -41,25 +42,25 @@ class Switch(EventMixin):
         assert self.dpid == connection.dpid
         self.connection = connection
 
-    def send_packet_data(self, outport, data = None):
-        msg = of.ofp_packet_out(in_port=of.OFPP_NONE, data = data)
-        msg.actions.append(of.ofp_action_output(port = outport))
+    def send_packet_data(self, outport, data=None):
+        msg = of.ofp_packet_out(in_port=of.OFPP_NONE, data=data)
+        msg.actions.append(of.ofp_action_output(port=outport))
         self.connection.send(msg)
 
-    def send_packet_bufid(self, outport, buffer_id = -1):
+    def send_packet_bufid(self, outport, buffer_id=-1):
         msg = of.ofp_packet_out(in_port=of.OFPP_NONE)
-        msg.actions.append(of.ofp_action_output(port = outport))
+        msg.actions.append(of.ofp_action_output(port=outport))
         msg.buffer_id = buffer_id
         self.connection.send(msg)
 
-    def install(self, port, match, buf = -1, deleteFlow=False, idle_timeout = 0 ):
+    def install(self, port, match, buf=-1, deleteFlow=False, idle_timeout=0):
         msg = of.ofp_flow_mod()
         msg.match = match
         msg.idle_timeout = idle_timeout
-        msg.actions.append(of.ofp_action_output(port = port))
+        msg.actions.append(of.ofp_action_output(port=port))
         if deleteFlow:
             msg.command = of.OFPFC_DELETE
-        #msg.buffer_id = buf          
+        #msg.buffer_id = buf
         msg.flags = of.OFPFF_SEND_FLOW_REM
 
         self.connection.send(msg)
@@ -73,18 +74,19 @@ class HController(EventMixin):
         self.r = r          # Routng object
         self.all_switches_up = False
         core.openflow.addListeners(self)
-        
-        self.statCntr = 0 #sanity check for the flow stats     
-        self.HostNameList = [] #a dictionary of the host
-        self.hostsList = [] #list of host dpid
-        self.flows = [] #list of the collected stats
-        self.bw = bw 
-        self.beReservation = {} #reservation for the elephant flows 
-        self.statMonitorLock = Lock() #to lock the multi access threads 
+
+        self.statCntr = 0  # sanity check for the flow stats
+        self.HostNameList = []  # a dictionary of the host
+        self.hostsList = []  # list of host dpid
+        self.flows = []  # list of the collected stats
+        self.bw = bw
+        self.beReservation = {}  # reservation for the elephant flows
+        self.statMonitorLock = Lock()  # to lock the multi access threads
         self.statMonitorLock.acquire()
-        statMonitorTimer = Timer(10.0,self._collectFlowStats()) #timer to collect stats
+        statMonitorTimer = Timer(10.0, self._collectFlowStats())  # timer to collect stats
         statMonitorTimer.start()
-        self.matchDict = {} # dictioanary of the matches
+        self.matchDict = {}  # dictioanary of the matches
+
     def _ecmp_hash(self, packet):
         ''' Return an ECMP-style 5-tuple hash for TCP/IP packets, otherwise 0.
         RFC2992 '''
@@ -101,7 +103,6 @@ class HController(EventMixin):
                 return crc32(pack('LLHHH', *hash_input))
         return 0
 
-
     def _flood(self, event):
         ''' Broadcast to every output port '''
         packet = event.parsed
@@ -112,21 +113,20 @@ class HController(EventMixin):
         for sw_name in t.layer_nodes(t.LAYER_EDGE):
             for host_name in t.lower_nodes(sw_name):
                 sw_port, host_port = t.port(sw_name, host_name)
-                sw = t.node_gen(name = sw_name).dpid
+                sw = t.node_gen(name=sw_name).dpid
 
                 # Send packet out each non-input host port
                 if sw != dpid or (sw == dpid and in_port != sw_port):
                     self.switches[sw].send_packet_data(sw_port, event.data)
 
-
     def _install_reactive_path(self, event, out_dpid, final_out_port, packet):
         ''' Install entries on route between two switches. '''
-        in_name = self.t.node_gen(dpid = event.dpid).name_str()
-        out_name = self.t.node_gen(dpid = out_dpid).name_str()
+        in_name = self.t.node_gen(dpid=event.dpid).name_str()
+        out_name = self.t.node_gen(dpid=out_dpid).name_str()
         hash_ = self._ecmp_hash(packet)
         route = self.r.get_route(in_name, out_name, hash_)
-        #print "Route:",route        
-        #print '-'*80
+        # print "Route:",route
+        # print '-'*80
         if route == None:
             print None, "route between", in_name, "and", out_name
             return
@@ -134,17 +134,17 @@ class HController(EventMixin):
         match = of.ofp_match.from_packet(packet)
 
         for i, node in enumerate(route):
-            node_dpid = self.t.node_gen(name = node).dpid
+            node_dpid = self.t.node_gen(name=node).dpid
             if i < len(route) - 1:
                 next_node = route[i + 1]
                 out_port, next_in_port = self.t.port(node, next_node)
             else:
                 out_port = final_out_port
-            self.switches[node_dpid].install(out_port, match, idle_timeout = 10)
+            self.switches[node_dpid].install(out_port, match, idle_timeout=10)
 
         if isinstance(packet.next, of.ipv4) and isinstance(packet.next.next, of.tcp):
             self.matchDict[(packet.next.srcip, packet.next.dstip, packet.next.next.srcport, packet.next.next.dstport)] = (route, match)
-     
+
     def _handle_PacketIn(self, event):
         if not self.all_switches_up:
             #log.info("Saw PacketIn before all switches were up - ignoring." )
@@ -156,10 +156,10 @@ class HController(EventMixin):
 
         # Learn MAC address of the sender on every packet-in.
         self.macTable[packet.src] = (dpid, in_port)
-        sw_name = self.t.node_gen(dpid = dpid).name_str()
-        #print "Sw:", sw_name, packet.src, packet.dst,"port", in_port, packet.dst.isMulticast(),"macTable", packet.dst in self.macTable
-        #print '-'*80
-        
+        sw_name = self.t.node_gen(dpid=dpid).name_str()
+        # print "Sw:", sw_name, packet.src, packet.dst,"port", in_port, packet.dst.isMulticast(),"macTable", packet.dst in self.macTable
+        # print '-'*80
+
         # Insert flow, deliver packet directly to destination.
 
         if packet.dst in self.macTable:
@@ -174,7 +174,7 @@ class HController(EventMixin):
     def _handle_ConnectionUp(self, event):
         sw = self.switches.get(event.dpid)
         sw_str = dpidToStr(event.dpid)
-        sw_name = self.t.node_gen(dpid = event.dpid).name_str()
+        sw_name = self.t.node_gen(dpid=event.dpid).name_str()
 
         if sw_name not in self.t.switches():
             log.warn("Ignoring unknown switch %s" % sw_str)
@@ -189,27 +189,26 @@ class HController(EventMixin):
 
         sw.connection.send(of.ofp_set_config(miss_send_len=MISS_SEND_LEN))
 
-        if len(self.switches)==len(self.t.switches()):
+        if len(self.switches) == len(self.t.switches()):
             log.info("All of the switches are up")
             self.all_switches_up = True
             if self.statMonitorLock.locked():
-                self.statMonitorLock.release()    
-
+                self.statMonitorLock.release()
 
     def _collectFlowStats(self):
-        log.info("attempt to capture STATS") 
+        log.info("attempt to capture STATS")
         ''' this function send the flow stat requests'''
         if not self.statMonitorLock.locked():
-            # log.info("here it goes to monitor flow stats") 
+            # log.info("here it goes to monitor flow stats")
             self.statMonitorLock.acquire()
             self.statCntr = 0
             self.flows = []
             self.HostNameList = []
             self.hostsList = []
             for sw_name in self.t.layer_nodes(self.t.LAYER_EDGE):
-                sw_dpid = self.t.node_gen(name = sw_name).dpid
-                #print 'sw_dpid',sw_dpid ,'sw_name',sw_name
-                for port in range(1,self.t.k + 1):
+                sw_dpid = self.t.node_gen(name=sw_name).dpid
+                # print 'sw_dpid',sw_dpid ,'sw_name',sw_name
+                for port in range(1, self.t.k + 1):
                     if not self.t.isPortUp(port):
                         msg = of.ofp_stats_request()
                         msg.type = of.OFPST_FLOW
@@ -221,37 +220,37 @@ class HController(EventMixin):
         statMonitorTimer = Timer(3.5, self._collectFlowStats)
         statMonitorTimer.start()
 
-
-    def IP2name_dpid(self,IP):
+    def IP2name_dpid(self, IP):
         IP = str(IP)
         ten, p, e, h = (int(s) for s in IP.split('.'))
-        node_name = self.t.node_gen(p,e,h).name_str()
+        node_name = self.t.node_gen(p, e, h).name_str()
         dpid_ = (p << 16) + (e << 8) + h
         return (node_name, dpid_)
 
-    def _handle_FlowStatsReceived(self, event): 
+    def _handle_FlowStatsReceived(self, event):
         '''handle function for collected stats '''
-        # log.info( "flow stat collected, process begins") 
-        #print 'event.stats', event.stats
+        # log.info( "flow stat collected, process begins")
+        # print 'event.stats', event.stats
         self.statCntr -= 1
         for stat in event.stats:
             flowLivingTime = stat.duration_sec * 1e9 + stat.duration_nsec
             if flowLivingTime <= 1:
                 flowLivingTime = 1
             flowDemand = 8 * float(stat.byte_count) / flowLivingTime / self.bw
-            #print 'stat.match.in_port:', stat.match.in_port,'flow byte_count',stat.byte_count,'flowLivingTime:', flowLivingTime, 'flowDemand:', flowDemand, 'stat.match.scrIP:', stat.match.nw_src, 'stat.match.dstIP', stat.match.nw_dst
+            # print 'stat.match.in_port:', stat.match.in_port,'flow byte_count',stat.byte_count,'flowLivingTime:', flowLivingTime, 'flowDemand:', flowDemand, 'stat.match.scrIP:', stat.match.nw_src, 'stat.match.dstIP', stat.match.nw_dst
             src_name, src = self.IP2name_dpid(stat.match.nw_src)
             dst_name, dst = self.IP2name_dpid(stat.match.nw_dst)
-            #print 'src_name:',src_name,'dst_name:', dst_name,'src_dpid:', src,'dst_dpid:', dst
-            #print stat.match.nw_src, stat.match.nw_dst, stat.match.tp_src, stat.match.tp_dst
+            # print 'src_name:',src_name,'dst_name:', dst_name,'src_dpid:', src,'dst_dpid:', dst
+            # print stat.match.nw_src, stat.match.nw_dst, stat.match.tp_src, stat.match.tp_dst
             if flowDemand > 0.1:
                 if src not in self.hostsList:
                     self.hostsList.append(src)
-                    self.HostNameList.append({'node_name':src_name, 'dpid':src})
+                    self.HostNameList.append({'node_name': src_name, 'dpid': src})
                 if dst not in self.hostsList:
                     self.hostsList.append(dst)
-                    self.HostNameList.append({'node_name':dst_name, 'dpid':dst})
-                self.flows.append({ 'demand': flowDemand, 'converged':False, 'src': src, 'dst': dst, 'recLimited': False, 'match': stat.match})
+                    self.HostNameList.append({'node_name': dst_name, 'dpid': dst})
+                self.flows.append({'demand': flowDemand, 'converged': False, 'src': src,
+                                   'dst': dst, 'recLimited': False, 'match': stat.match})
         if self.statCntr == 0:
             print "****flows processed, Estimating demands begins"
             self._demandEstimator()
@@ -259,7 +258,7 @@ class HController(EventMixin):
     def _demandEstimator(self):
         '''estimate the actual flow demands here'''
         temp = self.flows
-        temp = sorted(temp, key=lambda temp:temp['src'])
+        temp = sorted(temp, key=lambda temp: temp['src'])
         self.flows = temp
         self.bwReservation = {}
         M, estFlows = demand_estimation(self.flows, sorted(self.hostsList))
@@ -268,42 +267,40 @@ class HController(EventMixin):
             if demand >= 0.1:
                 self._GlobalFirstFit(flow)
 
-
-    def _GlobalFirstFit(self,flow):
+    def _GlobalFirstFit(self, flow):
         '''do the Hedera global first fit here'''
-        src_name = self.t.node_gen(dpid = flow['src']).name_str()
-        dst_name = self.t.node_gen(dpid = flow['dst']).name_str()
-        print 'Global Fisrt Fit for the elephant flow from ',src_name,'to', dst_name
-        paths = self.r.routes(src_name,dst_name)
-        #print 'all routes found for the big flow:\n',paths
+        src_name = self.t.node_gen(dpid=flow['src']).name_str()
+        dst_name = self.t.node_gen(dpid=flow['dst']).name_str()
+        print 'Global Fisrt Fit for the elephant flow from ', src_name, 'to', dst_name
+        paths = self.r.routes(src_name, dst_name)
+        # print 'all routes found for the big flow:\n',paths
         GFF_route = None
         for path in paths:
             fitCheck = True
-           
-            for i in range(1,len(path)):
-                fitCheck = False 
-                if self.bwReservation.has_key(path[i-1]) and self.bwReservation[path[i-1]].has_key(path[i]):
-                    if self.bwReservation[path[i-1]][path[i]]['reserveDemand'] + flow['demand'] > 1 :
-                        break   
+
+            for i in range(1, len(path)):
+                fitCheck = False
+                if self.bwReservation.has_key(path[i - 1]) and self.bwReservation[path[i - 1]].has_key(path[i]):
+                    if self.bwReservation[path[i - 1]][path[i]]['reserveDemand'] + flow['demand'] > 1:
+                        break
                     else:
                         #self.bwReservation[path[i-1]][path[i]]['reserveDemand'] += flow['demand']
-                        fitCheck = True  
+                        fitCheck = True
                 else:
-                    self.bwReservation[path[i-1]]={}
-                    self.bwReservation[path[i-1]][path[i]]={'reserveDemand':0}
+                    self.bwReservation[path[i - 1]] = {}
+                    self.bwReservation[path[i - 1]][path[i]] = {'reserveDemand': 0}
                     fitCheck = True
             if fitCheck == True:
-                for i in range(1,len(path)):
-                    self.bwReservation[path[i-1]][path[i]]['reserveDemand'] += flow['demand']
+                for i in range(1, len(path)):
+                    self.bwReservation[path[i - 1]][path[i]]['reserveDemand'] += flow['demand']
                 GFF_route = path
                 print "GFF route found:", path
                 break
         if GFF_route != None:
             """install new GFF_path between source and destintaion"""
-            self. _install_GFF_path(GFF_route,flow['match'])     
+            self. _install_GFF_path(GFF_route, flow['match'])
 
-
-    def _install_GFF_path(self,GFF_route, match):
+    def _install_GFF_path(self, GFF_route, match):
         '''installing the global first fit path here'''
         flow_match = match
         _route, match = self.matchDict[match.nw_src, match.nw_dst, match.tp_src, match.tp_dst]
@@ -316,34 +313,32 @@ class HController(EventMixin):
             print"GFF route to be installed between switches:", route
 
             for i, node in enumerate(route):
-                node_dpid = self.t.node_gen(name = node).dpid
+                node_dpid = self.t.node_gen(name=node).dpid
                 if i < len(route) - 1:
                     next_node = route[i + 1]
                     out_port, next_in_port = self.t.port(node, next_node)
                 else:
                     dpid_out, out_port = self.macTable[match.dl_dst]
-                    #print 'out_dpid', dpid_out,self.t.node_gen(name = GFF_route[-1]).dpid
-                    #print 'outPort', out_port
-                self.switches[node_dpid].install(out_port, match,idle_timeout = 10)
+                    # print 'out_dpid', dpid_out,self.t.node_gen(name = GFF_route[-1]).dpid
+                    # print 'outPort', out_port
+                self.switches[node_dpid].install(out_port, match, idle_timeout=10)
 
-            self.statMonitorLock.release()    
+            self.statMonitorLock.release()
             self.matchDict[flow_match.nw_src, flow_match.nw_dst, flow_match.tp_src, flow_match.tp_dst] = (route, match)
-        print '_'*20
-   
+        print '_' * 20
 
 
-def launch(topo = None, routing = None, bw = None ):
-    #print topo
+def launch(topo=None, routing=None, bw=None):
+    # print topo
     if not topo:
-        raise Exception ("Please specify the topology")
-    else: 
+        raise Exception("Please specify the topology")
+    else:
         t = buildTopo(topo)
     r = getRouting(routing, t)
     if bw == None:
-        bw = 10.0 #Mb/s
-        bw = float(bw/1000) #Gb/s
+        bw = 10.0  # Mb/s
+        bw = float(bw / 1000)  # Gb/s
     else:
-        bw = float(bw)/1000
+        bw = float(bw) / 1000
     core.registerNew(HController, t, r, bw)
     log.info("** HController is running")
- 

@@ -23,7 +23,6 @@
 
 #include "common.h"
 
-#define BUFSIZE 65536
 #define BACKLOG 100
 
 struct client_info

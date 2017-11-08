@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#define BUFSIZE 65536
-#define BUFSIZE_UDP 9450
 #define MAX_LINE_LEN 256
 
 #define TYPE_TCP 1
@@ -67,8 +65,10 @@ struct in_addr get_interface_addr(const char *interface);
 int parse_input_file(char *filename, vector<struct traffic_gen_info *> &tgen_info_vector, int *line_count, int *field_count);
 void start_flow(struct traffic_gen_info *tgen_info);
 void send_fake_rpc_request(struct traffic_gen_info *tgen_info);
-void send_recv_data(struct traffic_gen_info *tgen_info);
+size_t send_recv_data(struct traffic_gen_info *tgen_info, size_t send_recv_size);
 in_addr_t get_random_ip(struct traffic_gen_info *tgen_info);
+
+extern size_t tx_rate;
 
 void *client_thread_main(void *arg)
 {
@@ -77,10 +77,24 @@ void *client_thread_main(void *arg)
     int done;
     //double curr_test_time;
 
+    size_t epoch_bytes_left = tx_rate;
+    struct timeval cur_epoch;
+    struct timeval last_epoch;
+
+    gettimeofday(&last_epoch, NULL);
     memset(send_buf, 0, BUFSIZE);
     done = 0;
     while(!done && !interrupted)
     {
+        gettimeofday(&cur_epoch, NULL);
+        if (cur_epoch.tv_sec > last_epoch.tv_sec) {
+            epoch_bytes_left = tx_rate;
+            last_epoch = cur_epoch;
+        } else if (epoch_bytes_left == 0) {
+            usleep(1000000 - cur_epoch.tv_usec);
+            continue;
+        }
+
         done = 1; // assume done for now, will check later
         for (iter = tgen_info_vector.begin(); iter != tgen_info_vector.end(); iter++)
         {
@@ -106,8 +120,9 @@ void *client_thread_main(void *arg)
                             start_flow(tgen_info); // note: this will modify bytes_left
                         if (tgen_info->type == TYPE_RPC && !tgen_info->rpc_request_sent)
                             send_fake_rpc_request(tgen_info);
-                        if (tgen_info->bytes_left > 0)
-                            send_recv_data(tgen_info);
+                        if (tgen_info->bytes_left > 0 && epoch_bytes_left > 0) {
+                            epoch_bytes_left -= send_recv_data(tgen_info, epoch_bytes_left);
+                        }
                     }
                 }
             }
@@ -453,15 +468,16 @@ void send_fake_rpc_request(struct traffic_gen_info *tgen_info)
     }
 }
 
-void send_recv_data(struct traffic_gen_info *tgen_info)
+size_t send_recv_data(struct traffic_gen_info *tgen_info, size_t max_send_recv_size)
 {
-    int send_recv_size;
-    int ret;
+    int ret = 0;
     socklen_t socklen = sizeof (struct sockaddr_in);
 
-    send_recv_size = BUFSIZE;
-    if (tgen_info->bytes_left < BUFSIZE)
-        send_recv_size = tgen_info->bytes_left;
+    long long send_recv_size = max_send_recv_size;
+    if (BUFSIZE < send_recv_size)
+        send_recv_size = BUFSIZE;
+    if (tgen_info->bytes_left < send_recv_size)
+	    send_recv_size = tgen_info->bytes_left;
     /*
      * Avoid fragmentation in case of UDP
      */
@@ -536,6 +552,11 @@ void send_recv_data(struct traffic_gen_info *tgen_info)
                 tgen_info->next_start_time = get_test_time() + tgen_info->time_between_flows;
         }
     }
+
+    if (ret < 0)
+        ret = 0;
+
+    return ret;
 }
 
 // FIXME: This should just go. These IP addresses cannot remain here.

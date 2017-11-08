@@ -38,6 +38,7 @@ double test_start_time;
 unsigned int sample_period_us;
 pthread_t server_thread;
 pthread_t client_thread;
+pthread_t cntrl_thread;
 pthread_cond_t start_signal = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t start_signal_mutex = PTHREAD_MUTEX_INITIALIZER;
 volatile long long total_bytes_in;
@@ -127,6 +128,9 @@ int main(int argc, char *argv[])
     signal(SIGHUP, handleint);
     signal(SIGPIPE, handleint);
     signal(SIGKILL, handleint);
+
+    cntrl_init();
+    pthread_create(&cntrl_thread, NULL, cntrl_thread_main, (void *)0);
 
     client_init();
 

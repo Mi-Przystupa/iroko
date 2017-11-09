@@ -64,8 +64,8 @@ extern "C" {
  */
 struct rpc_req_info
 {
-	long long response_length;
-	double rpc_delay;
+    long long response_length;
+    double rpc_delay;
 };
 
 //****************************************************************************/

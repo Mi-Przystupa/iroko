@@ -38,7 +38,7 @@ enable_Flow_Entry_L4Port = False   # For including L4 port in the installing flo
 
 MAX_CAPACITY = 10000   # Max capacity of link
 
-get_topology_delay = 30
+get_topology_delay = 20
 
 # CONF = cfg.CONF
 k_paths = 4

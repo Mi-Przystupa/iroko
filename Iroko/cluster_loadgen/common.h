@@ -64,8 +64,8 @@ extern "C" {
  */
 struct rpc_req_info
 {
-	long long response_length;
-	double rpc_delay;
+    long long response_length;
+    double rpc_delay;
 };
 
 //****************************************************************************/
@@ -85,8 +85,10 @@ extern double curr_test_time;
 //****************************************************************************/
 
 void client_init();  // FIXME: move this to client.h?
+extern int cntrl_init();
 void *client_thread_main(void *arg);
 void *server_thread_main(void *arg);
+void *cntrl_thread_main(void *arg);
 int read_double(char *str, double *val);
 int read_ushort(char *str, unsigned short *val);
 int read_int(char *str, int *val);
@@ -104,3 +106,6 @@ void add_to_total_bytes_out(long long val);
 #endif
 
 // vim: set ts=4 sw=4 expandtab:
+
+#define BUFSIZE 65536
+#define BUFSIZE_UDP 9450

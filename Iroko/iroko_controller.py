@@ -64,8 +64,8 @@ class ShortestForwarding(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {
         "network_awareness": network_awareness.NetworkAwareness,
-        "network_monitor": network_monitor.NetworkMonitor}#,
-        #"network_delay": network_delay.NetworkDelayDetector}
+        "network_monitor": network_monitor.NetworkMonitor,
+        "network_delay": network_delay.NetworkDelayDetector}
 
     WEIGHT_MODEL = {'hop': 'weight', 'bw': 'bw'}
 
@@ -74,44 +74,44 @@ class ShortestForwarding(app_manager.RyuApp):
         self.name = "shortest_forwarding"
         self.awareness = kwargs["network_awareness"]
         self.monitor = kwargs["network_monitor"]
-        #self.monitor = kwargs["network_delay"]
+        self.monitor = kwargs["network_delay"]
         self.datapaths = {}
         self.weight = self.WEIGHT_MODEL[weight]
 
-    # @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
-    # def _state_change_handler(self, ev):
-    #     """
-    #         Collect datapath information.
-    #     """
-    #     datapath = ev.datapath
-    #     if ev.state == MAIN_DISPATCHER:
-    #         if not datapath.id in self.datapaths:
-    #             self.logger.debug('register datapath: %016x', datapath.id)
-    #             self.datapaths[datapath.id] = datapath
-    #     elif ev.state == DEAD_DISPATCHER:
-    #         if datapath.id in self.datapaths:
-    #             self.logger.debug('unregister datapath: %016x', datapath.id)
-    #             del self.datapaths[datapath.id]
+    @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, DEAD_DISPATCHER])
+    def _state_change_handler(self, ev):
+        """
+            Collect datapath information.
+        """
+        datapath = ev.datapath
+        if ev.state == MAIN_DISPATCHER:
+            if not datapath.id in self.datapaths:
+                self.logger.debug('register datapath: %016x', datapath.id)
+                self.datapaths[datapath.id] = datapath
+        elif ev.state == DEAD_DISPATCHER:
+            if datapath.id in self.datapaths:
+                self.logger.debug('unregister datapath: %016x', datapath.id)
+                del self.datapaths[datapath.id]
 
-    # @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
-    # def _packet_in_handler(self, ev):
-    #     '''
-    #         In packet_in handler, we need to learn access_table by ARP and IP packets.
-    #     '''
-    #     msg = ev.msg
-    #     pkt = packet.Packet(msg.data)
-    #     arp_pkt = pkt.get_protocol(arp.arp)
-    #     ip_pkt = pkt.get_protocol(ipv4.ipv4)
+    @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
+    def _packet_in_handler(self, ev):
+        '''
+            In packet_in handler, we need to learn access_table by ARP and IP packets.
+        '''
+        msg = ev.msg
+        pkt = packet.Packet(msg.data)
+        arp_pkt = pkt.get_protocol(arp.arp)
+        ip_pkt = pkt.get_protocol(ipv4.ipv4)
 
-    #     if isinstance(arp_pkt, arp.arp):
-    #         self.logger.debug("ARP processing")
-    #         self.arp_forwarding(msg, arp_pkt.src_ip, arp_pkt.dst_ip)
+        if isinstance(arp_pkt, arp.arp):
+            self.logger.debug("ARP processing")
+            self.arp_forwarding(msg, arp_pkt.src_ip, arp_pkt.dst_ip)
 
-    #     if isinstance(ip_pkt, ipv4.ipv4):
-    #         self.logger.debug("IPV4 processing")
-    #         if len(pkt.get_protocols(ethernet.ethernet)):
-    #             eth_type = pkt.get_protocols(ethernet.ethernet)[0].ethertype
-    #             self.shortest_forwarding(msg, eth_type, ip_pkt.src, ip_pkt.dst)
+        if isinstance(ip_pkt, ipv4.ipv4):
+            self.logger.debug("IPV4 processing")
+            if len(pkt.get_protocols(ethernet.ethernet)):
+                eth_type = pkt.get_protocols(ethernet.ethernet)[0].ethertype
+                self.shortest_forwarding(msg, eth_type, ip_pkt.src, ip_pkt.dst)
 
     # def add_flow(self, dp, priority, match, actions, idle_timeout=0, hard_timeout=0):
     #     """

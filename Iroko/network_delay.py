@@ -32,7 +32,7 @@ MONITOR_PERIOD = 2   # For monitoring traffic
 
 DELAY_DETECTING_PERIOD = 5  # For detecting link delay.
 
-TOSHOW = True     # For showing information in terminal
+TOSHOW = False     # For showing information in terminal
 
 enable_Flow_Entry_L4Port = False   # For including L4 port in the installing flow entries or not.
 

@@ -272,6 +272,16 @@ def install_proactive(net, topo):
                 k = 1
 
 
+def configureTopo(net, topo):
+    net.start()
+    # Set OVS's protocol as OF13.
+    topo.set_ovs_protocol_13()
+    # Set hosts IP addresses.
+    set_host_ip(net, topo)
+    # Install proactive flow entries
+    install_proactive(net, topo)
+
+
 def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10, bw_e2h=10):
     """
         Create network topology and run the Mininet.
@@ -282,18 +292,11 @@ def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10
     topo.createLinks(bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h)
 
     # Start Mininet
-    CONTROLLER_IP = ip
-    CONTROLLER_PORT = port
+    # CONTROLLER_IP = ip
+    #CONTROLLER_PORT = port
     link = custom(TCLink, max_queue_size=MAX_QUEUE)
-    net = Mininet(topo=topo, link=link, controller=RemoteController, autoSetMacs=True)
-    net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
+    net = Mininet(topo=topo, link=link,controller=None, autoSetMacs=True)
+    #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
 
-    net.start()
-
-    # Set OVS's protocol as OF13.
-    topo.set_ovs_protocol_13()
-    # Set hosts IP addresses.
-    set_host_ip(net, topo)
-    # Install proactive flow entries
-    install_proactive(net, topo)
+    # net.start()
     return (net, topo)

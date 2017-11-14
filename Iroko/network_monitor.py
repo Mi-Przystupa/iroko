@@ -32,7 +32,7 @@ import sys
 sys.path.append('./')
 
 
-DISCOVERY_PERIOD = 10   # For discovering topology.
+DISCOVERY_PERIOD = 1   # For discovering topology.
 
 MONITOR_PERIOD = 1   # For monitoring traffic
 
@@ -42,7 +42,7 @@ enable_Flow_Entry_L4Port = False   # For including L4 port in the installing flo
 
 MAX_CAPACITY = 10000   # Max capacity of link
 
-get_topology_delay = 30
+get_topology_delay = 2
 
 #CONF = cfg.CONF
 weight = 'bw'
@@ -73,7 +73,7 @@ class NetworkMonitor(app_manager.RyuApp):
         # Start to green thread to monitor traffic and calculating
         # free bandwidth of links respectively.
         self.monitor_thread = hub.spawn(self._monitor)
-        self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
+        #self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
 
     def _monitor(self):
         """
@@ -173,23 +173,23 @@ class NetworkMonitor(app_manager.RyuApp):
         self.free_bandwidth.setdefault(dpid, {})
         for stat in sorted(body, key=attrgetter('port_no')):
             port_no = stat.port_no
-            if port_no != ofproto_v1_3.OFPP_LOCAL:
-                key = (dpid, port_no)
-                value = (stat.tx_bytes, stat.rx_bytes, stat.rx_errors,
-                         stat.duration_sec, stat.duration_nsec)
-                self._save_stats(self.port_stats, key, value, 5)
+        #    if port_no != ofproto_v1_3.OFPP_LOCAL:
+            key = (dpid, port_no)
+            value = (stat.tx_bytes, stat.rx_bytes, stat.rx_errors,
+                     stat.duration_sec, stat.duration_nsec)
+            self._save_stats(self.port_stats, key, value, 5)
 
-                # Get port speed and Save it.
-                pre = 0
-                period = MONITOR_PERIOD
-                tmp = self.port_stats[key]
-                if len(tmp) > 1:
-                    # Calculate only the tx_bytes, not the rx_bytes. (hmc)
-                    pre = tmp[-2][0]
-                    period = self._get_period(tmp[-1][3], tmp[-1][4], tmp[-2][3], tmp[-2][4])
-                speed = self._get_speed(self.port_stats[key][-1][0], pre, period)
-                self._save_stats(self.port_speed, key, speed, 5)
-                self._save_freebandwidth(dpid, port_no, speed)
+            # Get port speed and Save it.
+            pre = 0
+            period = MONITOR_PERIOD
+            tmp = self.port_stats[key]
+            if len(tmp) > 1:
+                # Calculate only the tx_bytes, not the rx_bytes. (hmc)
+                pre = tmp[-2][0]
+                period = self._get_period(tmp[-1][3], tmp[-1][4], tmp[-2][3], tmp[-2][4])
+            speed = self._get_speed(self.port_stats[key][-1][0], pre, period)
+            self._save_stats(self.port_speed, key, speed, 5)
+            self._save_freebandwidth(dpid, port_no, speed)
 
     @set_ev_cls(ofp_event.EventOFPPortDescStatsReply, MAIN_DISPATCHER)
     def port_desc_stats_reply_handler(self, ev):
@@ -448,10 +448,10 @@ class NetworkMonitor(app_manager.RyuApp):
             _format = '%8d  %4x  %9d   %9d   %10d  %15.1f  %17.1f'
             for dpid in sorted(bodys.keys()):
                 for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-                    if stat.port_no != ofproto_v1_3.OFPP_LOCAL:
-                        print(_format % (
-                            dpid, stat.port_no,
-                            stat.rx_dropped, stat.tx_dropped, 10000,
-                            abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
-                            self.free_bandwidth[dpid][stat.port_no]))
+                    #if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
+                    print(_format % (
+                        dpid, stat.port_no,
+                        stat.rx_dropped, stat.tx_dropped, 10000,
+                        abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
+                        self.free_bandwidth[dpid][stat.port_no]))
             print

@@ -16,11 +16,11 @@ from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 from monitor.monitor import monitor_devs_ng
 from monitor.monitor import monitor_qlen
-from topo_ecmp import createECMPTopo
-from topo_non_block import createNonBlockTopo
 from multiprocessing import Process
+from mininet.term import makeTerm
 
-
+import topo_ecmp
+import topo_non_block
 import os
 import logging
 
@@ -155,7 +155,7 @@ def traffic_generation(net, topo, flows_peers, duration):
         # filename = src[1:]
         # client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), args.duration, args.output_dir, 'client'+filename+'.txt'))
         # Its statistics is useless, just throw away. 1990 just means a great number.
-        client.cmd("iperf -c %s -t %d > /dev/null &" % (server.IP(), 1990))
+        client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
         sleep(3)
 
     # Wait for the traffic to become stable.
@@ -275,11 +275,16 @@ if __name__ == '__main__':
     if os.getuid() != 0:
         logging.debug("You are NOT root")
         exit(1)
-
     # createTopo(2, 1)
-    net, topo = createECMPTopo(4, 2)
+    net, topo = topo_ecmp.createECMPTopo(4, 2)
     # net, topo = createNonBlockTopo(4, 2)
-
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 ryu_monitor.py")
+    #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
+    net.addController(c0)
+    sleep(2)
+    print ("HELLOOOO")
+    topo_ecmp.configureTopo(net, topo)
     # createTopo(8, 4)
     # dumpNodeConnections(net.hosts)
     # pingTest(net)

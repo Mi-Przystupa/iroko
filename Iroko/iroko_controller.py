@@ -64,8 +64,8 @@ class ShortestForwarding(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {
         "network_awareness": network_awareness.NetworkAwareness,
-        "network_monitor": network_monitor.NetworkMonitor}#,
-        #"network_delay": network_delay.NetworkDelayDetector}
+        "network_monitor": network_monitor.NetworkMonitor}  # ,
+    #"network_delay": network_delay.NetworkDelayDetector}
 
     WEIGHT_MODEL = {'hop': 'weight', 'bw': 'bw'}
 

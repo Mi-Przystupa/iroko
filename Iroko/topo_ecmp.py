@@ -282,6 +282,26 @@ def configureTopo(net, topo):
     install_proactive(net, topo)
 
 
+def connect_controller(net, topo, controller):
+    # for sw in topo.EdgeSwitchList:
+    #     net.addLink(sw, controller)
+    # for sw in topo.AggSwitchList:
+    #     net.addLink(sw, controller)
+    # for sw in topo.CoreSwitchList:
+    #     net.addLink(sw, controller)
+    i = 1
+    for host in topo.HostList:
+        link = net.addLink(controller, host)
+        # link.setIP("192.168.0.1")
+        host_o = net.get(host)
+        # print host_o
+        host_o.cmdPrint("ifconfig %s-eth1 192.168.5.%d" % (host, i))
+        controller.cmdPrint("ifconfig c0-eth%d 192.168.5.%d" % ((i - 1), i))
+        i += 1
+
+        # host.setIP("10.%d.0.%d" % (i, j))
+
+
 def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10, bw_e2h=10):
     """
         Create network topology and run the Mininet.
@@ -295,7 +315,7 @@ def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, bw_c2a=10, bw_a2e=10
     # CONTROLLER_IP = ip
     #CONTROLLER_PORT = port
     link = custom(TCLink, max_queue_size=MAX_QUEUE)
-    net = Mininet(topo=topo, link=link,controller=None, autoSetMacs=True)
+    net = Mininet(topo=topo, link=link, controller=None, autoSetMacs=True)
     #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
 
     # net.start()

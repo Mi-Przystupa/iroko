@@ -9,6 +9,7 @@ def monitor_qlen(iface, interval_sec=0.01, fname='%s/qlen.txt' % default_dir):
     #pat_queued = re.compile(r'backlog\s[^\s]+\s([\d]+)p')
     pat_queued = re.compile(r'backlog\s[^\s]+\s([\d]+)p')
     # tc -s qdisc show | sed -n '/^qdisc htb 5: dev/,/requeues/{s/^qdisc htb 5: dev//;/^requeues/d;p;}'
+    # tc -s qdisc show dev 2001-eth1 | grep -ohP -m1 '(?<=dropped )[ 0-9]*'
 
     cmd = "tc -s qdisc show dev %s" % (iface)
     ret = []

@@ -141,21 +141,21 @@ def traffic_generation(net, topo, flows_peers, duration):
     # Start the servers.
     serversList = set([peer[1] for peer in flows_peers])
     for server in serversList:
-        # filename = server[1:]
+        filename = server[1:]
         server = net.get(server)
-        # server.cmd("iperf -s > %s/%s &" % (args.output_dir, 'server'+filename+'.txt'))
-        server.cmd("iperf -s > /dev/null &")   # Its statistics is useless, just throw away.
-
+        server.cmd("iperf -s > %s/%s &" % (args.output_dir, 'server' + filename + '.txt'))
+        # server.cmd("iperf -s > /dev/null &")   # Its statistics is useless, just throw away.
+    monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
     sleep(3)
 
     # Start the clients.
     for src, dest in flows_peers:
         server = net.get(dest)
         client = net.get(src)
-        # filename = src[1:]
-        # client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), args.duration, args.output_dir, 'client'+filename+'.txt'))
+        filename = src[1:]
+        client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), duration, args.output_dir, 'client' + filename + '.txt'))
         # Its statistics is useless, just throw away. 1990 just means a great number.
-        client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
+        #client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
         sleep(3)
 
     # Wait for the traffic to become stable.
@@ -279,11 +279,10 @@ if __name__ == '__main__':
     net, topo = topo_ecmp.createECMPTopo(4, 2)
     # net, topo = createNonBlockTopo(4, 2)
     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 ryu_monitor.py")
+    makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
     #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
     net.addController(c0)
     sleep(2)
-    print ("HELLOOOO")
     topo_ecmp.configureTopo(net, topo)
     # createTopo(8, 4)
     # dumpNodeConnections(net.hosts)
@@ -298,7 +297,8 @@ if __name__ == '__main__':
     iperf_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
                    ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
     # 2. Generate traffics and test the performance of the network.
-    traffic_generation(net, topo, iperf_peers, 60)
+    traffic_generation(net, topo, iperf_peers, 20)
+    topo_ecmp.connect_controller(net, topo, c0)
     CLI(net)
     net.stop()
     clean()

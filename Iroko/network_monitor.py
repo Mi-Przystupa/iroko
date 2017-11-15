@@ -29,22 +29,18 @@ from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib import hub
 import sys
+import time
+import subprocess
 sys.path.append('./')
 
 
-DISCOVERY_PERIOD = 1   # For discovering topology.
-
-MONITOR_PERIOD = 1   # For monitoring traffic
+MONITOR_PERIOD = 1  # For monitoring traffic
 
 TOSHOW = True     # For showing information in terminal
 
-enable_Flow_Entry_L4Port = False   # For including L4 port in the installing flow entries or not.
-
 MAX_CAPACITY = 10000   # Max capacity of link
 
-get_topology_delay = 2
-
-#CONF = cfg.CONF
+# CONF = cfg.CONF
 weight = 'bw'
 
 
@@ -69,11 +65,16 @@ class NetworkMonitor(app_manager.RyuApp):
         self.graph = None
         self.capabilities = None
         self.best_paths = None
-
+        self.prev_overlimits = 0
+        self.prev_loss = 0
+        self.prev_util = 0
+        self.prev_overlimits_d = 0
+        self.prev_loss_d = 0
+        self.prev_util_d = 0
         # Start to green thread to monitor traffic and calculating
         # free bandwidth of links respectively.
         self.monitor_thread = hub.spawn(self._monitor)
-        #self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
+        # self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
 
     def _monitor(self):
         """
@@ -88,20 +89,20 @@ class NetworkMonitor(app_manager.RyuApp):
             # Refresh data.
             self.capabilities = None
             self.best_paths = None
-            hub.sleep(MONITOR_PERIOD)
+            hub.sleep(0.01)
             if self.stats['flow'] or self.stats['port']:
                 # self.show_stat('flow')
                 self.show_stat('port')
-                hub.sleep(1)
+                #hub.sleep(0.01)
 
-    def _save_bw_graph(self):
-        """
-                Save bandwidth data into networkx graph object.
-        """
-        while weight == 'bw':
-            self.graph = self.create_bw_graph(self.free_bandwidth)
-            self.logger.debug("save free bandwidth")
-            hub.sleep(MONITOR_PERIOD)
+    # def _save_bw_graph(self):
+    #     """
+    #             Save bandwidth data into networkx graph object.
+    #     """
+    #     while weight == 'bw':
+    #         self.graph = self.create_bw_graph(self.free_bandwidth)
+    #         self.logger.debug("save free bandwidth")
+    #         hub.sleep(MONITOR_PERIOD)
 
     @set_ev_cls(ofp_event.EventOFPStateChange,
                 [MAIN_DISPATCHER, DEAD_DISPATCHER])
@@ -288,68 +289,68 @@ class NetworkMonitor(app_manager.RyuApp):
         else:
             return min_bw
 
-    def get_best_path_by_bw(self, graph, paths):
-        """
-                Get best path by comparing paths.
-                Note: This function is called in EFattree module.
-        """
-        capabilities = {}
-        best_paths = copy.deepcopy(paths)
+    # def get_best_path_by_bw(self, graph, paths):
+    #     """
+    #             Get best path by comparing paths.
+    #             Note: This function is called in EFattree module.
+    #     """
+    #     capabilities = {}
+    #     best_paths = copy.deepcopy(paths)
 
-        for src in paths:
-            for dst in paths[src]:
-                if src == dst:
-                    best_paths[src][src] = [src]
-                    capabilities.setdefault(src, {src: MAX_CAPACITY})
-                    capabilities[src][src] = MAX_CAPACITY
-                else:
-                    max_bw_of_paths = 0
-                    best_path = paths[src][dst][0]
-                    for path in paths[src][dst]:
-                        min_bw = MAX_CAPACITY
-                        min_bw = self.get_min_bw_of_links(graph, path, min_bw)
-                        if min_bw > max_bw_of_paths:
-                            max_bw_of_paths = min_bw
-                            best_path = path
-                    best_paths[src][dst] = best_path
-                    capabilities.setdefault(src, {dst: max_bw_of_paths})
-                    capabilities[src][dst] = max_bw_of_paths
+    #     for src in paths:
+    #         for dst in paths[src]:
+    #             if src == dst:
+    #                 best_paths[src][src] = [src]
+    #                 capabilities.setdefault(src, {src: MAX_CAPACITY})
+    #                 capabilities[src][src] = MAX_CAPACITY
+    #             else:
+    #                 max_bw_of_paths = 0
+    #                 best_path = paths[src][dst][0]
+    #                 for path in paths[src][dst]:
+    #                     min_bw = MAX_CAPACITY
+    #                     min_bw = self.get_min_bw_of_links(graph, path, min_bw)
+    #                     if min_bw > max_bw_of_paths:
+    #                         max_bw_of_paths = min_bw
+    #                         best_path = path
+    #                 best_paths[src][dst] = best_path
+    #                 capabilities.setdefault(src, {dst: max_bw_of_paths})
+    #                 capabilities[src][dst] = max_bw_of_paths
 
-        # self.capabilities and self.best_paths have no actual utility in this module.
-        self.capabilities = capabilities
-        self.best_paths = best_paths
-        return capabilities, best_paths
+    #     # self.capabilities and self.best_paths have no actual utility in this module.
+    #     self.capabilities = capabilities
+    #     self.best_paths = best_paths
+    #     return capabilities, best_paths
 
-    def create_bw_graph(self, bw_dict):
-        """
-                Save bandwidth data into networkx graph object.
-        """
-        try:
-            graph = self.awareness.graph
-            link_to_port = self.awareness.link_to_port
-            for link in link_to_port:
-                (src_dpid, dst_dpid) = link
-                (src_port, dst_port) = link_to_port[link]
-                if src_dpid in bw_dict and dst_dpid in bw_dict:
-                    bandwidth = bw_dict[src_dpid][src_port]
-                    # Add key:value pair of bandwidth into graph.
-                    if graph.has_edge(src_dpid, dst_dpid):
-                        graph[src_dpid][dst_dpid]['bandwidth'] = bandwidth
-                    else:
-                        graph.add_edge(src_dpid, dst_dpid)
-                        graph[src_dpid][dst_dpid]['bandwidth'] = bandwidth
-                else:
-                    if graph.has_edge(src_dpid, dst_dpid):
-                        graph[src_dpid][dst_dpid]['bandwidth'] = 0
-                    else:
-                        graph.add_edge(src_dpid, dst_dpid)
-                        graph[src_dpid][dst_dpid]['bandwidth'] = 0
-            return graph
-        except:
-            self.logger.info("Create bw graph exception")
-            if self.awareness is None:
-                self.awareness = lookup_service_brick('awareness')
-            return self.awareness.graph
+    # def create_bw_graph(self, bw_dict):
+    #     """
+    #             Save bandwidth data into networkx graph object.
+    #     """
+    #     try:
+    #         graph = self.awareness.graph
+    #         link_to_port = self.awareness.link_to_port
+    #         for link in link_to_port:
+    #             (src_dpid, dst_dpid) = link
+    #             (src_port, dst_port) = link_to_port[link]
+    #             if src_dpid in bw_dict and dst_dpid in bw_dict:
+    #                 bandwidth = bw_dict[src_dpid][src_port]
+    #                 # Add key:value pair of bandwidth into graph.
+    #                 if graph.has_edge(src_dpid, dst_dpid):
+    #                     graph[src_dpid][dst_dpid]['bandwidth'] = bandwidth
+    #                 else:
+    #                     graph.add_edge(src_dpid, dst_dpid)
+    #                     graph[src_dpid][dst_dpid]['bandwidth'] = bandwidth
+    #             else:
+    #                 if graph.has_edge(src_dpid, dst_dpid):
+    #                     graph[src_dpid][dst_dpid]['bandwidth'] = 0
+    #                 else:
+    #                     graph.add_edge(src_dpid, dst_dpid)
+    #                     graph[src_dpid][dst_dpid]['bandwidth'] = 0
+    #         return graph
+    #     except:
+    #         self.logger.info("Create bw graph exception")
+    #         if self.awareness is None:
+    #             self.awareness = lookup_service_brick('awareness')
+    #         return self.awareness.graph
 
     def _save_freebandwidth(self, dpid, port_no, speed):
         """
@@ -389,6 +390,54 @@ class NetworkMonitor(app_manager.RyuApp):
 
     def _get_period(self, n_sec, n_nsec, p_sec, p_nsec):
         return self._get_time(n_sec, n_nsec) - self._get_time(p_sec, p_nsec)
+
+    def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
+        loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
+        self.prev_loss_d = loss_d
+        self.prev_loss = curr_loss
+        overlimits_d = max((curr_overlimits - self.prev_overlimits) - self.prev_overlimits_d, 0)
+        self.prev_overlimits_d = overlimits_d
+        self.prev_overlimits = curr_overlimits
+        util_d = curr_util - self.prev_util
+        self.prev_util = curr_util
+        print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
+        return loss_d, overlimits_d, util_d
+
+    def _get_bandwidths(self, iface_list):
+        #cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
+        bytes_old = {}
+        bytes_new = {}
+        for iface in iface_list:
+            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 } else { print $2 } }\' /proc/net/dev" % (
+                iface)
+            try:
+                output = subprocess.check_output(cmd, shell=True)
+            except:
+                print("Empty Request")
+                output = 0
+            bytes_old[iface] = float(output) / 1024
+        time.sleep(1)
+        for iface in iface_list:
+            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 } else { print $2 } }\' /proc/net/dev" % (
+                iface)
+            try:
+                output = subprocess.check_output(cmd, shell=True)
+            except:
+                print("Empty Request")
+                output = 0
+            bytes_new[iface] = float(output) / 1024
+        curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
+        return curr_bandwidth
+
+    def _get_active_ports(self):
+        bodys = self.stats['port']
+        iface_list = []
+        for dpid in sorted(bodys.keys()):
+            for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                if stat.port_no != ofproto_v1_3.OFPP_LOCAL:
+                    iface = str(dpid) + "-eth" + str(stat.port_no)
+                    iface_list.append(iface)
+        return iface_list
 
     def show_stat(self, _type):
         '''
@@ -440,18 +489,65 @@ class NetworkMonitor(app_manager.RyuApp):
         #                     self.port_features[dpid][stat.port_no][0],
         #                     self.port_features[dpid][stat.port_no][1]))
         #     print
-        if _type == 'port':
-            print('\ndatapath  port '
-                  ' rx-dropped '' tx-dropped '
-                  ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) ')
-            print('--------  ----  ' '----------  ---------- '' -------------  --------------- ' ' -----------------')
-            _format = '%8d  %4x  %9d   %9d   %10d  %15.1f  %17.1f'
-            for dpid in sorted(bodys.keys()):
-                for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-                    #if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
-                    print(_format % (
-                        dpid, stat.port_no,
-                        stat.rx_dropped, stat.tx_dropped, 10000,
-                        abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
-                        self.free_bandwidth[dpid][stat.port_no]))
-            print
+        loss_sum_old = 0
+        loss_sum_new = 0
+        overlimits = 0
+        free_bw = 0
+        avg_util_new = 0
+
+        i = 0
+        for dpid in sorted(bodys.keys()):
+            for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                loss_sum_old = + stat.rx_dropped
+                if stat.port_no != ofproto_v1_3.OFPP_LOCAL:
+                    free_bw += self.free_bandwidth[dpid][stat.port_no]
+                    iface = str(dpid) + "-eth" + str(stat.port_no)
+                    cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
+                    cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
+                    try:
+                        #output3 = subprocess.check_output(cmd3, shell=True)
+                        output1 = subprocess.check_output(cmd1, shell=True)
+                        output2 = subprocess.check_output(cmd2, shell=True)
+                    except:
+                        print("Empty Request")
+                        output1 = 0
+                        output2 = 0
+                        #output3 = 0
+                    loss_sum_new += int(output1)
+                    overlimits += int(output2)
+                    #avg_util_new += float(output3)
+                    i += 1
+                    # print ("%s %d %d " % (dpid, stat.port_no, i))
+        iface_list = self._get_active_ports()
+        bandwidths = self._get_bandwidths(iface_list)
+        avg_util_new = sum(bandwidths.itervalues())
+        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum_new, overlimits, free_bw)
+        print("Current Old Loss: %d" % loss_sum_old)
+        print("Current New Loss: %d" % loss_sum_new)
+        print("Overlimits: %d" % overlimits)
+
+        print("Free BW Sum: %d" % free_bw)
+        print("Current Util Sum: %f" % avg_util_new)
+
+        max_capacity_sum = MAX_CAPACITY * i
+        print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, i))
+        curr_avg_util = (max_capacity_sum - free_bw) / max_capacity_sum
+        curr_avg_util_alt = (avg_util_new / max_capacity_sum)
+        print("Current Average Utilization: %f" % curr_avg_util)
+        print("Current Average Utilization ALT: %f" % curr_avg_util_alt)
+
+        # if _type == 'port':
+        #     print('\ndatapath  port     '
+        #           ' rx-dropped '' tx-dropped '
+        #           ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) ')
+        #     print('--------  --------  ' '----------  ---------- '' -------------  --------------- ' ' -----------------')
+        #     _format = '%8d  %8x  %9d   %9d   %10d  %15.1f  %17.1f'
+        #     for dpid in sorted(bodys.keys()):
+        #         for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+        #             # if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
+        #             print(_format % (
+        #                 dpid, stat.port_no,
+        #                 stat.rx_dropped, stat.tx_dropped, 10000,
+        #                 abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
+        #                 self.free_bandwidth[dpid][stat.port_no]))
+        #     print

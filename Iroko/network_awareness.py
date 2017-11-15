@@ -36,7 +36,7 @@ from ryu.topology import event
 from ryu.topology.api import get_switch, get_link
 import copy
 
-DISCOVERY_PERIOD = 10   # For discovering topology.
+DISCOVERY_PERIOD = 2   # For discovering topology.
 
 MONITOR_PERIOD = 2   # For monitoring traffic
 
@@ -85,8 +85,12 @@ class NetworkAwareness(app_manager.RyuApp):
         while True:
             self.show_topology()
             if i == 5:
+                print "GETTING TOPO"
                 self.get_topology(None)
                 i = 0
+
+            print "SLEEPING TOPO"
+
             hub.sleep(DISCOVERY_PERIOD)
             i = i + 1
 
@@ -233,15 +237,19 @@ class NetworkAwareness(app_manager.RyuApp):
         """
             Get topology info and calculate shortest paths.
         """
+        print "ENTING PROBLEM ZONE"
         switch_list = get_switch(self.topology_api_app, None)
+        print "GOT PAST THAT BLOCKING THINGY"
+
         self.create_port_map(switch_list)
         self.switches = self.switch_port_table.keys()
         links = get_link(self.topology_api_app, None)
+        print "STUCK HERE"
         self.create_interior_links(links)
         self.create_access_ports()
-        self.get_graph(self.link_to_port.keys())
-        self.shortest_paths = self.all_k_shortest_paths(
-            self.graph, weight='weight', k=k_paths)
+        # self.get_graph(self.link_to_port.keys())
+        # self.shortest_paths = self.all_k_shortest_paths(
+        #     self.graph, weight='weight', k=k_paths)
 
     def register_access_info(self, dpid, in_port, ip, mac):
         """
@@ -286,40 +294,40 @@ class NetworkAwareness(app_manager.RyuApp):
     def show_topology(self):
         switch_num = len(list(self.graph.nodes()))
         if self.pre_graph != self.graph and TOSHOW:
-            print "---------------------Topo Link---------------------"
-            print '%10s' % ("switch"),
+            print("---------------------Topo Link---------------------")
+            print('%10s' % ("switch")),
             for i in self.graph.nodes():
-                print '%10d' % i,
-            print ""
+                print('%10d' % i),
+            print("")
             for i in self.graph.nodes():
-                print '%10d' % i,
+                print('%10d' % i),
                 for j in self.graph[i].values():
-                    print '%10.0f' % j['weight'],
-                print ""
+                    print('%10.0f' % j['weight']),
+                print("")
             self.pre_graph = copy.deepcopy(self.graph)
 
         if self.pre_link_to_port != self.link_to_port and TOSHOW:
-            print "---------------------Link Port---------------------"
-            print '%10s' % ("switch"),
+            print("---------------------Link Port---------------------")
+            print('%10s' % ("switch")),
             for i in self.graph.nodes():
-                print '%10d' % i,
-            print ""
+                print('%10d' % i),
+            print("")
             for i in self.graph.nodes():
-                print '%10d' % i,
+                print('%10d' % i),
                 for j in self.graph.nodes():
                     if (i, j) in self.link_to_port.keys():
-                        print '%10s' % str(self.link_to_port[(i, j)]),
+                        print('%10s' % str(self.link_to_port[(i, j)])),
                     else:
-                        print '%10s' % "No-link",
-                print ""
+                        print('%10s' % "No-link"),
+                print("")
             self.pre_link_to_port = copy.deepcopy(self.link_to_port)
 
         if self.pre_access_table != self.access_table and TOSHOW:
-            print "----------------Access Host-------------------"
-            print '%10s' % ("switch"), '%12s' % "Host"
+            print("----------------Access Host-------------------")
+            print('%10s' % ("switch"), '%12s' % "Host")
             if not self.access_table.keys():
-                print "    NO found host"
+                print("    NO found host")
             else:
                 for tup in self.access_table:
-                    print '%10d:    ' % tup[0], self.access_table[tup]
+                    print('%10d:    ' % tup[0], self.access_table[tup])
             self.pre_access_table = copy.deepcopy(self.access_table)

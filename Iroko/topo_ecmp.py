@@ -296,8 +296,8 @@ def connect_controller(net, topo, controller):
         host_o = net.get(host)
         # print host_o
         host_o.cmdPrint("ifconfig %s-eth1 192.168.10.%d" % (host, i))
-        controller.cmdPrint("ifconfig c0-eth%d 192.168.10.%d" % ((i - 1), (i + 100)))
-        controller.cmdPrint("route add 192.168.10.%d dev c0-eth%d" % (i, (i - 1)))
+        controller.cmdPrint("ifconfig c0-eth%d 192.168.5.%d" % ((i - 1), (i + 100)))
+        controller.cmdPrint("route add 192.168.5.%d dev c0-eth%d" % (i, (i - 1)))
         i += 1
         # host.setIP("10.%d.0.%d" % (i, j))
 

@@ -297,8 +297,8 @@ if __name__ == '__main__':
     iperf_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
                    ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
     # 2. Generate traffics and test the performance of the network.
-    traffic_generation(net, topo, iperf_peers, 20)
     topo_ecmp.connect_controller(net, topo, c0)
+    #traffic_generation(net, topo, iperf_peers, 20)
     CLI(net)
     net.stop()
     clean()

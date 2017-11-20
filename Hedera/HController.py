@@ -4,8 +4,11 @@
 '''
 
 import logging
-
+import os
+os.path.dirname(os.path.abspath(__file__))
 import sys
+print(os.path.dirname(os.path.abspath(__file__))+'/../../')
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../')
 
 
 from struct import pack
@@ -23,7 +26,6 @@ from pox.lib.packet.tcp import tcp
 from util import buildTopo, getRouting
 from DemandEstimation import demand_estimation
 from threading import Timer, Lock
-sys.path.append('./')
 log = core.getLogger()
 
 # Number of bytes to send for packet_ins
@@ -207,7 +209,7 @@ class HController(EventMixin):
             self.hostsList = []
             for sw_name in self.t.layer_nodes(self.t.LAYER_EDGE):
                 sw_dpid = self.t.node_gen(name=sw_name).dpid
-                # print 'sw_dpid',sw_dpid ,'sw_name',sw_name
+                print 'sw_dpid',sw_dpid ,'sw_name',sw_name
                 for port in range(1, self.t.k + 1):
                     if not self.t.isPortUp(port):
                         msg = of.ofp_stats_request()

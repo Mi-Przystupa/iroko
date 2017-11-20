@@ -102,10 +102,16 @@ def set_host_ip(net, topo):
     for k in range(len(topo.HostList)):
         hostlist.append(net.get(topo.HostList[k]))
     i = 1
+    j = 1
+    # for host in hostlist:
+    #     host.setIP("10.0.0.%d" % i)
+    #     i += 1
     for host in hostlist:
-        host.setIP("10.0.0.%d" % i)
-        i += 1
-
+        host.setIP("10.%d.0.%d" % (i, j))
+        j += 1
+        if j == 3:
+            j = 1
+            i += 1
 
 def install_proactive(net, topo):
     """
@@ -122,6 +128,14 @@ def install_proactive(net, topo):
                 nw_dst=10.0.0.%d,actions=output:%d'" % (sw, i, i)
             os.system(cmd)
 
+def configureTopo(net, topo):
+    # Set OVS's protocol as OF13.
+    topo.set_ovs_protocol_13()
+    # Set hosts IP addresses.
+    set_host_ip(net, topo)
+    # Install proactive flow entries
+    install_proactive(net, topo)
+
 def createNonBlockTopo(pod, ip="172.18.232.60", port=6653, bw_h2c=10):
     """
             Firstly, start up Mininet;
@@ -137,14 +151,6 @@ def createNonBlockTopo(pod, ip="172.18.232.60", port=6653, bw_h2c=10):
     CONTROLLER_PORT = port
     net = Mininet(topo=topo, link=TCLink, controller=RemoteController, autoSetMacs=True)
     #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
-    net.start()
+    #net.start()
 
-    # Set the OpenFlow version for switches as 1.3.0.
-    topo.set_ovs_protocol_13()
-    # Set the IP addresses for hosts.
-    set_host_ip(net, topo)
-    # Install proactive flow entries.
-    install_proactive(net, topo)
-
-    time.sleep(5)
     return net, topo

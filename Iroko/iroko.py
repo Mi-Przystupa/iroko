@@ -30,11 +30,29 @@ parser.add_argument('-d', '--dir', dest='output_dir', default='log',
                     help='Output directory')
 
 parser.add_argument('-i', '--input', dest='input_file',
-                    default='../inputs/all_to_all_data',
+                    default='../inputs/stag_prob_0_2_3_data',
                     help='Traffic generator input file')
 
 parser.add_argument('-t', '--time', dest='time', type=int, default=60,
                     help='Duration (sec) to run the experiment')
+
+parser.add_argument('-p', '--cpu', dest='cpu', type=float, default=-1,
+                    help='cpu fraction to allocate to each host')
+
+parser.add_argument('-n', '--nonblocking', dest='nonblocking', default=False,
+                    action='store_true', help='Run the experiment on the noneblocking topo')
+
+parser.add_argument('--iperf', dest='iperf', default=False, action='store_true',
+                    help='Use iperf to generate traffics')
+
+parser.add_argument('--hedera', dest='hedera', default=False,
+                    action='store_true', help='Run the experiment with hedera GFF scheduler')
+
+parser.add_argument('--ecmp', dest='ECMP', default=False,
+                    action='store_true', help='Run the experiment with ECMP routing')
+
+parser.add_argument('--iroko', dest='iroko', default=False,
+                    action='store_true', help='Run the experiment with Iroko rate limiting')
 args = parser.parse_args()
 
 
@@ -49,59 +67,12 @@ def stop_tcpprobe():
     os.system("killall -9 cat")
 
 
-def iperfTrafficGen(args, hosts, net):
-    ''' Generate traffic pattern using iperf and monitor all of thr interfaces
-
-    input format:
-    src_ip dst_ip dst_port type seed start_time stop_time flow_size r/e
-    repetitions time_between_flows r/e (rpc_delay r/e)
-
-    '''
-    host_list = {}
-    for h in hosts:
-        print(h.IP())
-        host_list[h.IP()] = h
-
-    port = 5001
-
-    data = open(args.input_file)
-
-    start_tcpprobe()
-    info('*** Starting iperf ...\n')
-    for line in data:
-        flow = line.split(' ')
-        src_ip = flow[0]
-        dst_ip = flow[1]
-        if src_ip not in host_list:
-            continue
-        sleep(0.2)
-        server = host_list[dst_ip]
-        server.popen('iperf -s -p %s > ./server.txt' % port, shell=True)
-
-        client = host_list[src_ip]
-        client.popen('iperf -c %s -p %s -t %d > ./client.txt'
-                     % (server.IP(), port, args.time), shell=True)
-
-    monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
-
-    monitor.start()
-
-    sleep(args.time)
-
-    monitor.terminate()
-
-    info('*** stoping iperf ...\n')
-    stop_tcpprobe()
-
-    Popen("killall iperf", shell=True).wait()
-
-
 def trafficGen(args, hosts, net):
     ''' Run the traffic generator and monitor all of the interfaces '''
     listen_port = 12345
     sample_period_us = 1000000
 
-    traffic_gen = '../cluster_loadgen/loadgen'
+    traffic_gen = 'cluster_loadgen/loadgen'
     if not os.path.isfile(traffic_gen):
         error('The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
         return
@@ -132,10 +103,12 @@ def trafficGen(args, hosts, net):
         h.cmd('killall loadgen')
 
 
-def traffic_generation(net, topo, flows_peers, duration):
+def traffic_generation(net, topo, duration):
     """
             Generate traffics and test the performance of the network.
     """
+    flows_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
+                   ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
     print("Running iperf test")
     # 1. Start iperf. (Elephant flows)
     # Start the servers.
@@ -174,63 +147,6 @@ def traffic_generation(net, topo, flows_peers, duration):
     os.system('killall iperf')
 
 
-def iperfTest(net, topo):
-    """
-        Start iperf test.
-    """
-    h001, h015, h016 = net.get(
-        topo.HostList[0], topo.HostList[14], topo.HostList[15])
-    bw = 10**6
-    for edgeSwitchName in topo.EdgeSwitchList:
-        switch = net.get(edgeSwitchName)
-        print(switch)
-        for intf in switch.intfList():
-            if str(intf) != 'lo':
-                switch.cmdPrint('dstat --net --time -N ' + str(intf) + '> ./tmp/dstat-' +
-                                str(edgeSwitchName) + '-' + str(intf) + '.txt &')
-                # os.system('ovs-vsctl -- set Port ' + str(intf) + ' qos=@newqos -- --id=@newqos create QoS type=linux-htb other-config:max-rate=' +
-                #           str(bw) + ' queues=0=@q0 -- --id=@q0   create   Queue   other-config:min-rate=' + str(bw) + ' other-config:max-rate=' + str(bw))
-                # os.system('ovs-vsctl set Interface ' + str(intf) + ' ingress_policing_rate=' + str(bw))
-
-    serverPort = 5000
-    clientPort = serverPort
-    # for i in range(len(topo.HostList) - 1):
-    #     # h001.cmdPrint('xterm  -T \"server' + str(serverPort) +
-    #     #              '\" -e \"iperf3 -s -i 1 -p ' + str(serverPort) + '; bash\" &')
-    #     h001.cmdPrint('iperf3 -s -D -i 1 -p ' + str(serverPort) + ' --json')  # ' > ./tmp/server_' + str(serverPort) + '')
-    #     serverPort += 1
-
-    h001.cmdPrint('xterm  -T \"server' + str(serverPort) + '\" -e \"iperf3 -s -i 1 -p 5001; bash\" &')
-    h001.cmdPrint('xterm  -T \"server' + str(serverPort) + '\" -e \"iperf3 -s -i 1 -p 5002; bash\" &')
-    sleep(5)
-    h015.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 40 -i 1 -b 10m -p 5001 & ')
-    h016.cmdPrint('iperf3 -c ' + h001.IP() + ' -u -t 40 -i 1 -b 10m -p 5002 & ')
-    # Input VPN-IDS
-
-    monitor = multiprocessing.Process(target=monitor_qlen, args=('3001-eth2', 0.01, './log/qlen.txt'))
-
-    monitor.start()
-
-    sleep(50)
-
-    monitor.terminate()
-    # for hostname in topo.HostList:
-    #     host = net.get(hostname)
-    #     if not(host == h001):
-    #         sleep(1)
-    #         host.cmdPrint('iperf3 -c ' + h001.IP() + ' -t 20 -i 1 -b 10m -p ' +
-    #                       str(clientPort) + ' & ')
-    #         clientPort += 1
-#    sleep(60)
-    # iperf Server
-    # h001.popen('iperf -s -u -i 1 > iperf_server_differentPod_result', shell=True)
-    # iperf Server
-    # h015.popen('iperf -s -u -i 1 > iperf_server_samePod_result', shell=True)
-    # iperf Client
-    # h016.cmdPrint('iperf -c ' + h001.IP() + ' -u -t 10 -i 1 -b 10m')
-    # h016.cmdPrint('iperf -c ' + h015.IP() + ' -u -t 10 -i 1 -b 10m')
-
-
 def pingTest(net):
     """
         Start ping test.
@@ -263,6 +179,51 @@ def clean():
             pass
     Popen('killall iperf3', shell=True).wait()
     Popen('killall xterm', shell=True).wait()
+    Popen('killall python2.7', shell=True).wait()
+
+
+def FatTreeTest(args, controller):
+
+    net, topo = topo_ecmp.createECMPTopo(4, 2)
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    ovs_v = 13 # default value
+    is_ecmp = True # default value
+    if controller == "Iroko":
+        makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+
+        #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
+    elif controller == "HController":
+        makeTerm(c0, cmd="../Hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+        ovs_v = 10
+        is_ecmp = False
+    net.addController(c0)
+    sleep(2)
+    net.start()
+    sleep(5)
+    topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
+    topo_ecmp.connect_controller(net, topo, c0)
+    # wait for the switches to connect to the controller
+    info('** Waiting for switches to connect to the controller\n')
+    sleep(2)
+    hosts = net.hosts
+    trafficGen(args, hosts, net)
+
+    net.stop()
+
+
+def NonBlockingTest(args):
+
+    net, topo = topo_non_block.createNonBlockTopo(4, 2)
+    net.start()
+    topo_non_block.configureTopo(net, topo)
+
+    info('** Waiting for switches to connect to the controller\n')
+    sleep(2)
+
+    hosts = net.hosts
+    trafficGen(args, hosts, net)
+
+    net.stop()
 
 
 if __name__ == '__main__':
@@ -275,32 +236,17 @@ if __name__ == '__main__':
     if os.getuid() != 0:
         logging.debug("You are NOT root")
         exit(1)
-    # createTopo(2, 1)
-    net, topo = topo_ecmp.createECMPTopo(4, 2)
-    # net, topo = createNonBlockTopo(4, 2)
-    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-    #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
-    net.addController(c0)
-    sleep(2)
-    topo_ecmp.configureTopo(net, topo)
-    # createTopo(8, 4)
-    # dumpNodeConnections(net.hosts)
-    # pingTest(net)
 
-    # hosts = []
-    # for hostname in topo.HostList:
-    #     hosts.append(net.get(hostname))
-    # trafficGen(args, hosts, net)
-    # app = ConsoleApp(net, width=4)
-    # iperfTest(net, topo)
-    iperf_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
-                   ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
-    # 2. Generate traffics and test the performance of the network.
-    topo_ecmp.connect_controller(net, topo, c0)
-    traffic_generation(net, topo, iperf_peers, 20)
-    CLI(net)
-    net.stop()
+    if args.nonblocking:
+        NonBlockingTest(args)
+    elif args.ECMP:
+        FatTreeTest(args, controller='None')
+    elif args.hedera:
+        FatTreeTest(args, controller='HController')
+    elif args.iroko:
+        FatTreeTest(args, controller='Iroko')
+    else:
+        info('**error** please specify either hedera, ecmp, or nonblocking\n')
     clean()
 
 

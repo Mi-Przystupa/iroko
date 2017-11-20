@@ -6,6 +6,7 @@
 '''
 
 import sys
+sys.path.append('./')
 
 from struct import pack
 from zlib import crc32
@@ -21,7 +22,6 @@ from pox.lib.packet.tcp import tcp
 
 from util import buildTopo, getRouting
 
-sys.path.append('./')
 
 log = core.getLogger()
 

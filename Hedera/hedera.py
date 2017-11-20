@@ -20,6 +20,7 @@ from time import sleep
 from monitor.monitor import monitor_devs_ng
 import os
 import sys
+sys.path.append('./')
 
 
 # Number of pods in Fat-Tree
@@ -196,10 +197,10 @@ def FatTreeTest(args, controller):
 
     hosts = net.hosts
 
-    if args.iperf:
-        iperfTrafficGen(args, hosts, net)
-    else:
-        trafficGen(args, hosts, net)
+    # if args.iperf:
+    #     iperfTrafficGen(args, hosts, net)
+    # else:
+    trafficGen(args, hosts, net)
 
     net.stop()
 

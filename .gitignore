@@ -149,15 +149,10 @@ Hedera/results/
 .DS_Store
 
 Iroko/ecmp/client\.txt
-
 Iroko/ecmp/log/
-
 Iroko/ecmp/1
-
 Iroko/ecmp/tmp/
-
 *.sublime-workspace
-
 *.sublime-project
 
 Iroko/ecmp/reports\.txt
@@ -168,3 +163,8 @@ Iroko/log/
 
 lodgen
 tags
+Iroko/1
+Hedera/1
+Hedera/cluster_loadgen/loadgen
+Iroko/cluster_loadgen/loadgen
+Iroko/results/

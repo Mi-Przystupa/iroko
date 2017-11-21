@@ -34,35 +34,6 @@ import os
 MAX_QUEUE = 1
 DENSITY = 2
 
-class FatNode(object):
-
-    def __init__(self, pod=0, sw=0, host=0, name=None, dpid=None):
-        ''' Create FatTreeNode '''
-        if dpid:
-            self.pod = (dpid & 0xff0000) >> 16
-            self.sw = (dpid & 0xff00) >> 8
-            self.host = (dpid & 0xff)
-            self.dpid = dpid
-        else:
-            if name:
-                pod, sw, host = [int(s) for s in name.split('h')]
-
-            self.pod = pod
-            self.sw = sw
-            self.host = host
-            self.dpid = (pod << 16) + (sw << 8) + host
-
-    def name_str(self):
-        ''' Return name '''
-        return "%ih%ih%i" % (self.pod, self.sw, self.host)
-
-    def ip_str(self):
-        ''' Return IP address '''
-        return "10.%i.%i.%i" % (self.pod, self.sw, self.host)
-
-    def mac_str(self):
-        ''' Return MAC address '''
-        return "00:00:00:%02x:%02x:%02x" % (self.pod, self.sw, self.host)
 
 class Fattree(Topo):
     """
@@ -80,7 +51,6 @@ class Fattree(Topo):
         self.iAggLayerSwitch = k * k / 2
         self.iEdgeLayerSwitch = k * k / 2
         self.iHost = self.iEdgeLayerSwitch * DENSITY
-        self.node_gen = FatNode
 
         # Init Topo
         Topo.__init__(self)

@@ -1,28 +1,27 @@
+import os
+import logging
+import multiprocessing
+
 from mininet.net import Mininet
-from mininet.node import Controller, RemoteController
+from mininet.node import RemoteController
 from mininet.cli import CLI
-from mininet.log import setLogLevel, info, warn, error, debug
-from mininet.link import Link, Intf, TCLink
-from mininet.topo import Topo
-from mininet.util import dumpNodeConnections
-from mininet.examples.consoles import ConsoleApp
 
 from time import sleep
-import multiprocessing
 from mininet.node import OVSKernelSwitch, CPULimitedHost
 from mininet.util import custom
+from mininet.log import setLogLevel, info, warn, error, debug
 
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 from monitor.monitor import monitor_devs_ng
-from monitor.monitor import monitor_qlen
 from multiprocessing import Process
 from mininet.term import makeTerm
+from mininet.link import TCLink
+from hedera.DCTopo import FatTreeTopo
 
 import topo_ecmp
 import topo_non_block
-import os
-import logging
+
 
 parser = ArgumentParser(description="Iroko Parser")
 
@@ -95,8 +94,9 @@ def trafficGen(args, hosts, net):
     monitor.start()
 
     sleep(args.time)
-
+    info('*** Stopping monitor\n')
     monitor.terminate()
+    os.system("killall bwm-ng")
 
     info('*** Stopping load-generators\n')
     for h in hosts:
@@ -143,7 +143,7 @@ def traffic_generation(net, topo, duration):
 
     # 4. Shut down.
     monitor.terminate()
-    os.system('killall bwm-ng')
+    Popen("killall -9 top bwm-ng", shell=True).wait()
     os.system('killall iperf')
 
 
@@ -186,14 +186,14 @@ def FatTreeTest(args, controller):
 
     net, topo = topo_ecmp.createECMPTopo(4, 2)
     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    ovs_v = 13 # default value
-    is_ecmp = True # default value
+    ovs_v = 13  # default value
+    is_ecmp = True  # default value
     if controller == "Iroko":
         makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
 
         #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
     elif controller == "HController":
-        makeTerm(c0, cmd="../Hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+        makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
         ovs_v = 10
         is_ecmp = False
     net.addController(c0)
@@ -206,6 +206,44 @@ def FatTreeTest(args, controller):
     info('** Waiting for switches to connect to the controller\n')
     sleep(2)
     hosts = net.hosts
+    trafficGen(args, hosts, net)
+
+    net.stop()
+
+
+def FatTreeNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
+    ''' Create a Fat-Tree network '''
+
+    info('*** Creating the topology')
+    topo = FatTreeTopo(k)
+
+    host = custom(CPULimitedHost, cpu=cpu)
+    link = custom(TCLink, bw=bw, max_queue_size=queue)
+
+    net = Mininet(topo, host=host, link=link, switch=OVSKernelSwitch,
+                  controller=None)
+
+    return net
+
+
+def HederaTest(args):
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+    net = FatTreeNet(k=4, cpu=args.cpu, bw=10, queue=1,
+                     controller=None)
+    net.addController(c0)
+    net.start()
+    CLI(net)
+    exit(1)
+    # wait for the switches to connect to the controller
+    info('** Waiting for switches to connect to the controller\n')
+    sleep(5)
+
+    hosts = net.hosts
+
+    # if args.iperf:
+    #     iperfTrafficGen(args, hosts, net)
+    # else:
     trafficGen(args, hosts, net)
 
     net.stop()
@@ -242,7 +280,7 @@ if __name__ == '__main__':
     elif args.ECMP:
         FatTreeTest(args, controller='None')
     elif args.hedera:
-        FatTreeTest(args, controller='HController')
+        HederaTest(args)
     elif args.iroko:
         FatTreeTest(args, controller='Iroko')
     else:

@@ -145,7 +145,7 @@ Mininet/openflow
 Hedera/client\.txt
 Hedera/server\.txt
 Hedera/tcp\.txt
-Hedera/results/
+results/
 .DS_Store
 
 Iroko/ecmp/client\.txt

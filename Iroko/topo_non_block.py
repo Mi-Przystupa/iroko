@@ -117,16 +117,25 @@ def install_proactive(net, topo):
     """
             Install proactive flow entries for the switch.
     """
+    hostlist = []
+    for k in range(len(topo.HostList)):
+        hostlist.append(net.get(topo.HostList[k]))
     for sw in topo.CoreSwitchList:
-        for i in range(1, topo.iHost + 1):
+        i = 1
+        j = 1
+        for k in range(1, topo.iHost + 1):
             cmd = "ovs-ofctl add-flow %s -O OpenFlow13 \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,arp, \
-                nw_dst=10.0.0.%d,actions=output:%d'" % (sw, i, i)
+                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, i, j, k)
             os.system(cmd)
             cmd = "ovs-ofctl add-flow %s -O OpenFlow13 \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,ip, \
-                nw_dst=10.0.0.%d,actions=output:%d'" % (sw, i, i)
+                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, i, j, k)
             os.system(cmd)
+            j += 1
+            if j == 3:
+                j = 1
+                i += 1
 
 def configureTopo(net, topo):
     # Set OVS's protocol as OF13.

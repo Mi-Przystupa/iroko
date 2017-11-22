@@ -19,10 +19,10 @@ args = parser.parse_args()
     '''
 
 traffics = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_3_data',
-                'stag_prob_0_5_3_data', 'stag_prob_1_5_3_data', 'stag_prob_2_5_3_data', 'stride1_data',
-                'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
-                'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
-                'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
+            'stag_prob_0_5_3_data', 'stag_prob_1_5_3_data', 'stag_prob_2_5_3_data', 'stride1_data',
+            'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
+            'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
+            'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
 
 labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
           'stag1(0.5,0.3)', 'stag2(0.5,0.3)', 'stride1', 'stride2',
@@ -74,31 +74,34 @@ def plot_results(args):
 
     bb = {'nonblocking': [], 'hedera': [], 'iroko': [], 'ecmp': []}
 
-    sw = '4h1h1'
+    # sw = '4h1h1'
+    sw = '1001'
     for t in traffics:
-        print "Nonblocking:", t
+        print("Nonblocking:", t)
         input_file = args.files + '/nonblocking/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
         bb['nonblocking'].append(vals / fbb)
 
-    sw = '[0-3]h[0-1]h1'
+    # sw = '[0-3]h[0-1]h1'
+    sw = '[1-3]00[1-9]'
     for t in traffics:
-        print "ECMP:", t
+        print("ECMP:", t)
         input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
         bb['ecmp'].append(vals / fbb / 2)
 
     for t in traffics:
-        print "Iroko:", t
+        print("Iroko:", t)
         input_file = args.files + '/fattree-iroko/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
         bb['iroko'].append(vals / fbb / 2)
 
-    # for t in traffics:
-    #    print "Hedera:", t
-    #    input_file = args.files + '/fattree-hedera/%s/rate.txt' % t
-    #    vals = get_bisection_bw(input_file, sw)
-    #    bb['hedera'].append(vals/fbb/2)
+    sw = '[0-3]h[0-1]h1'
+    for t in traffics:
+        print("Hedera:", t)
+        input_file = args.files + '/fattree-hedera/%s/rate.txt' % t
+        vals = get_bisection_bw(input_file, sw)
+        bb['hedera'].append(vals / fbb / 2)
 
     ind = np.arange(n_t)
     width = 0.2
@@ -117,20 +120,20 @@ def plot_results(args):
         plt.xticks(ind + 2.5 * width, labels[i * n_t:(i + 1) * n_t])
 
         # Nonblocking
-        p1 = plt.bar(ind + 3.5 * width, bb['nonblocking'][i * n_t:(i + 1) * n_t], width=width,
+        p1 = plt.bar(ind + 4.5 * width, bb['nonblocking'][i * n_t:(i + 1) * n_t], width=width,
                      color='royalblue')
 
         # FatTree + Hedera
-        # p2 = plt.bar(ind + 2.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
+        p2 = plt.bar(ind + 3.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
 
         # FatTree + Iroko
-        p2 = plt.bar(ind + 2.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='green')
+        p2 = plt.bar(ind + 2.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
 
         # FatTree + ECMP
         p3 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
 
         plt.legend([p1[0], p2[0], p3[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP'], loc='upper left')
-        plt.legend([p1[0], p2[0], p3[0]], ['Non-blocking', 'Iroko', 'ECMP'], loc='upper left')
+        # plt.legend([p1[0], p2[0], p3[0]], ['Non-blocking', 'Iroko', 'ECMP'], loc='upper left')
 
         plt.savefig(args.out)
 

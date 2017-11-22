@@ -233,8 +233,6 @@ def HederaTest(args):
                      controller=None)
     net.addController(c0)
     net.start()
-    CLI(net)
-    exit(1)
     # wait for the switches to connect to the controller
     info('** Waiting for switches to connect to the controller\n')
     sleep(5)

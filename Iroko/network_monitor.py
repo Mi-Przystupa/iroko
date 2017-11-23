@@ -43,6 +43,11 @@ MAX_CAPACITY = 10000   # Max capacity of link
 # CONF = cfg.CONF
 weight = 'bw'
 
+i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
+           '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
+           '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
+           '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
+
 
 class NetworkMonitor(app_manager.RyuApp):
     """
@@ -93,7 +98,7 @@ class NetworkMonitor(app_manager.RyuApp):
             if self.stats['flow'] or self.stats['port']:
                 # self.show_stat('flow')
                 self.show_stat('port')
-                #hub.sleep(0.01)
+                # hub.sleep(0.01)
 
     # def _save_bw_graph(self):
     #     """
@@ -518,6 +523,7 @@ class NetworkMonitor(app_manager.RyuApp):
                     #avg_util_new += float(output3)
                     i += 1
                     # print ("%s %d %d " % (dpid, stat.port_no, i))
+
         iface_list = self._get_active_ports()
         bandwidths = self._get_bandwidths(iface_list)
         avg_util_new = sum(bandwidths.itervalues())

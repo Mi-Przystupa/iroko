@@ -5,21 +5,21 @@ INPUT_FILES='stag_prob_0_2_3_data stag_prob_1_2_3_data stag_prob_2_2_3_data stag
 DURATION=60
 
 sudo mn -c
-# for f in $INPUT_FILES;
-# do
-#         input_file=$INPUT_DIR/$f
-#         pref="nonblocking"
-#         out_dir=$OUTPUT_DIR/$pref/$f
-#         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION -n
-# done
+for f in $INPUT_FILES;
+do
+        input_file=$INPUT_DIR/$f
+        pref="nonblocking"
+        out_dir=$OUTPUT_DIR/$pref/$f
+        sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION -n
+done
 
-# for f in $INPUT_FILES;
-# do
-#         input_file=$INPUT_DIR/$f
-#         pref="fattree-ecmp"
-#         out_dir=$OUTPUT_DIR/$pref/$f
-#         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --ecmp
-# done
+for f in $INPUT_FILES;
+do
+        input_file=$INPUT_DIR/$f
+        pref="fattree-ecmp"
+        out_dir=$OUTPUT_DIR/$pref/$f
+        sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --ecmp
+done
 
 for f in $INPUT_FILES;
 do
@@ -29,11 +29,11 @@ do
         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --iroko
 done
 
-# for f in $INPUT_FILES;
-# do
-#         input_file=hedera/$INPUT_DIR/$f
-#         pref="fattree-hedera"
-#         out_dir=$OUTPUT_DIR/$pref/$f
-#         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --hedera
-# done
+for f in $INPUT_FILES;
+do
+        input_file=hedera/$INPUT_DIR/$f
+        pref="fattree-hedera"
+        out_dir=$OUTPUT_DIR/$pref/$f
+        sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --hedera
+done
 

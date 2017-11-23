@@ -213,8 +213,8 @@ def FatTreeTest(args, controller):
     info('** Waiting for switches to connect to the controller\n')
     sleep(2)
     hosts = net.hosts
-    trafficGen(args, hosts, net)
     CLI(net)
+    trafficGen(args, hosts, net)
     net.stop()
 
 
@@ -290,7 +290,7 @@ if __name__ == '__main__':
     elif args.iroko:
         FatTreeTest(args, controller='Iroko')
     else:
-        info('**error** please specify either hedera, ecmp, or nonblocking\n')
+        info('**error** please specify either hedera, iroko, ecmp, or nonblocking\n')
     clean()
 
 

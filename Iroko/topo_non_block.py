@@ -30,7 +30,7 @@ import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
 #import iperf_peers
-MAX_QUEUE = 50
+MAX_QUEUE = 1000
 
 class NonBlocking(Topo):
     """

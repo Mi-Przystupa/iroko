@@ -213,7 +213,6 @@ def FatTreeTest(args, controller):
     info('** Waiting for switches to connect to the controller\n')
     sleep(2)
     hosts = net.hosts
-    CLI(net)
     trafficGen(args, hosts, net)
     net.stop()
 

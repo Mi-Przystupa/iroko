@@ -40,17 +40,14 @@ def get_bisection_bw(input_file, pat_iface):
 
     rate = {}
     column = 2
-
     for row in data:
         try:
             ifname = row[1]
         except:
             break
-
         if ifname not in ['eth0', 'lo']:
             if not rate.has_key(ifname):
                 rate[ifname] = []
-
             try:
                 rate[ifname].append(float(row[column]) * 8.0 / (1 << 20))
             except:
@@ -60,7 +57,7 @@ def get_bisection_bw(input_file, pat_iface):
         if pat_iface.match(k):
             avg_rate = avg(rate[k][10:-10])
             vals.append(avg_rate)
-
+            print k
     return fsum(vals)
 
 
@@ -84,7 +81,7 @@ def plot_results(args):
         bb['nonblocking'].append(vals / fbb)
 
     # sw = '[0-3]h[0-1]h1'
-    sw = '[1-3]00[1-9]'
+    sw = '300[1-9]'
     for t in traffics:
         print("ECMP:", t)
         input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
@@ -108,9 +105,9 @@ def plot_results(args):
         bb['hedera'].append(vals / fbb / 2)
 
     ind = np.arange(n_t)
-    width = 0.2
+    width = 0.15
     fig = plt.figure(1)
-    fig.set_size_inches(18.5, 6.5)
+    fig.set_size_inches(8.5, 6.5)
 
     for i in range(num_plot):
         fig.set_size_inches(24, 12)
@@ -131,13 +128,12 @@ def plot_results(args):
         p2 = plt.bar(ind + 3.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
 
         # FatTree + Iroko
-        p2 = plt.bar(ind + 2.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
+        p3 = plt.bar(ind + 2.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
 
         # FatTree + ECMP
-        p3 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
+        p4 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
 
-        plt.legend([p1[0], p2[0], p3[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP'], loc='upper left')
-        # plt.legend([p1[0], p2[0], p3[0]], ['Non-blocking', 'Iroko', 'ECMP'], loc='upper left')
+        plt.legend([p1[0], p2[0], p3[0], p4[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP'], loc='upper left')
 
         plt.savefig(args.out)
 

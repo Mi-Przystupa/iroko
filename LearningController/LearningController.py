@@ -3,9 +3,9 @@ from  torch.autograd import Variable
 import torch
 import math
 import random
-
+import numpy as np
 class LearningController:
-    def __init__(self, inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001):
+    def __init__(self, inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001, filepath = None):
         self.model = torch.nn.Sequential(
                 torch.nn.Linear(inputs + actions, numNeuron1, True ), 
                 torch.nn.ReLU(),
@@ -18,26 +18,35 @@ class LearningController:
         self.actionlength = actions
         self.prevAction = torch.zeros(actions);
         self.prevState = torch.zeros(inputs);
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr = 0.01)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr = 1e-6)
         self.epsilon = epsilon
         self.decay = decay
+        if (filepath != None):
+            self.model.load_state_dict(torch.load(filepath))
+
+
 
     def PerformAction(self):
         if(random.random() < self.epsilon):
-            self.epsilon = max(0, self.epsilon - self.decay)
-            return torch.rand( self.actionlength) >= .5 
+            # makes sure minimum is 0
+            self.epsilon = max(.05, self.epsilon - self.decay)
+            action = np.random.random_integers(0, self.actionlength - 1) 
+            ret = torch.zeros(self.actionlength)
+            ret[action] = 1.0
+            return ret 
         return self.ReturnBestAction() 
 
     def ReturnBestAction(self):
-        bAction = torch.rand(self.actionlength)
+        bAction = torch.zeros(self.actionlength)
         state = Variable(torch.cat((self.prevState, bAction),0))
         
         bVal = self.model(state)
-        for i in range(0, int(math.pow(2, self.actionlength) / 8)):
-            curVal = self.model(state); 
-
-            action = torch.rand(self.actionlength) >= .5
+        for i in range(0, self.actionlength):
+             
+            action = torch.zeros(self.actionlength) 
+            action[i] = 1
             state = Variable(torch.cat((self.prevState, action.float()), 0))  
+            curVal = self.model(state);
             if((curVal > bVal).data[0] ):
                 curVal = bVal
                 bAction = action
@@ -50,6 +59,7 @@ class LearningController:
         stateprev = Variable(torch.cat((self.prevState, self.prevAction), 0))
         #Qprev = self.model.forward(stateprev)
         Qcurr = self.model(state)
+        print(Qcurr)
         Qprev = self.model(stateprev)
         Qupdate = Qprev.data + self.alpha * (reward + self.gamma*Qcurr.data - Qprev.data)
         Qupdate = Variable(Qupdate)
@@ -61,4 +71,6 @@ class LearningController:
         self.prevAction = actions
         return Qupdate
      
+    def saveNetwork(self):
+       torch.save(self.model.state_dict(), './modelconfig') 
 

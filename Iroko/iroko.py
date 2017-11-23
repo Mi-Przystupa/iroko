@@ -22,6 +22,7 @@ from hedera.DCTopo import FatTreeTopo
 import topo_ecmp
 import topo_non_block
 
+MAX_QUEUE = 50
 
 parser = ArgumentParser(description="Iroko Parser")
 
@@ -167,10 +168,14 @@ def pingTest(net):
 def clean():
     ''' Clean any the running instances of POX '''
 
-    p = Popen("ps aux | grep 'pox' | awk '{print $2}'",
+    p_pox = Popen("ps aux | grep 'pox' | awk '{print $2}'",
               stdout=PIPE, shell=True)
-    p.wait()
-    procs = (p.communicate()[0]).split('\n')
+    p_pox.wait()
+    procs = (p_pox.communicate()[0]).split('\n')
+    p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
+              stdout=PIPE, shell=True)
+    p_ryu.wait()
+    procs.extend((p_ryu.communicate()[0]).split('\n'))
     for pid in procs:
         try:
             pid = int(pid)
@@ -190,10 +195,12 @@ def FatTreeTest(args, controller):
     is_ecmp = True  # default value
     if controller == "Iroko":
         makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+        # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
 
-        #c0.cmdPrint('xterm  -T \"./ryu/bin/ryu-manager --observe-links network_monitor.py\" &')
     elif controller == "HController":
-        makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+        # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+        Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+
         ovs_v = 10
         is_ecmp = False
     net.addController(c0)
@@ -207,7 +214,7 @@ def FatTreeTest(args, controller):
     sleep(2)
     hosts = net.hosts
     trafficGen(args, hosts, net)
-
+    CLI(net)
     net.stop()
 
 
@@ -228,8 +235,9 @@ def FatTreeNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
 
 def HederaTest(args):
     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
-    net = FatTreeNet(k=4, cpu=args.cpu, bw=10, queue=1,
+    # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+    Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+    net = FatTreeNet(k=4, cpu=args.cpu, bw=10, queue=MAX_QUEUE,
                      controller=None)
     net.addController(c0)
     net.start()

@@ -75,6 +75,7 @@ def plot_results(args):
         print "Nonblocking:", t
         input_file = args.files + '/nonblocking/%s/rate.txt' % t    
         vals = get_bisection_bw(input_file, sw)
+        print (vals)
         bb['nonblocking'].append(vals/fbb)
 
     sw = '[0-3]h[0-1]h1'
@@ -82,12 +83,14 @@ def plot_results(args):
         print "ECMP:", t
         input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
+        print (vals)
         bb['ecmp'].append(vals/fbb/2)
    
     for t in traffics:
        print "Hedera:", t
        input_file = args.files + '/fattree-hedera/%s/rate.txt' % t
        vals = get_bisection_bw(input_file, sw)
+       print (vals)
        bb['hedera'].append(vals/fbb/2)
 
 

@@ -30,7 +30,7 @@ import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
 #import iperf_peers
-
+MAX_QUEUE = 50
 
 class NonBlocking(Topo):
     """
@@ -83,7 +83,7 @@ class NonBlocking(Topo):
         """
         for sw in self.CoreSwitchList:
             for host in self.HostList:
-                self.addLink(sw, host, bw=bw_h2c, max_queue_size=1000)   # use_htb=False
+                self.addLink(sw, host, bw=bw_h2c, max_queue_size=MAX_QUEUE)   # use_htb=False
 
     def set_ovs_protocol_13(self):
         """

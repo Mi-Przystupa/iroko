@@ -536,18 +536,18 @@ class NetworkMonitor(app_manager.RyuApp):
         print("Current Average Utilization: %f" % curr_avg_util)
         print("Current Average Utilization ALT: %f" % curr_avg_util_alt)
 
-        # if _type == 'port':
-        #     print('\ndatapath  port     '
-        #           ' rx-dropped '' tx-dropped '
-        #           ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) ')
-        #     print('--------  --------  ' '----------  ---------- '' -------------  --------------- ' ' -----------------')
-        #     _format = '%8d  %8x  %9d   %9d   %10d  %15.1f  %17.1f'
-        #     for dpid in sorted(bodys.keys()):
-        #         for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-        #             # if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
-        #             print(_format % (
-        #                 dpid, stat.port_no,
-        #                 stat.rx_dropped, stat.tx_dropped, 10000,
-        #                 abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
-        #                 self.free_bandwidth[dpid][stat.port_no]))
-        #     print
+        if _type == 'port':
+            print('\ndatapath  port     '
+                  ' rx-dropped '' tx-dropped '
+                  ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) ')
+            print('--------  --------  ' '----------  ---------- '' -------------  --------------- ' ' -----------------')
+            _format = '%8d  %8x  %9d   %9d   %10d  %15.1f  %17.1f'
+            for dpid in sorted(bodys.keys()):
+                for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                    # if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
+                    print(_format % (
+                        dpid, stat.port_no,
+                        stat.rx_dropped, stat.tx_dropped, 10000,
+                        abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
+                        self.free_bandwidth[dpid][stat.port_no]))
+            print

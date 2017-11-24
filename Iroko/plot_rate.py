@@ -69,7 +69,7 @@ def plot_results(args):
     num_t = 20
     n_t = num_t / num_plot
 
-    bb = {'nonblocking': [], 'hedera': [], 'iroko': [], 'ecmp': []}
+    bb = {'nonblocking': [], 'hedera': [], 'iroko': [], 'dctcp': [], 'ecmp': []}
 
     # sw = '4h1h1'
     sw = '1001'
@@ -77,7 +77,7 @@ def plot_results(args):
         print("Nonblocking:", t)
         input_file = args.files + '/nonblocking/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
-        print (vals)
+        print(vals)
         bb['nonblocking'].append(vals / fbb)
 
     # sw = '[0-3]h[0-1]h1'
@@ -86,14 +86,21 @@ def plot_results(args):
         print("ECMP:", t)
         input_file = args.files + '/fattree-ecmp/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
-        print (vals)
+        print(vals)
         bb['ecmp'].append(vals / fbb / 2)
+
+    for t in traffics:
+        print("DCTCP:", t)
+        input_file = args.files + '/fattree-dctcp/%s/rate.txt' % t
+        vals = get_bisection_bw(input_file, sw)
+        print(vals)
+        bb['dctcp'].append(vals / fbb / 2)
 
     for t in traffics:
         print("Iroko:", t)
         input_file = args.files + '/fattree-iroko/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
-        print (vals)
+        print(vals)
         bb['iroko'].append(vals / fbb / 2)
 
     sw = '[0-3]h[0-1]h1'
@@ -101,7 +108,7 @@ def plot_results(args):
         print("Hedera:", t)
         input_file = args.files + '/fattree-hedera/%s/rate.txt' % t
         vals = get_bisection_bw(input_file, sw)
-        print (vals)
+        print(vals)
         bb['hedera'].append(vals / fbb / 2)
 
     ind = np.arange(n_t)
@@ -121,19 +128,22 @@ def plot_results(args):
         plt.xticks(ind + 2.5 * width, labels[i * n_t:(i + 1) * n_t])
 
         # Nonblocking
-        p1 = plt.bar(ind + 4.5 * width, bb['nonblocking'][i * n_t:(i + 1) * n_t], width=width,
+        p1 = plt.bar(ind + 5.5 * width, bb['nonblocking'][i * n_t:(i + 1) * n_t], width=width,
                      color='royalblue')
 
         # FatTree + Hedera
-        p2 = plt.bar(ind + 3.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
+        p2 = plt.bar(ind + 4.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
 
         # FatTree + Iroko
-        p3 = plt.bar(ind + 2.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
+        p3 = plt.bar(ind + 3.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
 
         # FatTree + ECMP
-        p4 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
+        p4 = plt.bar(ind + 2.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='red')
 
-        plt.legend([p1[0], p2[0], p3[0], p4[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP'], loc='upper left')
+        # FatTree + ECMP
+        p5 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
+
+        plt.legend([p1[0], p2[0], p3[0], p4[0], p5[0]], ['Non-blocking', 'Hedera', 'Iroko', 'DCTCP', 'ECMP'], loc='upper left')
 
         plt.savefig(args.out)
 

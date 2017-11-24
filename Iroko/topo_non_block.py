@@ -22,6 +22,8 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel
 from mininet.link import Link, Intf, TCLink
 from mininet.topo import Topo
+from mininet.node import OVSKernelSwitch, CPULimitedHost
+from mininet.util import custom
 
 import os
 import time
@@ -31,6 +33,7 @@ parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
 #import iperf_peers
 MAX_QUEUE = 1000
+
 
 class NonBlocking(Topo):
     """
@@ -113,6 +116,7 @@ def set_host_ip(net, topo):
             j = 1
             i += 1
 
+
 def install_proactive(net, topo):
     """
             Install proactive flow entries for the switch.
@@ -137,6 +141,7 @@ def install_proactive(net, topo):
                 j = 1
                 i += 1
 
+
 def configureTopo(net, topo):
     # Set OVS's protocol as OF13.
     topo.set_ovs_protocol_13()
@@ -145,7 +150,8 @@ def configureTopo(net, topo):
     # Install proactive flow entries
     install_proactive(net, topo)
 
-def createNonBlockTopo(pod, ip="172.18.232.60", port=6653, bw_h2c=10):
+
+def createNonBlockTopo(pod, ip="172.18.232.60", cpu=-1, port=6653, bw_h2c=10):
     """
             Firstly, start up Mininet;
             secondly, generate traffics and test the performance of the network.
@@ -158,8 +164,9 @@ def createNonBlockTopo(pod, ip="172.18.232.60", port=6653, bw_h2c=10):
     # Start Mininet
     CONTROLLER_IP = ip
     CONTROLLER_PORT = port
+    host = custom(CPULimitedHost, cpu=cpu)
     net = Mininet(topo=topo, link=TCLink, controller=RemoteController, autoSetMacs=True)
     #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
-    #net.start()
+    # net.start()
 
     return net, topo

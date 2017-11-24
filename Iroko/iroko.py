@@ -53,6 +53,10 @@ parser.add_argument('--ecmp', dest='ECMP', default=False,
 
 parser.add_argument('--iroko', dest='iroko', default=False,
                     action='store_true', help='Run the experiment with Iroko rate limiting')
+
+parser.add_argument('--dctcp', dest='dctcp', default=False,
+                    action='store_true', help='Run the experiment with DCTCP congestion control')
+
 args = parser.parse_args()
 
 
@@ -65,6 +69,24 @@ def start_tcpprobe():
 
 def stop_tcpprobe():
     os.system("killall -9 cat")
+
+
+def enable_tcp_ecn():
+    Popen("sysctl -w net.ipv4.tcp_ecn=1", shell=True).wait()
+
+
+def disable_tcp_ecn():
+    Popen("sysctl -w net.ipv4.tcp_ecn=0", shell=True).wait()
+
+
+def enable_dctcp():
+    Popen("sysctl -w net.ipv4.tcp_dctcp_enable=1", shell=True).wait()
+    enable_tcp_ecn()
+
+
+def disable_dctcp():
+    Popen("sysctl -w net.ipv4.tcp_dctcp_enable=0", shell=True).wait()
+    disable_tcp_ecn()
 
 
 def trafficGen(args, hosts, net):
@@ -169,11 +191,11 @@ def clean():
     ''' Clean any the running instances of POX '''
 
     p_pox = Popen("ps aux | grep 'pox' | awk '{print $2}'",
-              stdout=PIPE, shell=True)
+                  stdout=PIPE, shell=True)
     p_pox.wait()
     procs = (p_pox.communicate()[0]).split('\n')
     p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
-              stdout=PIPE, shell=True)
+                  stdout=PIPE, shell=True)
     p_ryu.wait()
     procs.extend((p_ryu.communicate()[0]).split('\n'))
     for pid in procs:
@@ -187,37 +209,52 @@ def clean():
     Popen('killall python2.7', shell=True).wait()
 
 
-def FatTreeTest(args, controller):
-
-    net, topo = topo_ecmp.createECMPTopo(4, 2)
-    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+def FatTreeTest(args, controller=None):
+    net, topo = topo_ecmp.createECMPTopo(pod=4, density=2, cpu=args.cpu, dctcp=args.dctcp)
     ovs_v = 13  # default value
     is_ecmp = True  # default value
-    if controller == "Iroko":
-        makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-        # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
 
-    elif controller == "HController":
-        # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
-        Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+    if controller is not None:
+        c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+        if controller == "Iroko":
+            makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+            # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
+        elif controller == "HController":
+            c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+            # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+            Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+            ovs_v = 10
+            is_ecmp = False
+        net.addController(c0)
 
-        ovs_v = 10
-        is_ecmp = False
-    net.addController(c0)
-    sleep(2)
     net.start()
-    sleep(5)
+    sleep(2)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)
-    # wait for the switches to connect to the controller
     info('** Waiting for switches to connect to the controller\n')
     sleep(2)
     hosts = net.hosts
     trafficGen(args, hosts, net)
+    CLI(net)
     net.stop()
 
 
-def FatTreeNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
+def NonBlockingTest(args):
+
+    net, topo = topo_non_block.createNonBlockTopo(pod=4, density=2, cpu=args.cpu)
+    net.start()
+    topo_non_block.configureTopo(net, topo)
+
+    info('** Waiting for switches to connect to the controller\n')
+    sleep(2)
+
+    hosts = net.hosts
+    trafficGen(args, hosts, net)
+
+    net.stop()
+
+
+def HederaNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
     ''' Create a Fat-Tree network '''
 
     info('*** Creating the topology')
@@ -236,8 +273,8 @@ def HederaTest(args):
     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
     # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
     Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
-    net = FatTreeNet(k=4, cpu=args.cpu, bw=10, queue=MAX_QUEUE,
-                     controller=None)
+    net = HederaNet(k=4, cpu=args.cpu, bw=10, queue=MAX_QUEUE,
+                    controller=None)
     net.addController(c0)
     net.start()
     # wait for the switches to connect to the controller
@@ -254,21 +291,6 @@ def HederaTest(args):
     net.stop()
 
 
-def NonBlockingTest(args):
-
-    net, topo = topo_non_block.createNonBlockTopo(4, 2)
-    net.start()
-    topo_non_block.configureTopo(net, topo)
-
-    info('** Waiting for switches to connect to the controller\n')
-    sleep(2)
-
-    hosts = net.hosts
-    trafficGen(args, hosts, net)
-
-    net.stop()
-
-
 if __name__ == '__main__':
     clean()
     setLogLevel('info')
@@ -279,7 +301,6 @@ if __name__ == '__main__':
     if os.getuid() != 0:
         logging.debug("You are NOT root")
         exit(1)
-
     if args.nonblocking:
         NonBlockingTest(args)
     elif args.ECMP:

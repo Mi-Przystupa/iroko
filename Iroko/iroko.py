@@ -235,7 +235,7 @@ def FatTreeTest(args, controller=None):
     sleep(2)
     hosts = net.hosts
     trafficGen(args, hosts, net)
-    CLI(net)
+    #CLI(net)
     net.stop()
 
 

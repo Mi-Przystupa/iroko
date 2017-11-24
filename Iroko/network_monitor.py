@@ -33,7 +33,14 @@ import time
 import subprocess
 sys.path.append('./')
 
+###########################################
+#Stuff for learning
+import numpy as np
+import torch
+from LearningAgent import LearningAgent
 
+Agent = LearningAgent(15)
+###########################################
 MONITOR_PERIOD = 1  # For monitoring traffic
 
 TOSHOW = True     # For showing information in terminal
@@ -80,7 +87,21 @@ class NetworkMonitor(app_manager.RyuApp):
         # free bandwidth of links respectively.
         self.monitor_thread = hub.spawn(self._monitor)
         # self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
+        self.Agent = LearningAgent(15)
 
+    def HandleDataCollection(self, bodys):
+        print("hello")
+        for dpid in sorted(bodys.keys()):
+            print(dpid)
+            #you have device id 300*
+            #Also port between 1 - 4 use these
+            if(dpid - 3000 >=0):
+                for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                    data = np.array(stat)
+                    if(data[0] < 30):
+                        self.Agent.addMemory(data)
+
+        print(self.Agent.getSample())
     def _monitor(self):
         """
                 Main entry method of monitoring traffic.
@@ -95,6 +116,9 @@ class NetworkMonitor(app_manager.RyuApp):
             self.capabilities = None
             self.best_paths = None
             hub.sleep(0.01)
+            bodys = self.stats['port']
+            if bodys:
+                self.HandleDataCollection(bodys)
             if self.stats['flow'] or self.stats['port']:
                 # self.show_stat('flow')
                 self.show_stat('port')

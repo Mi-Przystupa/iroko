@@ -10,18 +10,12 @@ sys.path.append('./')
 # Stuff for learning
 import numpy as np
 import torch
+import random
 from LearningAgent import LearningAgent
 
 MAX_CAPACITY = 10000   # Max capacity of link
 TOSHOW = True
 
-###########################################
-#Stuff for learning
-import numpy as np
-import torch
-from LearningAgent import LearningAgent
-
-Agent = LearningAgent(15)
 ###########################################
 
 i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
@@ -51,9 +45,6 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
-        print("hi michael")
-        self.Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
-
 
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
@@ -67,20 +58,6 @@ class StatsCollector():
         self.prev_util = curr_util
         print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
         return loss_d, overlimits_d, util_d
-
-    def HandleDataCollection(self, bodys):
-        for dpid in sorted(bodys.keys()):
-            #you have device id 300*
-            #Also port between 1 - 4 use these
-            if(dpid - 3000 >=0):
-                for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-                    data = np.array(stat)
-                    if(stat.port_no < 30):
-                        self.Agent.addMemory(data)
-                        fb = self.free_bandwidth[dpid][stat.port_no]                        
-                        self.Agent.updateHostsBandwidth(dpid, stat.port_no , fb)
-            self.Agent.displayAllHosts()
-            self.Agent.displayALLHostsBandwidths()
 
 
     def _get_bandwidths(self, iface_list):
@@ -112,6 +89,19 @@ class StatsCollector():
     def _get_free_bw(self, capacity, speed):
         # freebw: Kbit/s
         return max(capacity - speed * 8 / 1000.0, 0)
+
+    def get_interface_stats(self):
+        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
+        output = subprocess.check_output(cmd, shell=True)
+        iface_list = []
+        for row in output.split('\n'):
+            if row != '':
+                iface_list.append(row)
+        bandwidths = self._get_bandwidths(iface_list)
+
+        return bandwidths
+
+
 
     def show_stat(self):
         '''
@@ -173,8 +163,37 @@ class StatsCollector():
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
 
+def HandleDataCollection(self, bodys):
+    for dpid in sorted(bodys.keys()):
+    #you have device id 300*
+    #Also port between 1 - 4 use these
+        if(dpid - 3000 >=0):
+            for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                data = np.array(stat)
+                if(stat.port_no < 30):
+                    self.Agent.addMemory(data)
+                    fb = self.free_bandwidth[dpid][stat.port_no]                        
+                    self.Agent.updateHostsBandwidth(dpid, stat.port_no , fb)
+    self.Agent.displayAllHosts()
+    self.Agent.displayALLHostsBandwidths()
+
+
 
 if __name__ == '__main__':
     stats = StatsCollector()
+    Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+    Agent.initializePorts(i_h_map)
+    Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
+    Agent.initializePorts({})
     while(1):
-        stats.show_stat()
+        #stats.show_stat()
+        portstats = stats.get_interface_stats()
+        rfb = random.randint(0, 700)
+        if (random.random() < .3):
+            rfb = 0
+        for interface in portstats.keys():
+            portstats[interface] = rfb
+            Agent.updateHostsBandwidth(interface, portstats[interface])
+            #Agent.updateActorCritic(interface, data)
+        Agent.displayALLHostsBandwidths()
+       # print(stats.get_interface_stats())

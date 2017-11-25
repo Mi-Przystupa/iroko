@@ -74,7 +74,43 @@ class SARSA:
     def saveNetwork(self):
        torch.save(self.model.state_dict(), './modelconfig') 
 
+class Actor:
+    def __init__(self, inputs, numNeuron1, numNeuron2, learningRate = 1e-6,epsilon = .5,  filepath = None):
+        self.model = torch.nn.Sequential(
+                torch.nn.Linear(inputs + actions, numNeuron1, True ), 
+                torch.nn.ReLU(),
+                torch.nn.Linear(numNeuron1, numNeuron2, True),
+                torch.nn.ReLU(),
+                torch.nn.Linear(numNeuron2, 1))
+        self.epsilon = epsilon
+        self.inputlength = inputs
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr = learningRate)
+        self.actionVector = torch.zeros(3)
+        self.action = 0;
+        self.state = torch.zeros(inputs)
+        if (filepath != None):
+            self.model.load_state_dict(torch.load(filepath))
 
+    
+    def takeAction(self, state, asvector, actiontoPerform):
+        #actionToPerform is -1, 0, or 1 
+        if (random.random() < self.epsilon):
+            self.action= random.random() * actiontoPerform + actiontoPerform
+            return self.action
+        return self.model(torch.cat(state,asvector)) 
+    def updateAvailableActions(self, reward):
+        if(reward >= 0):
+            self.model.zero_grad()
+            state = Variable(torch.cat((self.state, self.actionVector), 0))
+            currAction = self.model(state)
+            criterion = torch.nn.MSELoss()
+            loss = criterion(currAction, self.action)
+            loss.backward()
+            self.optimizer.step()
+        # do nothing
+            
+
+            
 class CircularList:
     def __init__(self, capacity = 15):
         self.memory = []
@@ -106,7 +142,13 @@ class LearningAgent:
         self.defaultmax = defaultmax 
         #inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001, filepath = None
         # five actions 50% decrease, 25% decrease, 0 25% increase, 50% increase
-        self.SARSALearning = SARSA(10, 3, 15, 20 , alpha, gamma, epsilon = .9, decay=.001);
+        self.SARSACritic = SARSA(10, 3, 15, 20 , alpha, gamma, epsilon = .9, decay=.001);
+        self.Actor = Actor(10, 1
+    def initializePorts(self, ports):
+        #cleans out old ports and creates maps for new ones
+        self.hosts = {}
+        for key in ports.keys():
+            self.hosts[key] = dict(alloctBandwidth = self.defaultmax, e =  0 )
 
     
     def addMemory(self, data):
@@ -114,30 +156,31 @@ class LearningAgent:
 
     def getSample(self):
         return self.memory.sample()
+    def ActorCriticUpdate(self, interface, data):
+        # really kinda depends on what sort of input vector I have....
     
-    def updateHostsBandwidth(self, dpid, port_no, freebandwidth):
-        key = str(dpid) + "-" + str(port_no)
+    def updateHostsBandwidth(self, interface, freebandwidth):
+        key = str(interface)
         if(not (key in self.hosts.keys())):
             self.hosts[key] = dict(alloctBandwidth = self.defaultmax, e =  0 )
+            print(" a new port appears!")
         else:
             currhost = self.hosts[key]
             if(freebandwidth <= 0.0):
-                R = currhost['alloctBandWidth'] * .1
+                R = currhost['alloctBandwidth'] * .15
             else:
                 R = 0
             #assumes freebandwidth = allocatedbandwidth - used bandwidth
-            sprime = currhost['alloctBandwidth'] - freebandwidth
+            sTrue = currhost['alloctBandwidth'] - freebandwidth
             #V(s) = V(s) + alpha*e * (R * gamma* V(s') - V(s))
-            delta = R + self.gamma *  sprime - currhost['alloctBandwidth'] 
+            delta = R + self.gamma *  currhost['alloctBandwidth'] - sTrue
 
             currhost['e'] += 1
             currhost['alloctBandwidth'] += self.alpha * delta * currhost['e']
-            currhost['prevFreeBandwidth'] = freebandwidth
 
             currhost['e'] = self.gamma* self.lam * currhost['e']
             currhost['alloctBandwidth'] = max(0, currhost['alloctBandwidth'])
 
-            #print(currhost['alloctBandwidth'])
             self.hosts[key] = currhost
 
 

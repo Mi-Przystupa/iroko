@@ -257,10 +257,12 @@ def FatTreeTest(args, controller=None):
         enable_dctcp()
     if args.dctcp:
         for host in hosts:
-            enable_dctcp()
+            host_o = net.get(host)
+            host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
+            host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
+
     trafficGen(args, hosts, net)
     net.stop()
-
 
 def NonBlockingTest(args):
 

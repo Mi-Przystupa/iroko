@@ -13,7 +13,7 @@ sys.path.append('./')
 import numpy as np
 import torch
 import random
-#from LearningAgent import LearningAgent
+# from LearningAgent import LearningAgent
 
 MAX_CAPACITY = 10000   # Max capacity of link
 TOSHOW = True
@@ -25,10 +25,12 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 
+
 class StatsCollector():
     """
             NetworkMonitor is a Ryu app for collecting traffic information.
     """
+
     def __init__(self, *args, **kwargs):
         self.name = 'monitor'
         self.datapaths = {}
@@ -48,7 +50,6 @@ class StatsCollector():
         self.prev_loss_d = 0
         self.prev_util_d = 0
 
-
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
         self.prev_loss_d = loss_d
@@ -61,9 +62,8 @@ class StatsCollector():
         print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
         return loss_d, overlimits_d, util_d
 
-
     def _get_bandwidths(self, iface_list):
-        #cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
+        # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
         bytes_old = {}
         bytes_new = {}
         for iface in iface_list:
@@ -92,48 +92,42 @@ class StatsCollector():
         # freebw: Kbit/s
         return max(capacity - speed * 8 / 1000.0, 0)
 
-    def get_interface_stats(self):
+    def _get_free_bandwidths(self, bandwidths):
+        free_bandwidths = {}
+        for iface, bandwidth in bandwidths.iteritems():
+            free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
+        return free_bandwidths
+
+    def _get_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
         output = subprocess.check_output(cmd, shell=True)
         iface_list = []
         for row in output.split('\n'):
             if row != '':
                 iface_list.append(row)
-        bandwidths = self._get_bandwidths(iface_list)
+        return iface_list
 
-        return bandwidths
+    def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
+        bw_sum = sum(bandwidths.itervalues())
+        bw_free_sum = sum(free_bandwidths.itervalues())
+        loss_sum = sum(drops.itervalues())
+        overlimit_sum = sum(overlimits.itervalues())
+        queued_sum = sum(queues.itervalues())
+        return bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum
 
+    def _get_qdisc_stats(self, iface_list):
+        drops = {}
+        overlimits = {}
+        queues = {}
 
-
-    def show_stat(self):
-        '''
-                Show statistics information according to data type.
-                _type: 'port' / 'flow'
-        '''
-        if TOSHOW is False:
-            return
-
-        #     print
-        loss_sum = 0
-        overlimit_sum = 0
-        free_bw = 0
-        queued_sum = 0
-        i = 0
-        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
-        output = subprocess.check_output(cmd, shell=True)
-        iface_list = []
-        for row in output.split('\n'):
-            if row != '':
-                iface_list.append(row)
         re_dropped = re.compile(r'(?<=dropped )[ 0-9]*')
         re_overlimit = re.compile(r'(?<=overlimits )[ 0-9]*')
         re_queued = re.compile(r'backlog\s[^\s]+\s([\d]+)p')
-
         for iface in iface_list:
             cmd = "tc -s qdisc show dev %s" % (iface)
-            #cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
-            #cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
-            #cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
+            # cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
+            # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
+            # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
                 dr = re_dropped.findall(output)
@@ -144,56 +138,68 @@ class StatsCollector():
                 dr[0] = 0
                 ov[0] = 0
                 qu[0] = 0
-            loss_sum += int(dr[0])
-            overlimit_sum += int(ov[0])
-            queued_sum += int(qu[0])
-            i += 1
-        bandwidths = self._get_bandwidths(iface_list)
-        free_bandwidths = {}
-        for iface, bandwidth in bandwidths.iteritems():
-            free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
-        sum_bw = sum(bandwidths.itervalues())
-        sum_free_bw = sum(free_bandwidths.itervalues())
+            drops[iface] = int(dr[0])
+            overlimits[iface] = int(ov[0])
+            queues[iface] = int(qu[0])
+        return drops, overlimits, queues
 
-        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum, overlimit_sum, free_bw)
-        print("Current New Loss: %d" % loss_sum)
+    def get_interface_stats(self):
+        iface_list = self._get_interfaces()
+        bandwidths = self._get_bandwidths(iface_list)
+        free_bandwidths = self._get_free_bandwidths(bandwidths)
+        drops, overlimits, queues = self._get_qdisc_stats(iface_list)
+        return bandwidths, free_bandwidths, drops, overlimits, queues
+
+    def show_stat(self):
+        '''
+                Show statistics information according to data type.
+                _type: 'port' / 'flow'
+        '''
+        if TOSHOW is False:
+            return
+
+        #     print
+        bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
+        bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(bandwidths, free_bandwidths, drops, overlimits, queues)
+        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum, overlimit_sum, bw_free_sum)
+        print("Loss: %d" % loss_sum)
         print("Overlimits: %d" % overlimit_sum)
         print("Backlog: %d" % queued_sum)
 
-        print("Free BW Sum: %d" % sum_free_bw)
-        print("Current Util Sum: %f" % sum_bw)
+        print("Free BW Sum: %d" % bw_free_sum)
+        print("Current Util Sum: %f" % bw_sum)
 
-        max_capacity_sum = MAX_CAPACITY * i
-        print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, i))
-        total_util_ratio = (sum_bw) / max_capacity_sum
-        total_util_avg = (sum_bw) / bandwidths.__len__()
+        max_capacity_sum = MAX_CAPACITY * bandwidths.__len__()
+        print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, bandwidths.__len__()))
+        total_util_ratio = (bw_sum) / max_capacity_sum
+        total_util_avg = (bw_sum) / bandwidths.__len__()
         print("Current Average Utilization: %f" % total_util_avg)
         print("Current Ratio of Utilization: %f" % total_util_ratio)
 
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
 
+
 def HandleDataCollection(self, bodys):
     for dpid in sorted(bodys.keys()):
-    #you have device id 300*
-    #Also port between 1 - 4 use these
-        if(dpid - 3000 >=0):
+        # you have device id 300*
+        # Also port between 1 - 4 use these
+        if(dpid - 3000 >= 0):
             for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
                 data = np.array(stat)
                 if(stat.port_no < 30):
                     self.Agent.addMemory(data)
-                    fb = self.free_bandwidth[dpid][stat.port_no]                        
-                    self.Agent.updateHostsBandwidth(dpid, stat.port_no , fb)
+                    fb = self.free_bandwidth[dpid][stat.port_no]
+                    self.Agent.updateHostsBandwidth(dpid, stat.port_no, fb)
     self.Agent.displayAllHosts()
     self.Agent.displayALLHostsBandwidths()
-
 
 
 if __name__ == '__main__':
     stats = StatsCollector()
     # Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
     # Agent.initializePorts(i_h_map)
-    # Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
+    # Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'})
     # Agent.initializePorts({})
     while(1):
         stats.show_stat()

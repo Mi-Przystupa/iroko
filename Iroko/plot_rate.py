@@ -134,15 +134,15 @@ def plot_results(args):
         p2 = plt.bar(ind + 4.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
 
         # FatTree + Iroko
-        p3 = plt.bar(ind + 3.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='yellow')
+        p3 = plt.bar(ind + 3.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='magenta')
+
+        # FatTree + DCTCP
+        p5 = plt.bar(ind + 1.5 * width, bb['dctcp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
 
         # FatTree + ECMP
         p4 = plt.bar(ind + 2.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='red')
 
-        # FatTree + ECMP
-        p5 = plt.bar(ind + 1.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
-
-        plt.legend([p1[0], p2[0], p3[0], p4[0], p5[0]], ['Non-blocking', 'Hedera', 'Iroko', 'DCTCP', 'ECMP'], loc='upper left')
+        plt.legend([p1[0], p2[0], p3[0], p4[0], p5[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP', 'DCTCP'], loc='upper left')
 
         plt.savefig(args.out)
 

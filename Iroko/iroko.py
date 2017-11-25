@@ -232,14 +232,17 @@ def FatTreeTest(args, controller=None):
     #s Popen("sudo python iroko_controller.py", shell=True)
     makeTerm(c0, cmd="sudo python iroko_controller.py")
     net.start()
-    if args.dctcp:
-        enable_dctcp()
     sleep(2)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)
     info('** Waiting for switches to connect to the controller\n')
     sleep(2)
     hosts = net.hosts
+    if args.dctcp:
+        enable_dctcp()
+    if args.dctcp:
+        for host in hosts:
+            enable_dctcp()
     trafficGen(args, hosts, net)
     net.stop()
 

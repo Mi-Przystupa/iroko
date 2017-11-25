@@ -24,6 +24,14 @@ done
 for f in $INPUT_FILES;
 do
         input_file=$INPUT_DIR/$f
+        pref="fattree-dctcp"
+        out_dir=$OUTPUT_DIR/$pref/$f
+        sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --ecmp --dctcp
+done
+
+for f in $INPUT_FILES;
+do
+        input_file=$INPUT_DIR/$f
         pref="fattree-iroko"
         out_dir=$OUTPUT_DIR/$pref/$f
         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --iroko
@@ -35,12 +43,4 @@ do
         pref="fattree-hedera"
         out_dir=$OUTPUT_DIR/$pref/$f
         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --hedera
-done
-
-for f in $INPUT_FILES;
-do
-        input_file=$INPUT_DIR/$f
-        pref="fattree-dctcp"
-        out_dir=$OUTPUT_DIR/$pref/$f
-        sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --ecmp --dctcp
 done

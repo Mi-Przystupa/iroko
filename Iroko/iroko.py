@@ -215,33 +215,28 @@ def FatTreeTest(args, controller=None):
     ovs_v = 13  # default value
     is_ecmp = True  # default value
 
-    # if controller is not None:
-    # c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    c0 = None
-    if controller == "Iroko":
-        Popen("sudo python iroko_controller.py", shell=True)
+    if controller is not None:
         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    #         #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-    #         #makeTerm(c0, cmd="sudo python iroko_controller.py")
-    #     # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
-    #         Popen("iroko_controller.py", shell=True)
-    #     elif controller == "HController":
-    #         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-    #         # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
-    #         Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
-    #         ovs_v = 10
-    #         is_ecmp = False
-    #    net.addController(c0)
-    #s Popen("sudo python iroko_controller.py", shell=True)
-    #makeTerm(c0, cmd="sudo python iroko_controller.py")
+        if controller == "Iroko":
+            Popen("sudo python iroko_controller.py", shell=True)
+            #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+            #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
+            # elif controller == "HController":
+            #     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+            #     # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+            #     Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+            #     ovs_v = 10
+            #     is_ecmp = False
+        net.addController(c0)
 
     net.start()
     sleep(2)
-
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
-    topo_ecmp.connect_controller(net, topo, c0)
-    info('** Waiting for switches to connect to the controller\n')
-    sleep(2)
+
+    if controller is not None:
+        topo_ecmp.connect_controller(net, topo, c0)
+        info('** Waiting for switches to connect to the controller\n')
+        sleep(2)
     hosts = net.hosts
     if args.dctcp:
         enable_dctcp()
@@ -317,7 +312,7 @@ if __name__ == '__main__':
     if args.nonblocking:
         NonBlockingTest(args)
     elif args.ECMP:
-        FatTreeTest(args, controller='None')
+        FatTreeTest(args, controller=None)
     elif args.hedera:
         HederaTest(args)
     elif args.iroko:

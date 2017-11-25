@@ -165,7 +165,7 @@ def createNonBlockTopo(pod, ip="172.18.232.60", cpu=-1, port=6653, bw_h2c=10):
     CONTROLLER_IP = ip
     CONTROLLER_PORT = port
     host = custom(CPULimitedHost, cpu=cpu)
-    net = Mininet(topo=topo, link=TCLink, controller=RemoteController, autoSetMacs=True)
+    net = Mininet(topo=topo, host=host, link=TCLink, controller=RemoteController, autoSetMacs=True)
     #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
     # net.start()
 

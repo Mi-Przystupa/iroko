@@ -38,7 +38,6 @@ class StatsCollector():
     def __init__(self, *args, **kwargs):
         self.name = 'monitor'
         self.datapaths = {}
-        self.port_stats = {}
         self.port_speed = {}
         self.flow_stats = {}
         self.flow_speed = {}
@@ -54,10 +53,6 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
-        # Start to green thread to monitor traffic and calculating
-        # free bandwidth of links respectively.
-        #self.collect_thread = hub.spawn(self._collect)
-        # time.sleep(5)
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -107,6 +102,10 @@ class StatsCollector():
                     iface_list.append(iface)
         return iface_list
 
+    def _get_free_bw(self, capacity, speed):
+        # freebw: Kbit/s
+        return max(capacity - speed * 8 / 1000.0, 0)
+
     def show_stat(self):
         '''
                 Show statistics information according to data type.
@@ -115,48 +114,6 @@ class StatsCollector():
         if TOSHOW is False:
             return
 
-        #bodys = self.stats[_type]
-        #olas = self.port_features
-        # if _type == 'flow':
-        #     print('\ndatapath  '
-        #           'priority        ip_src        ip_dst  '
-        #           '  packets        bytes  flow-speed(Kb/s)')
-        #     print('--------  '
-        #           '--------  ------------  ------------  '
-        #           '---------  -----------  ----------------')
-        #     for dpid in sorted(bodys.keys()):
-
-        #         for stat in sorted([flow for flow in bodys[dpid] if ((flow.priority not in [0, 65535]) and (flow.match.get('ipv4_src')) and (flow.match.get('ipv4_dst')))],
-        #                            key=lambda flow: (flow.priority, flow.match.get('ipv4_src'), flow.match.get('ipv4_dst'))):
-        #             print('%8d  %8s  %12s  %12s  %9d  %11d  %16.1f' % (
-        #                 dpid,
-        #                 stat.priority, stat.match.get('ipv4_src'), stat.match.get('ipv4_dst'),
-        #                 stat.packet_count, stat.byte_count,
-        #                 abs(self.flow_speed[dpid][(stat.priority, stat.match.get('ipv4_src'), stat.match.get('ipv4_dst'))][-1]) * 8 / 1000.0))
-        #     print
-
-        # if _type == 'port':
-        #     print('\ndatapath  port '
-        #           '   rx-pkts     rx-bytes ''   tx-pkts     tx-bytes '
-        #           ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) '
-        #           ' port-state  link-state')
-        #     print('--------  ----  '
-        #           '---------  -----------  ''---------  -----------  '
-        #           '-------------  ---------------  -----------------  '
-        #           '----------  ----------')
-        #     _format = '%8d  %4x  %9d  %11d  %9d  %11d  %13d  %15.1f  %17.1f  %10s  %10s'
-        #     for dpid in sorted(bodys.keys()):
-        #         for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-        #             if stat.port_no != ofproto_v1_3.OFPP_LOCAL:
-        #                 print(_format % (
-        #                     dpid, stat.port_no,
-        #                     stat.rx_packets, stat.rx_bytes,
-        #                     stat.tx_packets, stat.tx_bytes,
-        #                     10000,
-        #                     abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
-        #                     self.free_bandwidth[dpid][stat.port_no],
-        #                     self.port_features[dpid][stat.port_no][0],
-        #                     self.port_features[dpid][stat.port_no][1]))
         #     print
         loss_sum_old = 0
         loss_sum_new = 0
@@ -165,28 +122,6 @@ class StatsCollector():
         avg_util_new = 0
 
         i = 0
-        # for dpid in sorted(bodys.keys()):
-        #     for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-        #         loss_sum_old = + stat.rx_dropped
-        #         if stat.port_no != ofproto_v1_3.OFPP_LOCAL:
-        #             free_bw += self.free_bandwidth[dpid][stat.port_no]
-        #             iface = str(dpid) + "-eth" + str(stat.port_no)
-        #             cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
-        #             cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
-        #             try:
-        #                 #output3 = subprocess.check_output(cmd3, shell=True)
-        #                 output1 = subprocess.check_output(cmd1, shell=True)
-        #                 output2 = subprocess.check_output(cmd2, shell=True)
-        #             except:
-        #                 print("Empty Request")
-        #                 output1 = 0
-        #                 output2 = 0
-        #                 #output3 = 0
-        #             loss_sum_new += int(output1)
-        #             overlimits += int(output2)
-        #             #avg_util_new += float(output3)
-        #             i += 1
-        #             # print ("%s %d %d " % (dpid, stat.port_no, i))
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
         output = subprocess.check_output(cmd, shell=True)
         iface_list = []
@@ -195,29 +130,20 @@ class StatsCollector():
                 iface_list.append(row)
 
         print(iface_list)
-        #iface_list = self._get_active_ports()
-        # for dpid in sorted(olas.keys()):
-        #    for stat in sorted(olas[dpid]):
-        #loss_sum_old = + stat.rx_dropped
-        #       if stat != ofproto_v1_3.OFPP_LOCAL:
-        #free_bw += self.free_bandwidth[dpid][stat.port_no]
+
         for iface in iface_list:
-            #iface = str(dpid) + "-eth" + str(stat)
             cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
             cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
             try:
-                #output3 = subprocess.check_output(cmd3, shell=True)
                 output1 = subprocess.check_output(cmd1, shell=True)
                 output2 = subprocess.check_output(cmd2, shell=True)
             except:
                 print("Empty Request")
                 output1 = 0
                 output2 = 0
-                #output3 = 0
             loss_sum_new += int(output1)
             overlimits += int(output2)
             i += 1
-            # print ("%s %d %d " % (dpid, stat.port_no, i))
         bandwidths = self._get_bandwidths(iface_list)
         avg_util = sum(bandwidths.itervalues())
         loss_d, overlimits_d, util_d = self._get_deltas(loss_sum_new, overlimits, free_bw)
@@ -234,22 +160,6 @@ class StatsCollector():
         curr_avg_util_alt = (avg_util_new / max_capacity_sum)
         print("Current Average Utilization: %f" % curr_avg_util)
         print("Current Average Utilization ALT: %f" % curr_avg_util_alt)
-
-        # if _type == 'port':
-        #     print('\ndatapath  port     '
-        #           ' rx-dropped '' tx-dropped '
-        #           ' port-bw(Kb/s)  port-speed(b/s)  port-freebw(Kb/s) ')
-        #     print('--------  --------  ' '----------  ---------- '' -------------  --------------- ' ' -----------------')
-        #     _format = '%8d  %8x  %9d   %9d   %10d  %15.1f  %17.1f'
-        #     for dpid in sorted(bodys.keys()):
-        #         for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-        #             # if stat.port_no == ofproto_v1_3.OFPP_LOCAL:
-        #             print(_format % (
-        #                 dpid, stat.port_no,
-        #                 stat.rx_dropped, stat.tx_dropped, 10000,
-        #                 abs(self.port_speed[(dpid, stat.port_no)][-1] * 8),
-        #                 self.free_bandwidth[dpid][stat.port_no]))
-        #     print
 
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13

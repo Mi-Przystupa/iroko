@@ -57,7 +57,6 @@ def get_bisection_bw(input_file, pat_iface):
         if pat_iface.match(k):
             avg_rate = avg(rate[k][10:-10])
             vals.append(avg_rate)
-            print k
     return fsum(vals)
 
 

@@ -298,11 +298,11 @@ def connect_controller(net, topo, controller):
         # print host_o
         host_o.cmdPrint("ifconfig %s-eth1 192.168.10.%d" % (host, i))
         if controller != None:
-            controller.cmdPrint("ifconfig c0-eth%d 192.168.5.%d" % ((i - 1), (i + 100)))
-            controller.cmdPrint("route add 192.168.5.%d dev c0-eth%d" % (i, (i - 1)))
+            controller.cmdPrint("ifconfig c0-%s-eth1 192.168.5.%d" % (host, i))
+            controller.cmdPrint("route add 192.168.5.%d dev c0-%s-eth1" % (i, host))
         else:
-            os.system("ifconfig c0-eth%d 192.168.5.%d" % ((i - 1), (i + 100)))
-            os.system("route add 192.168.5.%d dev c0-eth%d" % (i, (i - 1)))
+            os.system("ifconfig c0-%s-eth1 192.168.5.%d" % (host, i))
+            os.system("route add 192.168.5.%d dev c0-%s-eth1" % (i, host))
         i += 1
         # host.setIP("10.%d.0.%d" % (i, j))
 

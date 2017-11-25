@@ -30,6 +30,7 @@ from ryu.ofproto import ofproto_v1_3
 from ryu.lib import hub
 import sys
 import time
+import thread
 import subprocess
 sys.path.append('./')
 
@@ -38,6 +39,7 @@ sys.path.append('./')
 import numpy as np
 import torch
 from LearningAgent import LearningAgent
+import IrokoController
 
 Agent = LearningAgent(15)
 ###########################################
@@ -49,11 +51,6 @@ MAX_CAPACITY = 10000   # Max capacity of link
 
 # CONF = cfg.CONF
 weight = 'bw'
-
-i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
-           '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
-           '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
-           '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 
 
 class NetworkMonitor(app_manager.RyuApp):
@@ -88,6 +85,9 @@ class NetworkMonitor(app_manager.RyuApp):
         self.monitor_thread = hub.spawn(self._monitor)
         # self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
         self.Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+
+        # Spawning Iroko controller
+        self.iroko = IrokoController()
 
     def HandleDataCollection(self, bodys):
         for dpid in sorted(bodys.keys()):

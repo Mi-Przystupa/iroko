@@ -2,8 +2,7 @@
 #define CNTRL_PCKT_SIZE 9450
 
 typedef struct cntrl_pckt {
-    unsigned long epoch;
-    size_t buf_size;
+    char buf_size[20];
 } cntrl_pckt;
 
 int cntrl_init();

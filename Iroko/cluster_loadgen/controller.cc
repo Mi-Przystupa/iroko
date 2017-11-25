@@ -1,4 +1,5 @@
 #include<limits.h>
+#include<stdlib.h>
 
 #include "common.h"
 #include "controller.h"
@@ -45,7 +46,8 @@ void *cntrl_thread_main(void *arg)
         if (rcvd_bytes != sizeof(cntrl_pckt)) {
             perror("Received control packet");
         }
-        tx_rate = pckt.buf_size;
+        tx_rate = atol(pckt.buf_size);
+        printf("tx_rate: %lu\n", tx_rate);
     }
 
     return NULL;

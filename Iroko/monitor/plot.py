@@ -3,27 +3,30 @@ import matplotlib.pyplot as plt
 
 def colorGenerator():
     "Return cycling list of colors"
-    colors = [ 'red', 'green', 'blue', 'orange', 'purple', 'cyan']
+    colors = ['red', 'green', 'blue', 'orange', 'purple', 'cyan']
     index = 0
     while True:
-        yield colors[ index ]
-        index = ( index + 1 ) % len( colors )
+        yield colors[index]
+        index = (index + 1) % len(colors)
+
 
 def markerGenerator():
     "Return cycling list of colors"
-    markers = [ 'o', '^', 'v', '*', 'x', 'd']
+    markers = ['o', '^', 'v', '*', 'x', 'd']
     index = 0
     while True:
-        yield markers [ index ]
-        index = ( index + 1 ) % len(markers)
+        yield markers[index]
+        index = (index + 1) % len(markers)
+
 
 def hatchGenerator():
     "Return cycling list of colors"
-    hatches = [ '/', '\\', '-', '.', '|', 'x']
+    hatches = ['/', '\\', '-', '.', '|', 'x']
     index = 0
     while True:
-        yield hatches[ index ]
-        index = ( index + 1 ) % len(hatches)
+        yield hatches[index]
+        index = (index + 1) % len(hatches)
+
 
 def convertToStep(x, y):
     """Convert to a "stepped" data format by duplicating all but the last elt."""
@@ -36,6 +39,7 @@ def convertToStep(x, y):
             newx.append(x[i + 1])
             newy.append(y[i])
     return newx, newy
+
 
 def convertToStepUpCDF(x, y):
     """Convert to a "stepped" data format by duplicating all but the last elt.
@@ -54,6 +58,7 @@ def convertToStepUpCDF(x, y):
     newy.append(1.0)
     return newx, newy
 
+
 def plotTimeSeries(data, title, xlabel, ylabel, step):
     """Plot a time series.
 
@@ -70,24 +75,25 @@ def plotTimeSeries(data, title, xlabel, ylabel, step):
     cgen = colorGenerator()
     colors = {}
 
-    fig.canvas.set_window_title( title )
+    fig.canvas.set_window_title(title)
 
     for d in data:
         x = d['x']
         y = d['y']
         if step:
             x, y = convertToStep(x, y)
-        plt.plot( x, y, label=d['label'], color=cgen.next())
+        plt.plot(x, y, label=d['label'], color=cgen.next())
 
-    plt.xlabel( xlabel, fontsize=20 )
-    plt.ylabel( ylabel, fontsize=20 )
-    plt.grid( True )
+    plt.xlabel(xlabel, fontsize=20)
+    plt.ylabel(ylabel, fontsize=20)
+    plt.grid(True)
     for tick in ax.xaxis.get_major_ticks():
         tick.label1.set_fontsize(18)
     for tick in ax.yaxis.get_major_ticks():
         tick.label1.set_fontsize(18)
 
     return fig
+
 
 def plotCDF(data, title, xlabel, ylabel, step):
     data_mod = []
@@ -102,7 +108,8 @@ def plotCDF(data, title, xlabel, ylabel, step):
         entry['label'] = line['label']
         data_mod.append(entry)
 
-    return plotTimeSeries(data_mod, title, xlabel, ylabel, step = False)
+    return plotTimeSeries(data_mod, title, xlabel, ylabel, step=False)
+
 
 if __name__ == '__main__':
     print convertToStep([1, 2, 3], [4, 5, 6])

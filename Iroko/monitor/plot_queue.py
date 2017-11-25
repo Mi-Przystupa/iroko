@@ -15,14 +15,14 @@ parser.add_argument('--files', '-f',
 
 parser.add_argument('--maxy',
                     help="Max mbps on y-axis..",
-		    type=int,
+                    type=int,
                     default=1000,
                     action="store",
                     dest="maxy")
 
 parser.add_argument('--miny',
                     help="Min mbps on y-axis..",
-		    type=int,
+                    type=int,
                     default=0,
                     action="store",
                     dest="miny")
@@ -36,7 +36,7 @@ parser.add_argument('--legend', '-l',
 
 parser.add_argument('--out', '-o',
                     help="Output png file for the plot.",
-                    default=None, # Will show the plot
+                    default=None,  # Will show the plot
                     dest="out")
 
 parser.add_argument('-s', '--summarise',
@@ -64,12 +64,15 @@ if args.labels is None:
 if args.legend is None:
     args.legend = args.files
 
-to_plot=[]
+to_plot = []
+
+
 def get_style(i):
     if i == 0:
         return {'color': 'red'}
     else:
         return {'color': 'black', 'ls': '-.'}
+
 
 for i, f in enumerate(args.files):
     data = read_list(f)
@@ -88,28 +91,28 @@ plt.grid(True)
 #yaxis = range(0, 1101, 50)
 #ylabels = map(lambda y: str(y) if y%100==0 else '', yaxis)
 #plt.yticks(yaxis, ylabels)
-#plt.ylim((0,1100))
-plt.ylim((args.miny,args.maxy))
+# plt.ylim((0,1100))
+plt.ylim((args.miny, args.maxy))
 
 if args.summarise:
     plt.xlabel("Link Rates")
     plt.boxplot(to_plot)
-    xaxis = range(1, 1+len(args.files))
+    xaxis = range(1, 1 + len(args.files))
     plt.xticks(xaxis, args.labels)
     for x in xaxis:
-        y = pc99(to_plot[x-1])
+        y = pc99(to_plot[x - 1])
         print x, y
         if x == 1:
             s = '99pc: %d' % y
-            offset = (-20,20)
+            offset = (-20, 20)
         else:
             s = str(y)
             offset = (-10, 20)
-        plt.annotate(s, (x,y+1), xycoords='data',
-                xytext=offset, textcoords='offset points',
-                arrowprops=dict(arrowstyle="->"))
+        plt.annotate(s, (x, y + 1), xycoords='data',
+                     xytext=offset, textcoords='offset points',
+                     arrowprops=dict(arrowstyle="->"))
 elif args.cdf:
-    for i,data in enumerate(to_plot):
+    for i, data in enumerate(to_plot):
         xs, ys = cdf(map(int, data))
         plt.plot(xs, ys, label=args.legend[i], lw=2, **get_style(i))
         plt.ylabel("Fraction")

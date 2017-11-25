@@ -4,6 +4,8 @@ from operator import attrgetter
 import sys
 import time
 import subprocess
+import re
+
 sys.path.append('./')
 
 ###########################################
@@ -11,7 +13,7 @@ sys.path.append('./')
 import numpy as np
 import torch
 import random
-from LearningAgent import LearningAgent
+#from LearningAgent import LearningAgent
 
 MAX_CAPACITY = 10000   # Max capacity of link
 TOSHOW = True
@@ -112,11 +114,10 @@ class StatsCollector():
             return
 
         #     print
-        loss_sum_old = 0
-        loss_sum_new = 0
-        overlimits = 0
+        loss_sum = 0
+        overlimit_sum = 0
         free_bw = 0
-
+        queued_sum = 0
         i = 0
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
         output = subprocess.check_output(cmd, shell=True)
@@ -124,19 +125,28 @@ class StatsCollector():
         for row in output.split('\n'):
             if row != '':
                 iface_list.append(row)
+        re_dropped = re.compile(r'(?<=dropped )[ 0-9]*')
+        re_overlimit = re.compile(r'(?<=overlimits )[ 0-9]*')
+        re_queued = re.compile(r'backlog\s[^\s]+\s([\d]+)p')
 
         for iface in iface_list:
-            cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
-            cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
+            cmd = "tc -s qdisc show dev %s" % (iface)
+            #cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
+            #cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
+            #cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
             try:
-                output1 = subprocess.check_output(cmd1, shell=True)
-                output2 = subprocess.check_output(cmd2, shell=True)
+                output = subprocess.check_output(cmd, shell=True)
+                dr = re_dropped.findall(output)
+                ov = re_overlimit.findall(output)
+                qu = re_queued.findall(output)
             except:
                 print("Empty Request")
-                output1 = 0
-                output2 = 0
-            loss_sum_new += int(output1)
-            overlimits += int(output2)
+                dr[0] = 0
+                ov[0] = 0
+                qu[0] = 0
+            loss_sum += int(dr[0])
+            overlimit_sum += int(ov[0])
+            queued_sum += int(qu[0])
             i += 1
         bandwidths = self._get_bandwidths(iface_list)
         free_bandwidths = {}
@@ -145,10 +155,10 @@ class StatsCollector():
         sum_bw = sum(bandwidths.itervalues())
         sum_free_bw = sum(free_bandwidths.itervalues())
 
-        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum_new, overlimits, free_bw)
-        print("Current Old Loss: %d" % loss_sum_old)
-        print("Current New Loss: %d" % loss_sum_new)
-        print("Overlimits: %d" % overlimits)
+        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum, overlimit_sum, free_bw)
+        print("Current New Loss: %d" % loss_sum)
+        print("Overlimits: %d" % overlimit_sum)
+        print("Backlog: %d" % queued_sum)
 
         print("Free BW Sum: %d" % sum_free_bw)
         print("Current Util Sum: %f" % sum_bw)
@@ -181,19 +191,19 @@ def HandleDataCollection(self, bodys):
 
 if __name__ == '__main__':
     stats = StatsCollector()
-    Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
-    Agent.initializePorts(i_h_map)
-    Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
-    Agent.initializePorts({})
+    # Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+    # Agent.initializePorts(i_h_map)
+    # Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
+    # Agent.initializePorts({})
     while(1):
-        #stats.show_stat()
-        portstats = stats.get_interface_stats()
-        rfb = random.randint(0, 700)
-        if (random.random() < .3):
-            rfb = 0
-        for interface in portstats.keys():
-            portstats[interface] = rfb
-            Agent.updateHostsBandwidth(interface, portstats[interface])
-            #Agent.updateActorCritic(interface, data)
-        Agent.displayALLHostsBandwidths()
+        stats.show_stat()
+#        portstats = stats.get_interface_stats()
+        # rfb = random.randint(0, 700)
+        # if (random.random() < .3):
+        #     rfb = 0
+        # for interface in portstats.keys():
+        #     portstats[interface] = rfb
+        #     Agent.updateHostsBandwidth(interface, portstats[interface])
+        #     #Agent.updateActorCritic(interface, data)
+        # Agent.displayALLHostsBandwidths()
        # print(stats.get_interface_stats())

@@ -14,6 +14,7 @@ from mininet.log import setLogLevel, info, warn, error, debug
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
 from monitor.monitor import monitor_devs_ng
+from monitor.monitor import monitor_qlen
 from multiprocessing import Process
 from mininet.term import makeTerm
 from mininet.link import TCLink
@@ -89,6 +90,15 @@ def disable_dctcp():
     disable_tcp_ecn()
 
 
+def get_intf_list(net):
+    switches = net.switches
+    sw_intfs = []
+    for sw in switches:
+        for intf in sw.intfNames():
+            if intf is not 'lo':
+                sw_intfs.append(intf)
+    return sw_intfs
+
 def trafficGen(args, hosts, net):
     ''' Run the traffic generator and monitor all of the interfaces '''
     listen_port = 12345
@@ -112,13 +122,19 @@ def trafficGen(args, hosts, net):
     for h in hosts:
         h.cmd('nc -nzv %s %d' % (h.IP(), listen_port))
 
-    monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
+    ifaces = get_intf_list(net)
 
-    monitor.start()
+    monitor1 = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
+    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(ifaces, 1, '%s/qlen.txt' % args.output_dir))
+
+    monitor1.start()
+    monitor2.start()
 
     sleep(args.time)
     info('*** Stopping monitor\n')
-    monitor.terminate()
+    monitor1.terminate()
+    monitor2.terminate()
+
     os.system("killall bwm-ng")
 
     info('*** Stopping load-generators\n')
@@ -126,56 +142,48 @@ def trafficGen(args, hosts, net):
         h.cmd('killall loadgen')
 
 
-def traffic_generation(net, topo, duration):
-    """
-            Generate traffics and test the performance of the network.
-    """
-    flows_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
-                   ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
-    print("Running iperf test")
-    # 1. Start iperf. (Elephant flows)
-    # Start the servers.
-    serversList = set([peer[1] for peer in flows_peers])
-    for server in serversList:
-        filename = server[1:]
-        server = net.get(server)
-        server.cmd("iperf -s > %s/%s &" % (args.output_dir, 'server' + filename + '.txt'))
-        # server.cmd("iperf -s > /dev/null &")   # Its statistics is useless, just throw away.
-    monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
-    sleep(3)
+# def traffic_generation(net, topo, duration):
+#     """
+#             Generate traffics and test the performance of the network.
+#     """
+#     flows_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
+#                    ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
+#     print("Running iperf test")
+#     # 1. Start iperf. (Elephant flows)
+#     # Start the servers.
+#     serversList = set([peer[1] for peer in flows_peers])
+#     for server in serversList:
+#         filename = server[1:]
+#         server = net.get(server)
+#         server.cmd("iperf -s > %s/%s &" % (args.output_dir, 'server' + filename + '.txt'))
+#         # server.cmd("iperf -s > /dev/null &")   # Its statistics is useless, just throw away.
+#     monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
+#     sleep(3)
 
-    # Start the clients.
-    for src, dest in flows_peers:
-        server = net.get(dest)
-        client = net.get(src)
-        filename = src[1:]
-        client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), duration, args.output_dir, 'client' + filename + '.txt'))
-        # Its statistics is useless, just throw away. 1990 just means a great number.
-        #client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
-        sleep(3)
+#     # Start the clients.
+#     for src, dest in flows_peers:
+#         server = net.get(dest)
+#         client = net.get(src)
+#         filename = src[1:]
+#         client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), duration, args.output_dir, 'client' + filename + '.txt'))
+#         # Its statistics is useless, just throw away. 1990 just means a great number.
+#         #client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
+#         sleep(3)
 
-    # Wait for the traffic to become stable.
-    sleep(10)
+#     # Wait for the traffic to become stable.
+#     sleep(10)
 
-    # 2. Start bwm-ng to monitor throughput.
-    monitor = Process(target=monitor_devs_ng, args=('%s/bwmng.txt' % args.output_dir, 1.0))
-    monitor.start()
+#     # 2. Start bwm-ng to monitor throughput.
+#     monitor = Process(target=monitor_devs_ng, args=('%s/bwmng.txt' % args.output_dir, 1.0))
+#     monitor.start()
 
-    # 3. The experiment is going on.
-    sleep(duration + 5)
+#     # 3. The experiment is going on.
+#     sleep(duration + 5)
 
-    # 4. Shut down.
-    monitor.terminate()
-    Popen("killall -9 top bwm-ng", shell=True).wait()
-    os.system('killall iperf')
-
-
-def pingTest(net):
-    """
-        Start ping test.
-    """
-    net.pingAll()
-
+#     # 4. Shut down.
+#     monitor.terminate()
+#     Popen("killall -9 top bwm-ng", shell=True).wait()
+#     os.system('killall iperf')
 
 # def monitor_devs_ng(fname="./txrate.txt", interval_sec=0.1):
 #     """
@@ -208,6 +216,13 @@ def clean():
     Popen('killall iperf3', shell=True).wait()
     Popen('killall xterm', shell=True).wait()
     Popen('killall python2.7', shell=True).wait()
+
+
+def pingTest(net):
+    """
+        Start ping test.
+    """
+    net.pingAll()
 
 
 def FatTreeTest(args, controller=None):

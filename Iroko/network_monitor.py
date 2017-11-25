@@ -87,21 +87,22 @@ class NetworkMonitor(app_manager.RyuApp):
         # free bandwidth of links respectively.
         self.monitor_thread = hub.spawn(self._monitor)
         # self.save_freebandwidth_thread = hub.spawn(self._save_bw_graph)
-        self.Agent = LearningAgent(15)
+        self.Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
 
     def HandleDataCollection(self, bodys):
-        print("hello")
         for dpid in sorted(bodys.keys()):
-            print(dpid)
             #you have device id 300*
             #Also port between 1 - 4 use these
             if(dpid - 3000 >=0):
                 for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
                     data = np.array(stat)
-                    if(data[0] < 30):
+                    if(stat.port_no < 30):
                         self.Agent.addMemory(data)
+                        fb = self.free_bandwidth[dpid][stat.port_no]                        
+                        self.Agent.updateHostsBandwidth(dpid, stat.port_no , fb)
+            self.Agent.displayAllHosts()
+            self.Agent.displayALLHostsBandwidths()
 
-        print(self.Agent.getSample())
     def _monitor(self):
         """
                 Main entry method of monitoring traffic.

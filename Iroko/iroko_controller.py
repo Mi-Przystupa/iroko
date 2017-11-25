@@ -2,14 +2,14 @@ from __future__ import division
 import copy
 from operator import attrgetter
 
-from ryu import cfg
-from ryu.base import app_manager
-from ryu.base.app_manager import lookup_service_brick
-from ryu.controller import ofp_event
-from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
-from ryu.controller.handler import set_ev_cls
-from ryu.ofproto import ofproto_v1_3
-from ryu.lib import hub
+#from ryu import cfg
+#from ryu.base import app_manager
+#from ryu.base.app_manager import lookup_service_brick
+#from ryu.controller import ofp_event
+#from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
+#from ryu.controller.handler import set_ev_cls
+#from ryu.ofproto import ofproto_v1_3
+#from ryu.lib import hub
 import sys
 import time
 import subprocess
@@ -24,6 +24,15 @@ from LearningAgent import LearningAgent
 MAX_CAPACITY = 10000   # Max capacity of link
 TOSHOW = True
 
+###########################################
+#Stuff for learning
+import numpy as np
+import torch
+from LearningAgent import LearningAgent
+
+Agent = LearningAgent(15)
+###########################################
+
 i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
            '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
@@ -33,7 +42,7 @@ class StatsCollector():
     """
             NetworkMonitor is a Ryu app for collecting traffic information.
     """
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+#    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
         self.name = 'monitor'
@@ -53,6 +62,10 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
+        print("hi michael")
+        self.Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+
+
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -65,6 +78,21 @@ class StatsCollector():
         self.prev_util = curr_util
         print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
         return loss_d, overlimits_d, util_d
+
+    def HandleDataCollection(self, bodys):
+        for dpid in sorted(bodys.keys()):
+            #you have device id 300*
+            #Also port between 1 - 4 use these
+            if(dpid - 3000 >=0):
+                for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
+                    data = np.array(stat)
+                    if(stat.port_no < 30):
+                        self.Agent.addMemory(data)
+                        fb = self.free_bandwidth[dpid][stat.port_no]                        
+                        self.Agent.updateHostsBandwidth(dpid, stat.port_no , fb)
+            self.Agent.displayAllHosts()
+            self.Agent.displayALLHostsBandwidths()
+
 
     def _get_bandwidths(self, iface_list):
         #cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
@@ -166,6 +194,6 @@ class StatsCollector():
 
 
 if __name__ == '__main__':
+    stats = StatsCollector()
     while(1):
-        stats = StatsCollector()
         stats.show_stat()

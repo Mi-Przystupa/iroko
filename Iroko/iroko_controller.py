@@ -1,15 +1,6 @@
 from __future__ import division
-import copy
 from operator import attrgetter
 
-from ryu import cfg
-from ryu.base import app_manager
-from ryu.base.app_manager import lookup_service_brick
-from ryu.controller import ofp_event
-from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
-from ryu.controller.handler import set_ev_cls
-from ryu.ofproto import ofproto_v1_3
-from ryu.lib import hub
 import sys
 import time
 import subprocess
@@ -33,8 +24,6 @@ class StatsCollector():
     """
             NetworkMonitor is a Ryu app for collecting traffic information.
     """
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-
     def __init__(self, *args, **kwargs):
         self.name = 'monitor'
         self.datapaths = {}
@@ -92,16 +81,6 @@ class StatsCollector():
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
         return curr_bandwidth
 
-    def _get_active_ports(self):
-        sw = self.port_features
-        iface_list = []
-        for dpid in sorted(sw.keys()):
-            for port in sorted(sw[dpid]):
-                if port != ofproto_v1_3.OFPP_LOCAL:
-                    iface = str(dpid) + "-eth" + str(port)
-                    iface_list.append(iface)
-        return iface_list
-
     def _get_free_bw(self, capacity, speed):
         # freebw: Kbit/s
         return max(capacity - speed * 8 / 1000.0, 0)
@@ -119,7 +98,6 @@ class StatsCollector():
         loss_sum_new = 0
         overlimits = 0
         free_bw = 0
-        avg_util_new = 0
 
         i = 0
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
@@ -128,8 +106,6 @@ class StatsCollector():
         for row in output.split('\n'):
             if row != '':
                 iface_list.append(row)
-
-        print(iface_list)
 
         for iface in iface_list:
             cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
@@ -145,21 +121,26 @@ class StatsCollector():
             overlimits += int(output2)
             i += 1
         bandwidths = self._get_bandwidths(iface_list)
-        avg_util = sum(bandwidths.itervalues())
+        free_bandwidths = {}
+        for iface, bandwidth in bandwidths.iteritems():
+            free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
+        sum_bw = sum(bandwidths.itervalues())
+        sum_free_bw = sum(free_bandwidths.itervalues())
+
         loss_d, overlimits_d, util_d = self._get_deltas(loss_sum_new, overlimits, free_bw)
         print("Current Old Loss: %d" % loss_sum_old)
         print("Current New Loss: %d" % loss_sum_new)
         print("Overlimits: %d" % overlimits)
 
-        print("Free BW Sum: %d" % free_bw)
-        print("Current Util Sum: %f" % avg_util)
+        print("Free BW Sum: %d" % sum_free_bw)
+        print("Current Util Sum: %f" % sum_bw)
 
         max_capacity_sum = MAX_CAPACITY * i
         print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, i))
-        curr_avg_util = (max_capacity_sum - free_bw) / max_capacity_sum
-        curr_avg_util_alt = (avg_util_new / max_capacity_sum)
-        print("Current Average Utilization: %f" % curr_avg_util)
-        print("Current Average Utilization ALT: %f" % curr_avg_util_alt)
+        total_util_ratio = (sum_bw) / max_capacity_sum
+        total_util_avg = (sum_bw) / bandwidths.__len__()
+        print("Current Average Utilization: %f" % total_util_avg)
+        print("Current Ratio of Utilization: %f" % total_util_ratio)
 
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13

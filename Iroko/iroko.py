@@ -80,12 +80,12 @@ def disable_tcp_ecn():
 
 
 def enable_dctcp():
-    Popen("sysctl -w net.ipv4.tcp_dctcp_enable=1", shell=True).wait()
+    Popen("sysctl -w net.ipv4.tcp_congestion_control=dctcp", shell=True).wait()
     enable_tcp_ecn()
 
 
 def disable_dctcp():
-    Popen("sysctl -w net.ipv4.tcp_dctcp_enable=0", shell=True).wait()
+    Popen("sysctl -w net.ipv4.tcp_congestion_control=cubic", shell=True).wait()
     disable_tcp_ecn()
 
 
@@ -215,19 +215,22 @@ def FatTreeTest(args, controller=None):
     ovs_v = 13  # default value
     is_ecmp = True  # default value
 
-    if controller is not None:
-        c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-        if controller == "Iroko":
-            makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-            # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
-        elif controller == "HController":
-            c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-            # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
-            Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
-            ovs_v = 10
-            is_ecmp = False
-        net.addController(c0)
-
+    # if controller is not None:
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    #     if controller == "Iroko":
+    #         #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+    #         #makeTerm(c0, cmd="sudo python iroko_controller.py")
+    #     # Popen("./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py", shell=True)
+    #         Popen("iroko_controller.py", shell=True)
+    #     elif controller == "HController":
+    #         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    #         # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
+    #         Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
+    #         ovs_v = 10
+    #         is_ecmp = False
+    #    net.addController(c0)
+    #s Popen("sudo python iroko_controller.py", shell=True)
+    makeTerm(c0, cmd="sudo python iroko_controller.py")
     net.start()
     if args.dctcp:
         enable_dctcp()
@@ -239,7 +242,6 @@ def FatTreeTest(args, controller=None):
     hosts = net.hosts
     trafficGen(args, hosts, net)
     net.stop()
-
 
 
 def NonBlockingTest(args):

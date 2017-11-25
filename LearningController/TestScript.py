@@ -10,8 +10,8 @@ numSimulation = 100000000
 simulationLengths = torch.zeros(numSimulation);
 simulationCount = 0
 maxSeen = 0
-#Agent = LearningController(4, 2,8 , 3, .001, .9, epsilon = .9, decay = 1e-8 )
-Agent = LearningController(4, 2,8 , 3, .001, .1, 1e-8, './modelconfig')
+Agent = LearningController(4, 2,8 , 3, .001, .9, epsilon = .9, decay = 1e-8 )
+#Agent = LearningController(4, 2,8 , 3, .001, .1, 1e-8, './modelconfig')
 for params in Agent.model.parameters():
     print(params)
 

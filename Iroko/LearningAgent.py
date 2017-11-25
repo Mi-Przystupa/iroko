@@ -77,7 +77,7 @@ class SARSA:
 class Actor:
     def __init__(self, inputs, numNeuron1, numNeuron2, learningRate = 1e-6,epsilon = .5,  filepath = None):
         self.model = torch.nn.Sequential(
-                torch.nn.Linear(inputs + actions, numNeuron1, True ), 
+                torch.nn.Linear(inputs, numNeuron1, True ), 
                 torch.nn.ReLU(),
                 torch.nn.Linear(numNeuron1, numNeuron2, True),
                 torch.nn.ReLU(),
@@ -143,7 +143,7 @@ class LearningAgent:
         #inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001, filepath = None
         # five actions 50% decrease, 25% decrease, 0 25% increase, 50% increase
         self.SARSACritic = SARSA(10, 3, 15, 20 , alpha, gamma, epsilon = .9, decay=.001);
-        self.Actor = Actor(10, 1
+        self.Actor = Actor(10, 20, 10, learningRate = 1e-6,epsilon = .5,  filepath = None)
     def initializePorts(self, ports):
         #cleans out old ports and creates maps for new ones
         self.hosts = {}
@@ -156,8 +156,15 @@ class LearningAgent:
 
     def getSample(self):
         return self.memory.sample()
-    def ActorCriticUpdate(self, interface, data):
+    def updateActorCritic(self, interface, data):
         # really kinda depends on what sort of input vector I have....
+        return 0
+
+
+
+    def getHostsBandwidth(self, interface):
+        return self.hosts[interface]['alloctBandwidth']
+
     
     def updateHostsBandwidth(self, interface, freebandwidth):
         key = str(interface)

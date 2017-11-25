@@ -13,7 +13,7 @@ sys.path.append('./')
 import numpy as np
 import torch
 import random
-# from LearningAgent import LearningAgent
+from LearningAgent import LearningAgent
 
 MAX_CAPACITY = 10000   # Max capacity of link
 TOSHOW = True
@@ -197,19 +197,19 @@ def HandleDataCollection(self, bodys):
 
 if __name__ == '__main__':
     stats = StatsCollector()
-    # Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
-    # Agent.initializePorts(i_h_map)
-    # Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'})
-    # Agent.initializePorts({})
+    Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+    Agent.initializePorts(i_h_map)
+    Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
+    Agent.initializePorts({})
     while(1):
         stats.show_stat()
-#        portstats = stats.get_interface_stats()
-        # rfb = random.randint(0, 700)
-        # if (random.random() < .3):
-        #     rfb = 0
-        # for interface in portstats.keys():
-        #     portstats[interface] = rfb
-        #     Agent.updateHostsBandwidth(interface, portstats[interface])
-        #     #Agent.updateActorCritic(interface, data)
-        # Agent.displayALLHostsBandwidths()
-       # print(stats.get_interface_stats())
+        portstats = stats.get_interface_stats()
+        rfb = random.randint(0, 700)
+        if (random.random() < .3):
+             rfb = 0
+        for interface in portstats.keys():
+            portstats[interface] = rfb
+            Agent.updateHostsBandwidth(interface, portstats[interface])
+            #Agent.updateActorCritic(interface, data)
+        Agent.displayALLHostsBandwidths()
+        print(stats.get_interface_stats())

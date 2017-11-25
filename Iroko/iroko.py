@@ -189,7 +189,8 @@ def pingTest(net):
 
 def clean():
     ''' Clean any the running instances of POX '''
-
+    if args.dctcp:
+        disable_dctcp()
     p_pox = Popen("ps aux | grep 'pox' | awk '{print $2}'",
                   stdout=PIPE, shell=True)
     p_pox.wait()
@@ -228,6 +229,8 @@ def FatTreeTest(args, controller=None):
         net.addController(c0)
 
     net.start()
+    if args.dctcp:
+        enable_dctcp()
     sleep(2)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)
@@ -235,13 +238,13 @@ def FatTreeTest(args, controller=None):
     sleep(2)
     hosts = net.hosts
     trafficGen(args, hosts, net)
-    #CLI(net)
     net.stop()
+
 
 
 def NonBlockingTest(args):
 
-    net, topo = topo_non_block.createNonBlockTopo(pod=4, density=2, cpu=args.cpu)
+    net, topo = topo_non_block.createNonBlockTopo(pod=4, cpu=args.cpu)
     net.start()
     topo_non_block.configureTopo(net, topo)
 

@@ -1,6 +1,8 @@
 from __future__ import division
 from operator import attrgetter
 
+import time, threading
+import socket
 import sys
 import time
 import subprocess
@@ -25,6 +27,26 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 
+class IrokoController(threading.Thread):
+    def __init__(self, name):
+        print "Initializing controller"
+        threading.Thread.__init__(self)
+        self.name = name
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def run(self):
+        while True:
+            time.sleep(1)
+            for iface in i_h_map:
+                txrate = random.randint(1310720, 2621440)
+                self.send_cntrl_pckt(self.sock, iface, txrate)
+
+    def send_cntrl_pckt(sock, interface, txrate):
+        ip = "192.168.10." + i_h_map[interface].split('.')[-1]
+        port = 20130
+        pckt = str(txrate) + '\0'
+        print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
+        sock.sendto(pckt, (ip, port))
 
 class StatsCollector():
     """
@@ -226,6 +248,10 @@ def HandleDataCollection(self, bodys):
 
 
 if __name__ == '__main__':
+    # Spawning Iroko controller
+    ic = IrokoController("Iroko_Thead")
+    ic.start()
+
     stats = StatsCollector()
     Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
     Agent.initializePorts(i_h_map)

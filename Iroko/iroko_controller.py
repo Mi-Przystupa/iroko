@@ -49,6 +49,7 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
+	self.iface_list = self._get_interfaces()
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
        	# loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -128,14 +129,19 @@ class StatsCollector():
             free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
         return free_bandwidths
 
+    def _get_bw_deltas(self, bandwidths, bandwidths_old):
+
+	return 0
+
     def _get_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
         output = subprocess.check_output(cmd, shell=True)
-        iface_list = []
+        iface_list_temp = []
         for row in output.split('\n'):
             if row != '':
-                iface_list.append(row)
-        return iface_list
+                iface_list_temp.append(row)
+	return_list = [iface for iface in iface_list_temp if iface in i_h_map] #filter against actual hosts
+	return return_list
 
     def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
         bw_sum = sum(bandwidths.itervalues())
@@ -174,10 +180,10 @@ class StatsCollector():
         return drops, overlimits, queues
 
     def get_interface_stats(self):
-        iface_list = self._get_interfaces()
-        bandwidths = self._get_bandwidths(iface_list)
+        #iface_list = self._get_interfaces()
+        bandwidths = self._get_bandwidths(self.iface_list)
         free_bandwidths = self._get_free_bandwidths(bandwidths)
-        drops, overlimits, queues = self._get_qdisc_stats(iface_list)
+        drops, overlimits, queues = self._get_qdisc_stats(self.iface_list)
         return bandwidths, free_bandwidths, drops, overlimits, queues
 
     def show_stat(self):
@@ -191,7 +197,7 @@ class StatsCollector():
         #     print
         bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
         bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(bandwidths, free_bandwidths, drops, overlimits, queues)
-        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(loss_sum, overlimit_sum, bw_free_sum)
+        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(loss_sum, overlimit_sum, bw_sum)
         print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
         print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
         print("Backlog: %d" % queued_sum)

@@ -61,6 +61,13 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
+	self.iface_list = []
+	self.prev_bandwidth = {}
+	
+
+
+
+
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -126,7 +133,18 @@ class StatsCollector():
                 output = 0
             bytes_new[iface] = float(output) / 1024
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
-        return curr_bandwidth
+
+	#Get bandwidth deltas
+
+	bandwidth_d = {} 
+	if self.prev_bandwidth == {}:
+		bandwidth_d = curr_bandwidth #base case
+	else:
+		for iface in curr_bandwidth:
+			bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface] #calculate delta
+	self.prev_bandwidth = curr_bandwidth 
+	
+        return curr_bandwidth, bandwidth_d
 
     def _get_free_bw(self, capacity, speed):
         # freebw: Kbit/s
@@ -191,7 +209,7 @@ class StatsCollector():
 
     def get_interface_stats(self):
         #iface_list = self._get_interfaces()
-        bandwidths = self._get_bandwidths(self.iface_list)
+        bandwidths, bandwidth_d = self._get_bandwidths(self.iface_list)
         free_bandwidths = self._get_free_bandwidths(bandwidths)
         drops, overlimits, queues = self._get_qdisc_stats(self.iface_list)
         return bandwidths, free_bandwidths, drops, overlimits, queues
@@ -254,7 +272,7 @@ if __name__ == '__main__':
     while(1):
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-        for interface in i_h_map.keys():
+        for interface in i_h_map:
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # My Naive way to update bandwidth

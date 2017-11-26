@@ -195,9 +195,9 @@ class StatsCollector():
                 qu = re_queued.findall(output)
             except:
                 print("Empty Request")
-                dr[0] = 0
-                ov[0] = 0
-                qu[0] = 0
+                dr[iface] = 0
+                ov[iface] = 0
+                qu[iface] = 0
             drops[iface] = int(dr[0])
             overlimits[iface] = int(ov[0])
             queues[iface] = int(qu[0])
@@ -278,7 +278,9 @@ if __name__ == '__main__':
             reward = 1
             Agent.updateCritic(interface, data, reward)
             Agent.updateActor(interface, reward)
-            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            txrate = random.randint(1310720, 2621440)
+            # ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            ic.send_cntrl_pckt(interface, txrate)
 
         Agent.predictBandwidthOnHosts()
         # update the allocated bandwidth

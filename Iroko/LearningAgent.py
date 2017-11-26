@@ -38,6 +38,7 @@ class SARSA:
 
     def ReturnBestAction(self):
         bAction = torch.zeros(self.actionlength)
+        bAction[0] = 1.0
         bVal = -1000
         for i in range(0, self.actionlength):
             action = torch.zeros(self.actionlength)
@@ -90,7 +91,7 @@ class Actor:
     def takeAction(self, state, asvector, actiontoPerform):
         #actionToPerform is -1, 0, or 1 
         if (random.random() < self.epsilon):
-            action = random.random() * actiontoPerform + actiontoPerform
+            action = random.random() * actiontoPerform
             return action
         return self.model(Variable(torch.cat((state,asvector), 0))).data[0] 
 
@@ -168,10 +169,9 @@ class LearningAgent:
         host = self.hosts[interface]
         self.Actor.updateActions(host['controller'].prevState, host['action'], host['modifier'],   reward)
 
-    def updateCritic(self, interface, data):
+    def updateCritic(self, interface, data, reward):
         #assumes data is a pytorch.tensor
         data = data;
-        reward = 1
         action = self.hosts[interface]['action']
         self.hosts[interface]['controller'].UpdateValueFunction(data, action, reward) 
     
@@ -191,14 +191,16 @@ class LearningAgent:
             print("Something is wrong")
 
         adjustment = self.Actor.takeAction(self.hosts[interface]['controller'].prevState, hostsAction, a)
-        adjustment = max(min(adjustment, 2.0), -2.0)
+        adjustment = max(min(adjustment, .90), -0.20)
         self.hosts[interface]['predictedAllocation'] += self.hosts[interface]['predictedAllocation'] * adjustment
         self.hosts[interface]['action'] = hostsAction
         self.hosts[interface]['modifier'] = adjustment
 
     def getHostsBandwidth(self, interface):
         return self.hosts[interface]['alloctBandwidth']
-
+    
+    def getHostsPredictedBandwidth(self, interface):
+        return self.hosts[interface]['predictedAllocation']
     
     def updateHostsBandwidth(self, interface, freebandwidth):
         key = str(interface)
@@ -235,4 +237,9 @@ class LearningAgent:
         allbandwidths = ""
         for host in self.hosts.keys():
             allbandwidths = allbandwidths + " " + str(self.hosts[host]['alloctBandwidth'])
+        print(allbandwidths)
+    def displayALLHostsPredictedBandwidths(self):
+        allbandwidths = ""
+        for host in self.hosts.keys():
+            allbandwidths = allbandwidths + " " + str(self.hosts[host]['predictedAllocation'])
         print(allbandwidths)

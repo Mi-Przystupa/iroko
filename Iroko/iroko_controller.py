@@ -41,11 +41,11 @@ class IrokoController(threading.Thread):
                 txrate = random.randint(1310720, 2621440)
                 self.send_cntrl_pckt(self.sock, iface, txrate)
 
-    def send_cntrl_pckt(sock, interface, txrate):
+    def send_cntrl_pckt(self, sock, interface, txrate):
         ip = "192.168.10." + i_h_map[interface].split('.')[-1]
         port = 20130
         pckt = str(txrate) + '\0'
-        print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
+        #print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
         sock.sendto(pckt, (ip, port))
 
 class StatsCollector():
@@ -266,13 +266,15 @@ if __name__ == '__main__':
             #My Naive way to update bandwidth
             Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
             #A supposedly more eloquent way of doing it
-            Agent.updateCritic( interface, data)
-            Agent.updateActor(interface, 1)
+            reward = 1
+            Agent.updateCritic( interface, data, reward)
+            Agent.updateActor(interface, reward)
             
         Agent.predictBandwidthOnHosts() 
         #update the allocated bandwidth
         #wait for update to happen
 
 
-        Agent.displayALLHostsBandwidths()
+        #Agent.displayALLHostsBandwidths()
+        Agent.displayALLHostsPredictedBandwidths()
    #     print(stats.get_interface_stats())

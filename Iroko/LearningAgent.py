@@ -3,6 +3,7 @@ import torch.nn
 from  torch.autograd import Variable
 import random
 import numpy as np
+import math
 
 class SARSA:
     def __init__(self, inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001, filepath = None):
@@ -197,10 +198,10 @@ class LearningAgent:
         self.hosts[interface]['modifier'] = adjustment
 
     def getHostsBandwidth(self, interface):
-        return self.hosts[interface]['alloctBandwidth']
+        return int(math.ceil(self.hosts[interface]['alloctBandwidth']))
     
     def getHostsPredictedBandwidth(self, interface):
-        return self.hosts[interface]['predictedAllocation']
+        return int(math.ceil(self.hosts[interface]['predictedAllocation']))
     
     def updateHostsBandwidth(self, interface, freebandwidth):
         key = str(interface)

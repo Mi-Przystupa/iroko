@@ -99,6 +99,7 @@ def get_intf_list(net):
                 sw_intfs.append(intf)
     return sw_intfs
 
+
 def trafficGen(args, hosts, net):
     ''' Run the traffic generator and monitor all of the interfaces '''
     listen_port = 12345
@@ -233,7 +234,6 @@ def FatTreeTest(args, controller=None):
     if controller is not None:
         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py > controller.log", shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
             # elif controller == "HController":
@@ -242,9 +242,11 @@ def FatTreeTest(args, controller=None):
             #     Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
             #     ovs_v = 10
             #     is_ecmp = False
-        net.addController(c0)
+            net.addController(c0)
 
     net.start()
+    Popen("sudo python iroko_controller.py > controller.log", shell=True)
+
     sleep(2)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
 
@@ -262,6 +264,7 @@ def FatTreeTest(args, controller=None):
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
     trafficGen(args, hosts, net)
     net.stop()
+
 
 def NonBlockingTest(args):
 

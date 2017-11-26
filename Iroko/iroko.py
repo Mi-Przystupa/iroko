@@ -256,11 +256,10 @@ def FatTreeTest(args, controller=None):
     if args.dctcp:
         enable_dctcp()
     if args.dctcp:
-        for host in hosts:
+        for host in topo.HostList:
             host_o = net.get(host)
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
-
     trafficGen(args, hosts, net)
     net.stop()
 

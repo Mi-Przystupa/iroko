@@ -278,9 +278,9 @@ if __name__ == '__main__':
             reward = 1
             Agent.updateCritic(interface, data, reward)
             Agent.updateActor(interface, reward)
-            txrate = random.randint(1310720, 2621440)
-            # ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
-            ic.send_cntrl_pckt(interface, txrate)
+            # txrate = random.randint(1310720, 2621440)
+            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            # ic.send_cntrl_pckt(interface, txrate)
 
         Agent.predictBandwidthOnHosts()
         # update the allocated bandwidth

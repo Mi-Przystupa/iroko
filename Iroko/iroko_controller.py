@@ -18,7 +18,7 @@ import torch
 import random
 from LearningAgent import LearningAgent
 
-MAX_CAPACITY = 10000   # Max capacity of link
+MAX_CAPACITY = 5e6   # Max capacity of link
 TOSHOW = True
 
 ###########################################
@@ -284,6 +284,9 @@ if __name__ == '__main__':
         # update the allocated bandwidth
         # wait for update to happen
 
-        # Agent.displayALLHostsBandwidths()
+        Agent.displayAllHosts()
+        Agent.displayALLHostsBandwidths()
         Agent.displayALLHostsPredictedBandwidths()
+        Agent.displayAdjustments()
+
    #     print(stats.get_interface_stats())

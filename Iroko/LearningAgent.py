@@ -26,7 +26,6 @@ class SARSA:
             self.model.load_state_dict(torch.load(filepath))
 
 
-
     def PerformAction(self):
         if(random.random() < self.epsilon):
             # makes sure minimum is 0
@@ -131,7 +130,7 @@ class CircularList:
         return len(self.memory)
 
 class LearningAgent:
-    def __init__(self,alpha = 1e-6, gamma = .9, l = .1,  capacity= 15, globalBW = 0, defaultmax = 0):
+    def __init__(self,alpha = 1e-6, gamma = .9, l = .1,  capacity= 15, globalBW = 0, defaultmax = 10e6):
         self.memory = CircularList(capacity)
         self.hosts = {}
         self.globalBandWidth = globalBW
@@ -194,6 +193,8 @@ class LearningAgent:
         adjustment = self.Actor.takeAction(self.hosts[interface]['controller'].prevState, hostsAction, a)
         adjustment = max(min(adjustment, .90), -0.20)
         self.hosts[interface]['predictedAllocation'] += self.hosts[interface]['predictedAllocation'] * adjustment
+        self.hosts[interface]['predictedAllocation'] = max(0, self.hosts[interface]['predictedAllocation'])
+        self.hosts[interface]['predictedAllocation'] = min(self.hosts[interface]['predictedAllocation'], self.defaultmax)
         self.hosts[interface]['action'] = hostsAction
         self.hosts[interface]['modifier'] = adjustment
 
@@ -220,10 +221,10 @@ class LearningAgent:
             delta = R + self.gamma *  currhost['alloctBandwidth'] - sTrue
 
             currhost['e'] += 1
-            currhost['alloctBandwidth'] += self.alpha * delta * currhost['e']
+            currhost['alloctBandwidth'] +=  delta * currhost['e']
 
             currhost['e'] = self.gamma* self.lam * currhost['e']
-            currhost['alloctBandwidth'] = max(0, currhost['alloctBandwidth'])
+            currhost['alloctBandwidth'] = min( max(0, currhost['alloctBandwidth']), self.defaultmax)
 
             self.hosts[key] = currhost
 
@@ -238,9 +239,14 @@ class LearningAgent:
         allbandwidths = ""
         for host in self.hosts.keys():
             allbandwidths = allbandwidths + " " + str(self.hosts[host]['alloctBandwidth'])
-        print(allbandwidths)
+        print("Alloct Bandwidth: " + allbandwidths)
     def displayALLHostsPredictedBandwidths(self):
         allbandwidths = ""
         for host in self.hosts.keys():
             allbandwidths = allbandwidths + " " + str(self.hosts[host]['predictedAllocation'])
-        print(allbandwidths)
+        print("Predict Banwidth: " + allbandwidths)
+    def displayAdjustments(self):
+        allbandwidths = ""
+        for host in self.hosts.keys():
+            allbandwidths = allbandwidths + " " + str(self.hosts[host]['modifier'])
+        print("Bandwidth Adjustment: " + allbandwidths)

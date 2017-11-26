@@ -250,7 +250,7 @@ def HandleDataCollection(self, bodys):
 if __name__ == '__main__':
     # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
-    ic.start()
+    #ic.start()
 
     stats = StatsCollector()
     Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
@@ -269,6 +269,8 @@ if __name__ == '__main__':
             reward = 1
             Agent.updateCritic( interface, data, reward)
             Agent.updateActor(interface, reward)
+            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth( interface))
+
             
         Agent.predictBandwidthOnHosts() 
         #update the allocated bandwidth

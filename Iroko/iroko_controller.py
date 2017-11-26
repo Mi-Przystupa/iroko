@@ -5,11 +5,8 @@ import time
 import threading
 import socket
 import sys
-import time
 import subprocess
 import re
-
-sys.path.append('./')
 
 ###########################################
 # Stuff for learning
@@ -31,7 +28,7 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
 
 class IrokoController(threading.Thread):
     def __init__(self, name):
-        print "Initializing controller"
+        print("Initializing controller")
         threading.Thread.__init__(self)
         self.name = name
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -47,7 +44,7 @@ class IrokoController(threading.Thread):
         ip = "192.168.10." + i_h_map[interface].split('.')[-1]
         port = 20130
         pckt = str(txrate) + '\0'
-        print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
+        print("interface: %s, ip: %s, rate: %s") % (interface, ip, txrate)
         self.sock.sendto(pckt, (ip, port))
 
 
@@ -57,24 +54,13 @@ class StatsCollector():
     """
 
     def __init__(self, *args, **kwargs):
-        self.name = 'monitor'
-        self.datapaths = {}
-        self.port_speed = {}
-        self.flow_stats = {}
-        self.flow_speed = {}
-        self.stats = {}
-        self.port_features = {}
-        self.free_bandwidth = {}   # self.free_bandwidth = {dpid:{port_no:free_bw,},} unit:Kbit/s
-        self.graph = None
-        self.capabilities = None
-        self.best_paths = None
+        self.name = 'Collector'
         self.prev_overlimits = 0
         self.prev_loss = 0
         self.prev_util = 0
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
-        self.iface_list = self._get_interfaces()
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -156,7 +142,7 @@ class StatsCollector():
 
         return 0
 
-    def _get_interfaces(self):
+    def _set_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
         output = subprocess.check_output(cmd, shell=True)
         iface_list_temp = []
@@ -259,15 +245,14 @@ def HandleDataCollection(self, bodys):
 if __name__ == '__main__':
     # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
-    # ic.start()
+    # ic.run()
 
     stats = StatsCollector()
     Agent = LearningAgent(capacity=15, globalBW=MAX_CAPACITY * 16, defaultmax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
-    Agent.initializePorts({})
+    stats._set_interfaces()
     while(1):
         # update Agents internal representations
-        iface_list = stats._get_interfaces()
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
         for interface in i_h_map.keys():
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
@@ -291,4 +276,4 @@ if __name__ == '__main__':
         Agent.displayALLHostsPredictedBandwidths()
         Agent.displayAdjustments()
 
-   #     print(stats.get_interface_stats())
+       #print(stats.get_interface_stats())

@@ -31,7 +31,7 @@ from mininet.util import custom
 
 import os
 
-MAX_QUEUE = 50
+MAX_QUEUE = 100
 DENSITY = 2
 
 

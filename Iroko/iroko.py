@@ -143,71 +143,22 @@ def trafficGen(args, hosts, net):
         h.cmd('killall loadgen')
 
 
-# def traffic_generation(net, topo, duration):
-#     """
-#             Generate traffics and test the performance of the network.
-#     """
-#     flows_peers = [('h011', 'h012'), ('h004', 'h006'), ('h003', 'h004'), ('h007', 'h008'), ('h008', 'h007'), ('h009', 'h010'), ('h013', 'h014'), ('h016', 'h013'),
-#                    ('h002', 'h003'), ('h006', 'h013'), ('h010', 'h009'), ('h012', 'h011'), ('h001', 'h002'), ('h015', 'h002'), ('h005', 'h006'), ('h014', 'h013')]
-#     print("Running iperf test")
-#     # 1. Start iperf. (Elephant flows)
-#     # Start the servers.
-#     serversList = set([peer[1] for peer in flows_peers])
-#     for server in serversList:
-#         filename = server[1:]
-#         server = net.get(server)
-#         server.cmd("iperf -s > %s/%s &" % (args.output_dir, 'server' + filename + '.txt'))
-#         # server.cmd("iperf -s > /dev/null &")   # Its statistics is useless, just throw away.
-#     monitor = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
-#     sleep(3)
-
-#     # Start the clients.
-#     for src, dest in flows_peers:
-#         server = net.get(dest)
-#         client = net.get(src)
-#         filename = src[1:]
-#         client.cmd("iperf -c %s -t %d > %s/%s &" % (server.IP(), duration, args.output_dir, 'client' + filename + '.txt'))
-#         # Its statistics is useless, just throw away. 1990 just means a great number.
-#         #client.cmd("iperf -c %s -u -t %d &" % (server.IP(), 100000))
-#         sleep(3)
-
-#     # Wait for the traffic to become stable.
-#     sleep(10)
-
-#     # 2. Start bwm-ng to monitor throughput.
-#     monitor = Process(target=monitor_devs_ng, args=('%s/bwmng.txt' % args.output_dir, 1.0))
-#     monitor.start()
-
-#     # 3. The experiment is going on.
-#     sleep(duration + 5)
-
-#     # 4. Shut down.
-#     monitor.terminate()
-#     Popen("killall -9 top bwm-ng", shell=True).wait()
-#     os.system('killall iperf')
-
-# def monitor_devs_ng(fname="./txrate.txt", interval_sec=0.1):
-#     """
-#             Use bwm-ng tool to collect interface transmit rate statistics.
-#             bwm-ng Mode: rate;
-#             interval time: 1s.
-#     """
-#     cmd = "sleep 1; bwm-ng -t %s -o csv -u bits -T rate -C ',' > %s" % (interval_sec * 1000, fname)
-#     Popen(cmd, shell=True).wait()
-
-
 def clean():
     ''' Clean any the running instances of POX '''
     if args.dctcp:
         disable_dctcp()
-    p_pox = Popen("ps aux | grep 'pox' | awk '{print $2}'",
+    p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko_controller' | awk '{print $2}'",
                   stdout=PIPE, shell=True)
     p_pox.wait()
     procs = (p_pox.communicate()[0]).split('\n')
-    p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
-                  stdout=PIPE, shell=True)
-    p_ryu.wait()
-    procs.extend((p_ryu.communicate()[0]).split('\n'))
+    # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
+    #               stdout=PIPE, shell=True)
+    # p_ryu.wait()
+    # procs.extend((p_ryu.communicate()[0]).split('\n'))
+    # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
+    #               stdout=PIPE, shell=True)
+    # p_ryu.wait()
+    # procs.extend((p_ryu.communicate()[0]).split('\n'))
     for pid in procs:
         try:
             pid = int(pid)
@@ -233,25 +184,19 @@ def FatTreeTest(args, controller=None):
 
     if controller is not None:
         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-        if controller == "Iroko":
-            #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-            #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
-            # elif controller == "HController":
-            #     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-            #     # makeTerm(c0, cmd="hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP")
-            #     Popen("hedera/pox/pox.py HController --topo=ft,4 --routing=ECMP", shell=True)
-            #     ovs_v = 10
-            #     is_ecmp = False
-            net.addController(c0)
+        net.addController(c0)
 
     net.start()
-    Popen("sudo python iroko_controller.py > controller.log", shell=True)
 
     sleep(2)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
 
     if controller is not None:
         topo_ecmp.connect_controller(net, topo, c0)
+        if controller == "Iroko":
+            Popen("sudo python iroko_controller.py | tee controller.log", shell=True)
+            #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+            #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
         info('** Waiting for switches to connect to the controller\n')
         sleep(2)
     hosts = net.hosts

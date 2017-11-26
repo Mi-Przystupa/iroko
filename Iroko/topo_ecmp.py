@@ -300,10 +300,10 @@ def connect_controller(net, topo, controller):
         host_o.cmdPrint("route add -net 192.168.5.0/24 dev %s-eth1" % (host))
         
         # Configure controller
-        intf = controller.intfs[i - 1]
-        intf.rename("c0-%s-eth1" % host)
-        controller.cmdPrint("ifconfig c0-%s-eth1 192.168.5.%d" % (host, i))
-        controller.cmdPrint("route add 192.168.10.%d dev c0-%s-eth1" % (i, host))
+        # intf = controller.intfs[i - 1]
+        # intf.rename("c0-%s-eth1" % host)
+        controller.cmdPrint("ifconfig c0-eth%s 192.168.5.%d" % (i-1, i))
+        controller.cmdPrint("route add 192.168.10.%d dev c0-eth%s" % (i, i-1))
 
         i += 1
         # host.setIP("10.%d.0.%d" % (i, j))

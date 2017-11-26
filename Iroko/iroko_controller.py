@@ -1,6 +1,8 @@
 from __future__ import division
 from operator import attrgetter
 
+import time, threading
+import socket
 import sys
 import time
 import subprocess
@@ -25,6 +27,26 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 
+class IrokoController(threading.Thread):
+    def __init__(self, name):
+        print "Initializing controller"
+        threading.Thread.__init__(self)
+        self.name = name
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def run(self):
+        while True:
+            time.sleep(1)
+            for iface in i_h_map:
+                txrate = random.randint(1310720, 2621440)
+                self.send_cntrl_pckt(iface, txrate)
+
+    def send_cntrl_pckt(self, interface, txrate):
+        ip = "192.168.10." + i_h_map[interface].split('.')[-1]
+        port = 20130
+        pckt = str(txrate) + '\0'
+        print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
+        self.sock.sendto(pckt, (ip, port))
 
 class StatsCollector():
     """
@@ -232,20 +254,35 @@ def HandleDataCollection(self, bodys):
 
 
 if __name__ == '__main__':
+    # Spawning Iroko controller
+    ic = IrokoController("Iroko_Thead")
+    #ic.start()
+
     stats = StatsCollector()
     Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
-    Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
     Agent.initializePorts({})
     while(1):
-        stats.show_stat()
-      #  portstats = stats.get_interface_stats()
-      #  rfb = random.randint(0, 700)
-      #  if (random.random() < .3):
-      #       rfb = 0
-      #  for interface in portstats.keys():
-      #      portstats[interface] = rfb
-      #      Agent.updateHostsBandwidth(interface, portstats[interface])
-      #      #Agent.updateActorCritic(interface, data)
-      # Agent.displayALLHostsBandwidths()
-      #  print(stats.get_interface_stats())
+        #update Agents internal representations
+        interfaces = stats._get_interfaces()
+        bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
+        for interface in interfaces:
+            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface], \
+                    drops[interface], overlimits[interface], queues[interface]])
+            #My Naive way to update bandwidth
+            Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
+            #A supposedly more eloquent way of doing it
+            reward = 1
+            Agent.updateCritic( interface, data, reward)
+            Agent.updateActor(interface, reward)
+            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth( interface))
+
+            
+        Agent.predictBandwidthOnHosts() 
+        #update the allocated bandwidth
+        #wait for update to happen
+
+
+        #Agent.displayALLHostsBandwidths()
+        Agent.displayALLHostsPredictedBandwidths()
+   #     print(stats.get_interface_stats())

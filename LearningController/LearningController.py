@@ -38,20 +38,18 @@ class LearningController:
 
     def ReturnBestAction(self):
         bAction = torch.zeros(self.actionlength)
-        state = Variable(torch.cat((self.prevState, bAction),0))
         
-        bVal = self.model(state)
+        bVal = -1000
         for i in range(0, self.actionlength):
              
             action = torch.zeros(self.actionlength) 
             action[i] = 1
             state = Variable(torch.cat((self.prevState, action.float()), 0))  
             curVal = self.model(state);
-            if((curVal > bVal).data[0] ):
-                curVal = bVal
+            if(curVal.data[0] > bVal ):
+                bVal = curVal.data[0]
                 bAction = action
-
-        return action
+        return bAction 
 
     def UpdateValueFunction(self, inputs, actions, reward):
         self.model.zero_grad()
@@ -64,7 +62,6 @@ class LearningController:
         #Qupdate = Variable(Qupdate)
         criterion = torch.nn.MSELoss()
         QCurr = reward + self.gamma * QCurr.data
-        print(QCurr)
         QCurr = Variable(QCurr)
         loss = criterion(Qprev, QCurr )
         loss.backward()

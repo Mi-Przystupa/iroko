@@ -233,7 +233,7 @@ def FatTreeTest(args, controller=None):
     if controller is not None:
         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py", shell=True)
+            Popen("sudo python iroko_controller.py > controller.log", shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
             # elif controller == "HController":
@@ -256,11 +256,10 @@ def FatTreeTest(args, controller=None):
     if args.dctcp:
         enable_dctcp()
     if args.dctcp:
-        for host in hosts:
+        for host in topo.HostList:
             host_o = net.get(host)
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
-
     trafficGen(args, hosts, net)
     net.stop()
 

@@ -246,6 +246,7 @@ if __name__ == '__main__':
     Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
     Agent.initializePorts({})
     while(1):
+<<<<<<< HEAD
         stats.show_stat()
       #  portstats = stats.get_interface_stats()
       #  rfb = random.randint(0, 700)
@@ -257,3 +258,28 @@ if __name__ == '__main__':
       #      #Agent.updateActorCritic(interface, data)
       # Agent.displayALLHostsBandwidths()
       #  print(stats.get_interface_stats())
+=======
+        #update Agents internal representations
+        interfaces = stats._get_interfaces()
+        bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
+        for interface in i_h_map.keys():
+            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface], \
+                    drops[interface], overlimits[interface], queues[interface]])
+            #My Naive way to update bandwidth
+            Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
+            #A supposedly more eloquent way of doing it
+            reward = 1
+            Agent.updateCritic( interface, data, reward)
+            Agent.updateActor(interface, reward)
+            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth( interface))
+
+            
+        Agent.predictBandwidthOnHosts() 
+        #update the allocated bandwidth
+        #wait for update to happen
+
+
+        #Agent.displayALLHostsBandwidths()
+        Agent.displayALLHostsPredictedBandwidths()
+   #     print(stats.get_interface_stats())
+>>>>>>> 4d0f865e0f0235a42d8e028702a6cafed219b2c9

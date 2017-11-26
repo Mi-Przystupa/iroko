@@ -260,7 +260,7 @@ if __name__ == '__main__':
         #update Agents internal representations
         interfaces = stats._get_interfaces()
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-        for interface in interfaces:
+        for interface in i_h_map.keys():
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface], \
                     drops[interface], overlimits[interface], queues[interface]])
             #My Naive way to update bandwidth

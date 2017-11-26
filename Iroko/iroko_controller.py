@@ -229,17 +229,24 @@ if __name__ == '__main__':
     stats = StatsCollector()
     Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
-    Agent.initializePorts({'s1_eth1': 'apples', 's2-eth2': 'orange'}) 
     Agent.initializePorts({})
     while(1):
-        stats.show_stat()
-      #  portstats = stats.get_interface_stats()
-      #  rfb = random.randint(0, 700)
-      #  if (random.random() < .3):
-      #       rfb = 0
-      #  for interface in portstats.keys():
-      #      portstats[interface] = rfb
-      #      Agent.updateHostsBandwidth(interface, portstats[interface])
-      #      #Agent.updateActorCritic(interface, data)
-      # Agent.displayALLHostsBandwidths()
-      #  print(stats.get_interface_stats())
+        #update Agents internal representations
+        interfaces = stats._get_interfaces()
+        bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
+        for interface in interfaces:
+            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface], \
+                    drops[interface], overlimits[interface], queues[interface]])
+            #My Naive way to update bandwidth
+            Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
+            #A supposedly more eloquent way of doing it
+            Agent.updateCritic( interface, data)
+            Agent.updateActor(interface, 1)
+            
+        Agent.predictBandwidthOnHosts() 
+        #update the allocated bandwidth
+        #wait for update to happen
+
+
+        Agent.displayALLHostsBandwidths()
+   #     print(stats.get_interface_stats())

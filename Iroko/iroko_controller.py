@@ -1,7 +1,8 @@
 from __future__ import division
 from operator import attrgetter
 
-import time, threading
+import time
+import threading
 import socket
 import sys
 import time
@@ -27,6 +28,7 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 
+
 class IrokoController(threading.Thread):
     def __init__(self, name):
         print "Initializing controller"
@@ -47,6 +49,7 @@ class IrokoController(threading.Thread):
         pckt = str(txrate) + '\0'
         print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
         self.sock.sendto(pckt, (ip, port))
+
 
 class StatsCollector():
     """
@@ -71,50 +74,48 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
-	self.iface_list = self._get_interfaces()
+        self.iface_list = self._get_interfaces()
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
-       	# loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
+        # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
 
-	#losses
-        loss_d = curr_loss - self.prev_loss #loss in epoch
+        # losses
+        loss_d = curr_loss - self.prev_loss  # loss in epoch
 
         if loss_d > self.prev_loss_d:
-		loss_increase = 1  	    #loss increasing?
-	else:
-		loss_increase = 0
+            loss_increase = 1  # loss increasing?
+        else:
+            loss_increase = 0
 
-	self.prev_loss_d = loss_d	    #loss in previous epoch
+        self.prev_loss_d = loss_d  # loss in previous epoch
         self.prev_loss = curr_loss
 
-	#overlimits
-        overlimits_d = curr_overlimits - self.prev_overlimits #overlimints in epoch
+        # overlimits
+        overlimits_d = curr_overlimits - self.prev_overlimits  # overlimints in epoch
 
-
-	if overlimits_d > self.prev_overlimits_d:
-		overlimits_increase = 1
-	else:
-		overlimits_increase = 0
-
+        if overlimits_d > self.prev_overlimits_d:
+            overlimits_increase = 1
+        else:
+            overlimits_increase = 0
 
         self.prev_overlimits_d = overlimits_d
         self.prev_overlimits = curr_overlimits
 
-	#utilization
+        # utilization
         util_d = curr_util - self.prev_util
-	
-	if util_d > 0:
-		util_increase = 1
-	else:
-		util_increase = 0
-	
+
+        if util_d > 0:
+            util_increase = 1
+        else:
+            util_increase = 0
+
         self.prev_util = curr_util
 
-	#print
+        # print
         print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
-	print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
+        print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
         return loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase
- 
+
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
         bytes_old = {}
@@ -153,7 +154,7 @@ class StatsCollector():
 
     def _get_bw_deltas(self, bandwidths, bandwidths_old):
 
-	return 0
+        return 0
 
     def _get_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
@@ -162,8 +163,9 @@ class StatsCollector():
         for row in output.split('\n'):
             if row != '':
                 iface_list_temp.append(row)
-	return_list = [iface for iface in iface_list_temp if iface in i_h_map] #filter against actual hosts
-	return return_list
+        return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
+        self.iface_list = iface_list_temp
+        return return_list
 
     def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
         bw_sum = sum(bandwidths.itervalues())
@@ -218,7 +220,8 @@ class StatsCollector():
 
         #     print
         bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
-        bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(bandwidths, free_bandwidths, drops, overlimits, queues)
+        bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(
+            bandwidths, free_bandwidths, drops, overlimits, queues)
         loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(loss_sum, overlimit_sum, bw_sum)
         print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
         print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
@@ -256,33 +259,31 @@ def HandleDataCollection(self, bodys):
 if __name__ == '__main__':
     # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
-    #ic.start()
+    # ic.start()
 
     stats = StatsCollector()
-    Agent = LearningAgent(capacity=15, globalBW = MAX_CAPACITY* 16, defaultmax = MAX_CAPACITY)
+    Agent = LearningAgent(capacity=15, globalBW=MAX_CAPACITY * 16, defaultmax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
     Agent.initializePorts({})
     while(1):
-        #update Agents internal representations
-        interfaces = stats._get_interfaces()
+        # update Agents internal representations
+        iface_list = stats._get_interfaces()
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
         for interface in i_h_map.keys():
-            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface], \
-                    drops[interface], overlimits[interface], queues[interface]])
-            #My Naive way to update bandwidth
+            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
+                                 drops[interface], overlimits[interface], queues[interface]])
+            # My Naive way to update bandwidth
             Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
-            #A supposedly more eloquent way of doing it
+            # A supposedly more eloquent way of doing it
             reward = 1
-            Agent.updateCritic( interface, data, reward)
+            Agent.updateCritic(interface, data, reward)
             Agent.updateActor(interface, reward)
-            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth( interface))
+            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
 
-            
-        Agent.predictBandwidthOnHosts() 
-        #update the allocated bandwidth
-        #wait for update to happen
+        Agent.predictBandwidthOnHosts()
+        # update the allocated bandwidth
+        # wait for update to happen
 
-
-        #Agent.displayALLHostsBandwidths()
+        # Agent.displayALLHostsBandwidths()
         Agent.displayALLHostsPredictedBandwidths()
    #     print(stats.get_interface_stats())

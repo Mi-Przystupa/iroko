@@ -51,17 +51,47 @@ class StatsCollector():
         self.prev_util_d = 0
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
-        loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
-        self.prev_loss_d = loss_d
+       	# loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
+
+	#losses
+        loss_d = curr_loss - self.prev_loss #loss in epoch
+
+        if loss_d > self.prev_loss_d:
+		loss_increase = 1  	    #loss increasing?
+	else:
+		loss_increase = 0
+
+	self.prev_loss_d = loss_d	    #loss in previous epoch
         self.prev_loss = curr_loss
-        overlimits_d = max((curr_overlimits - self.prev_overlimits) - self.prev_overlimits_d, 0)
+
+	#overlimits
+        overlimits_d = curr_overlimits - self.prev_overlimits #overlimints in epoch
+
+
+	if overlimits_d > self.prev_overlimits_d:
+		overlimits_increase = 1
+	else:
+		overlimits_increase = 0
+
+
         self.prev_overlimits_d = overlimits_d
         self.prev_overlimits = curr_overlimits
-        util_d = curr_util - self.prev_util
-        self.prev_util = curr_util
-        print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
-        return loss_d, overlimits_d, util_d
 
+	#utilization
+        util_d = curr_util - self.prev_util
+	
+	if util_d > 0:
+		util_increase = 1
+	else:
+		util_increase = 0
+	
+        self.prev_util = curr_util
+
+	#print
+        print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
+	print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
+        return loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase
+ 
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
         bytes_old = {}
@@ -161,9 +191,9 @@ class StatsCollector():
         #     print
         bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
         bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(bandwidths, free_bandwidths, drops, overlimits, queues)
-        loss_d, overlimits_d, util_d = self._get_deltas(loss_sum, overlimit_sum, bw_free_sum)
-        print("Loss: %d" % loss_sum)
-        print("Overlimits: %d" % overlimit_sum)
+        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(loss_sum, overlimit_sum, bw_free_sum)
+        print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
+        print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
         print("Backlog: %d" % queued_sum)
 
         print("Free BW Sum: %d" % bw_free_sum)
@@ -203,13 +233,13 @@ if __name__ == '__main__':
     Agent.initializePorts({})
     while(1):
         stats.show_stat()
-        portstats = stats.get_interface_stats()
-        rfb = random.randint(0, 700)
-        if (random.random() < .3):
-             rfb = 0
-        for interface in portstats.keys():
-            portstats[interface] = rfb
-            Agent.updateHostsBandwidth(interface, portstats[interface])
-            #Agent.updateActorCritic(interface, data)
-        Agent.displayALLHostsBandwidths()
-        print(stats.get_interface_stats())
+      #  portstats = stats.get_interface_stats()
+      #  rfb = random.randint(0, 700)
+      #  if (random.random() < .3):
+      #       rfb = 0
+      #  for interface in portstats.keys():
+      #      portstats[interface] = rfb
+      #      Agent.updateHostsBandwidth(interface, portstats[interface])
+      #      #Agent.updateActorCritic(interface, data)
+      # Agent.displayALLHostsBandwidths()
+      #  print(stats.get_interface_stats())

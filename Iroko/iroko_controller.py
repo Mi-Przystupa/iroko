@@ -39,14 +39,14 @@ class IrokoController(threading.Thread):
             time.sleep(1)
             for iface in i_h_map:
                 txrate = random.randint(1310720, 2621440)
-                self.send_cntrl_pckt(self.sock, iface, txrate)
+                self.send_cntrl_pckt(iface, txrate)
 
-    def send_cntrl_pckt(self, sock, interface, txrate):
+    def send_cntrl_pckt(self, interface, txrate):
         ip = "192.168.10." + i_h_map[interface].split('.')[-1]
         port = 20130
         pckt = str(txrate) + '\0'
-        #print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
-        sock.sendto(pckt, (ip, port))
+        print "interface: %s, ip: %s, rate: %s" % (interface, ip, txrate)
+        self.sock.sendto(pckt, (ip, port))
 
 class StatsCollector():
     """

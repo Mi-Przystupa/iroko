@@ -133,15 +133,14 @@ class CircularList:
 
 
 class LearningAgent:
-    def __init__(self, alpha=1e-6, gamma=.9, lam=.1, capacity=15, globalBW=0, defaultmax=10e6):
+    def __init__(self,alpha = 1e-6, gamma = .9, lam = .1,  capacity= 15, initMax = 0, defaultmax = 10e6):
         self.memory = CircularList(capacity)
         self.hosts = {}
-        self.globalBandWidth = globalBW
         self.alpha = alpha
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
-        # inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001, filepath = None
+        self.initmax = initMax
         # five actions 50% decrease, 25% decrease, 0 25% increase, 50% increase
 
         self.Actor = Actor(8, 20, 10, learningRate=alpha, epsilon=.5, filepath=None)
@@ -153,9 +152,9 @@ class LearningAgent:
             self.hosts[key] = self.createHost()
 
     def createHost(self):
-        host = dict(alloctBandwidth=self.defaultmax, e=0, predictedAllocation=self.defaultmax)
-        host['controller'] = self.generateController()
-        host['action'] = torch.zeros(3)
+        host = dict(alloctBandwidth = self.initmax, e =  0, predictedAllocation = self.initmax)
+        host['controller'] = self.generateController() 
+        host['action'] = torch.zeros(3);
         host['modifier'] = 0
         return host
 
@@ -218,17 +217,17 @@ class LearningAgent:
             if(freebandwidth <= 0.0):
                 R = currhost['alloctBandwidth'] * .15
             else:
-                R = -(freebandwidth * 0.5) 
+                R =  -(freebandwidth * 0.15) 
             #assumes freebandwidth = allocatedbandwidth - used bandwidth
             sTrue = currhost['alloctBandwidth'] - freebandwidth
             #V(s) = V(s) + alpha*e * (R + gamma* V(s') - V(s))
             delta = R + self.gamma *  currhost['alloctBandwidth'] - sTrue
 
             currhost['e'] += 1
-            currhost['alloctBandwidth'] += delta * currhost['e']
 
-            currhost['e'] = self.gamma * self.lam * currhost['e']
-            currhost['alloctBandwidth'] = min(max(0, currhost['alloctBandwidth']), self.defaultmax)
+            currhost['alloctBandwidth'] = sTrue +   delta * currhost['e']
+            currhost['e'] = self.gamma* self.lam * currhost['e']
+            currhost['alloctBandwidth'] = min( max(self.defaultmax / 100, currhost['alloctBandwidth']), self.defaultmax)
 
             self.hosts[key] = currhost
 

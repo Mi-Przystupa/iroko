@@ -266,7 +266,7 @@ if __name__ == '__main__':
     # ic.run()
 
     stats = StatsCollector()
-    Agent = LearningAgent(capacity=15, globalBW=MAX_CAPACITY * 16, defaultmax=MAX_CAPACITY)
+    Agent = LearningAgent(initMax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     while(1):

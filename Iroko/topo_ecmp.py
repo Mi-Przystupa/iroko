@@ -31,7 +31,6 @@ from mininet.util import custom
 
 import os
 
-MAX_QUEUE = 100
 DENSITY = 2
 
 
@@ -94,7 +93,7 @@ class Fattree(Topo):
                 PREFIX = "h00"
             self.HostList.append(self.addHost(PREFIX + str(i), cpu=1.0 / NUMBER))
 
-    def createLinks(self, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
+    def createLinks(self, max_queue=100, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
         """
             Add network links.
         """
@@ -106,7 +105,7 @@ class Fattree(Topo):
                     self.addLink(
                         self.CoreSwitchList[i * end + j],
                         self.AggSwitchList[x + i],
-                        bw=bw_c2a, max_queue_size=MAX_QUEUE, enable_ecn=dctcp)   # use_htb=False
+                        bw=bw_c2a, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
         # Agg to Edge
         for x in range(0, self.iAggLayerSwitch, end):
@@ -114,7 +113,7 @@ class Fattree(Topo):
                 for j in range(0, end):
                     self.addLink(
                         self.AggSwitchList[x + i], self.EdgeSwitchList[x + j],
-                        bw=bw_a2e, max_queue_size=MAX_QUEUE, enable_ecn=dctcp)   # use_htb=False
+                        bw=bw_a2e, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
         # Edge to Host
         for x in range(0, self.iEdgeLayerSwitch):
@@ -122,7 +121,7 @@ class Fattree(Topo):
                 self.addLink(
                     self.EdgeSwitchList[x],
                     self.HostList[self.density * x + i],
-                    bw=bw_e2h, max_queue_size=MAX_QUEUE, enable_ecn=dctcp)   # use_htb=False
+                    bw=bw_e2h, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
     def set_ovs_protocol(self, ovs_v):
         """
@@ -298,18 +297,18 @@ def connect_controller(net, topo, controller):
         net.addLink(controller, host)
         host_o.cmdPrint("ifconfig %s-eth1 192.168.10.%d" % (host, i))
         host_o.cmdPrint("route add -net 192.168.5.0/24 dev %s-eth1" % (host))
-        
+
         # Configure controller
         # intf = controller.intfs[i - 1]
         # intf.rename("c0-%s-eth1" % host)
-        controller.cmdPrint("ifconfig c0-eth%s 192.168.5.%d" % (i-1, i))
-        controller.cmdPrint("route add 192.168.10.%d dev c0-eth%s" % (i, i-1))
+        controller.cmdPrint("ifconfig c0-eth%s 192.168.5.%d" % (i - 1, i))
+        controller.cmdPrint("route add 192.168.10.%d dev c0-eth%s" % (i, i - 1))
 
         i += 1
         # host.setIP("10.%d.0.%d" % (i, j))
 
 
-def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
+def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, max_queue=100, cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
     """
         Create network topology and run the Mininet.
     """
@@ -317,14 +316,14 @@ def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, cpu=-1, bw_c2a=10, b
     # Create Topo.
     topo = Fattree(pod)
     topo.createNodes()
-    topo.createLinks(bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
+    topo.createLinks(max_queue=max_queue, bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
     # Start Mininet
     # CONTROLLER_IP = ip
-    #CONTROLLER_PORT = port
-    link = custom(TCLink, max_queue_size=MAX_QUEUE, enable_ecn=dctcp)
+    # CONTROLLER_PORT = port
+    link = custom(TCLink, max_queue=max_queue, enable_ecn=dctcp)
     host = custom(CPULimitedHost, cpu=cpu)
     net = Mininet(topo=topo, host=host, link=link, controller=None, autoSetMacs=True)
-    #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
+    # net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
 
     # net.start()
     return (net, topo)

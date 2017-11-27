@@ -178,7 +178,7 @@ def pingTest(net):
 
 
 def FatTreeTest(args, controller=None):
-    net, topo = topo_ecmp.createECMPTopo(pod=4, density=2, cpu=args.cpu, dctcp=args.dctcp)
+    net, topo = topo_ecmp.createECMPTopo(pod=4, density=2, cpu=args.cpu, max_queue=MAX_QUEUE, dctcp=args.dctcp)
     ovs_v = 13  # default value
     is_ecmp = True  # default value
 

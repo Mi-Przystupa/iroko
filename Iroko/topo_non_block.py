@@ -151,7 +151,7 @@ def configureTopo(net, topo):
     install_proactive(net, topo)
 
 
-def createNonBlockTopo(pod, ip="172.18.232.60", cpu=-1, port=6653, bw_h2c=10):
+def createNonBlockTopo(pod, cpu=-1, bw_h2c=10):
     """
             Firstly, start up Mininet;
             secondly, generate traffics and test the performance of the network.
@@ -162,11 +162,8 @@ def createNonBlockTopo(pod, ip="172.18.232.60", cpu=-1, port=6653, bw_h2c=10):
     topo.createLinks(bw_h2c=bw_h2c)
 
     # Start Mininet
-    CONTROLLER_IP = ip
-    CONTROLLER_PORT = port
     host = custom(CPULimitedHost, cpu=cpu)
     net = Mininet(topo=topo, host=host, link=TCLink, controller=RemoteController, autoSetMacs=True)
-    #net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
     # net.start()
 
     return net, topo

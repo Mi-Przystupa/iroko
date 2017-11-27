@@ -45,3 +45,4 @@ do
         out_dir=$OUTPUT_DIR/$pref/$f
         sudo python iroko.py -i $input_file -d $out_dir -p 0.03 -t $DURATION --hedera
 done
+./gen_plot.sh

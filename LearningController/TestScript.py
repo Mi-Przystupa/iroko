@@ -10,8 +10,8 @@ numSimulation = 100000000
 simulationLengths = torch.zeros(numSimulation);
 simulationCount = 0
 maxSeen = 0
-Agent = LearningController(4, 2,8 , 15, .001, .9, epsilon = .5, decay = 1e-8 )
-#Agent = LearningController(4, 2,8 , 15, .001, .5, 1e-8, './modelconfig')
+#Agent = LearningController(4, 2,8 , 15, .000001, .9, epsilon = .7, decay = 1e-8 )
+Agent = LearningController(4, 2,8 , 15, .000001, 0.9,epsilon =.7,  decay=1e-8,filepath= './modelconfig')
 for params in Agent.model.parameters():
     print(params)
 
@@ -25,13 +25,13 @@ for i in range(1, numSimulation):
     action = Agent.PerformAction()
     val, a = torch.max(action, 0)
     observation, reward, done, info = env.step(a[0]) 
-    env.render()    
+    #env.render()    
     inputs = torch.from_numpy(observation)
     numIterations += 1
     if( done ):
         simulationLengths[simulationCount] = numIterations
         simulationCount += 1
-        reward = -100
+        reward = 0 
         if(maxSeen < numIterations):
             maxSeen = numIterations
             print(maxSeen)

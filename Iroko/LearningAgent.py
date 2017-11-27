@@ -218,11 +218,11 @@ class LearningAgent:
             if(freebandwidth <= 0.0):
                 R = currhost['alloctBandwidth'] * .15
             else:
-                R = 0
-            # assumes freebandwidth = allocatedbandwidth - used bandwidth
+                R = -(freebandwidth * 0.5) 
+            #assumes freebandwidth = allocatedbandwidth - used bandwidth
             sTrue = currhost['alloctBandwidth'] - freebandwidth
-            # V(s) = V(s) + alpha*e * (R * gamma* V(s') - V(s))
-            delta = R + self.gamma * currhost['alloctBandwidth'] - sTrue
+            #V(s) = V(s) + alpha*e * (R + gamma* V(s') - V(s))
+            delta = R + self.gamma *  currhost['alloctBandwidth'] - sTrue
 
             currhost['e'] += 1
             currhost['alloctBandwidth'] += delta * currhost['e']

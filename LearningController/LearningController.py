@@ -9,6 +9,7 @@ class LearningController:
         self.model = torch.nn.Sequential(
                 torch.nn.Linear(inputs + actions, numNeuron1, True ), 
                 torch.nn.ReLU(),
+                torch.nn.Dropout(p=0.5),
                 torch.nn.Linear(numNeuron1, numNeuron2, True),
                 torch.nn.ReLU(),
                 torch.nn.Linear(numNeuron2, 1))
@@ -40,12 +41,14 @@ class LearningController:
         bAction = torch.zeros(self.actionlength)
         
         bVal = -1000
+        vals = []
         for i in range(0, self.actionlength):
              
             action = torch.zeros(self.actionlength) 
             action[i] = 1
             state = Variable(torch.cat((self.prevState, action.float()), 0))  
             curVal = self.model(state);
+            vals.append(curVal.data[0])
             if(curVal.data[0] > bVal ):
                 bVal = curVal.data[0]
                 bAction = action
@@ -58,8 +61,6 @@ class LearningController:
         #Qprev = self.model.forward(stateprev)
         QCurr = self.model(state)
         Qprev = self.model(stateprev)
-        Qupdate = Qprev.data + self.alpha * (reward + self.gamma*QCurr.data - Qprev.data)
-        #Qupdate = Variable(Qupdate)
         criterion = torch.nn.MSELoss()
         QCurr = reward + self.gamma * QCurr.data
         QCurr = Variable(QCurr)
@@ -68,7 +69,8 @@ class LearningController:
         self.optimizer.step()
         self.prevState = inputs
         self.prevAction = actions
-        return Qupdate
+
+        return self.model(Variable(torch.zeros(self.inputlength + self.actionlength))).data[0] 
      
     def saveNetwork(self):
        torch.save(self.model.state_dict(), './modelconfig') 

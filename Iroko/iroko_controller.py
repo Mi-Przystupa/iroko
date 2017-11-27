@@ -269,14 +269,18 @@ if __name__ == '__main__':
     Agent = LearningAgent(initMax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
+    prevdrops = [] 
     while(1):
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
+
+        if not prevdrops:
+            prevdrops = drops
         for interface in i_h_map:
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # My Naive way to update bandwidth
-            Agent.updateHostsBandwidth(interface, free_bandwidths[interface])
+            Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface] )
             # A supposedly more eloquent way of doing it
             reward = 1
             Agent.updateCritic(interface, data, reward)
@@ -294,4 +298,5 @@ if __name__ == '__main__':
         Agent.displayALLHostsPredictedBandwidths()
         Agent.displayAdjustments()
 
+        prevdrops = drops
        #print(stats.get_interface_stats())

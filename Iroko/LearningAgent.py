@@ -207,17 +207,18 @@ class LearningAgent:
     def getHostsPredictedBandwidth(self, interface):
         return int(math.ceil(self.hosts[interface]['predictedAllocation']))
 
-    def updateHostsBandwidth(self, interface, freebandwidth):
+    def updateHostsBandwidth(self, interface, freebandwidth, loss):
         key = str(interface)
         if(not (key in self.hosts.keys())):
             self.hosts[key] = self.createHost()
             print("New port added: " + key)
         else:
             currhost = self.hosts[key]
-            if(freebandwidth <= 0.0):
-                R = currhost['alloctBandwidth'] * .15
+            #loss is increasing
+            if(loss > 0.0):
+                R = -1000
             else:
-                R =  -(freebandwidth * 0.15) 
+                R = 1000 
             #assumes freebandwidth = allocatedbandwidth - used bandwidth
             sTrue = currhost['alloctBandwidth'] - freebandwidth
             #V(s) = V(s) + alpha*e * (R + gamma* V(s') - V(s))

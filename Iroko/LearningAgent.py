@@ -79,7 +79,8 @@ class Actor:
                 torch.nn.ReLU(),
                 torch.nn.Linear(numNeuron1, numNeuron2, True),
                 torch.nn.ReLU(),
-                torch.nn.Linear(numNeuron2, 1))
+                torch.nn.Linear(numNeuron2, 1),
+                torch.nn.Tanh())
         self.epsilon = epsilon
         self.inputlength = inputs
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr = learningRate)
@@ -181,6 +182,7 @@ class LearningAgent:
 
     def predictBandwidthOnHost(self, interface):
         hostsAction = self.hosts[interface]['controller'].PerformAction()
+        a = 0
         if(hostsAction[0] > 0):
             a = 0
         elif (hostsAction[1] > 0):

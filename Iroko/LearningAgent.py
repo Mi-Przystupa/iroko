@@ -58,7 +58,6 @@ class SARSA:
 
         Qcurr = self.model(state)
         Qprev = self.model(stateprev)
-        Qupdate = Qprev.data + self.alpha * (reward + self.gamma * Qcurr.data - Qprev.data)
 
         Qcurr = reward + self.gamma * Qcurr.data
         Qcurr = Variable(Qcurr)
@@ -68,7 +67,7 @@ class SARSA:
         self.optimizer.step()
         self.prevState = inputs
         self.prevAction = actions
-        return Qupdate
+        return Qcurr 
 
     def saveNetwork(self):
         torch.save(self.model.state_dict(), './modelconfig')

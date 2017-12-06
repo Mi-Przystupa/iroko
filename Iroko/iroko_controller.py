@@ -283,10 +283,17 @@ if __name__ == '__main__':
             Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface] )
             # A supposedly more eloquent way of doing it
             reward = 1
+            if(drops[interface] > 0.0):
+                reward = -1
+            else:
+                reward = 1
+
+            
             Agent.updateCritic(interface, data, reward)
             Agent.updateActor(interface, reward)
             # txrate = random.randint(1310720, 2621440)
-            ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            #ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
             # ic.send_cntrl_pckt(interface, txrate)
 
         Agent.predictBandwidthOnHosts()

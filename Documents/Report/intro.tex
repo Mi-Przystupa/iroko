@@ -1,0 +1,30 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:intro}
+
+Initially, research in network congestion was dominated by the assumption of a decentralised, autonomous network - end-hosts only have control over the amount of traffic they send, and are unaware of the intentions or traffic rates of their peers. Similarly, switches and routers are unaware of global traffic patterns and only forward based on their local notion of optimality.
+
+In line with these assumptions, TCP was designed to optimize traffic globally on a simple fairness principle: nodes react to packet loss and assume that others will behave accordingly. An equilibrium is reached when all end-hosts achieve a traffic rate that, in sum, conforms to the maximum available bandwidth of the most congested link.
+TCP works well  in scenarios where many different distrustful participants compete for limited bandwidth. Still, TCP is a \textit{reactive protocol}; the fact that packet loss and latency increases occur in the network already indicates a problem. Packet loss is primarily due to overflowing queues in forwarding elements, implying that traffic has not been optimally distributed. Ideally, a network should always be “zero-queue”, i.e., latency will merely be induced by propagation, and not queuing delay. 
+
+Queueing has generally not been a dominating issue in wide-area and enterprise networks, as traffic is sufficiently distributed and diverse, with only few “hot” target hosts.~\cite{hedera, microte} Traffic optimization is a substantial challenge; network operators have no control over the individual network elements nor its participants. Under these conditions, TCP and its extensions can be considered a best-effort solution.
+
+Developments in the past decade have changed the general networking environment. Datacenters have emerged as an exciting new research frontier, posing novel design challenges and opportunities.
+
+Driven by minimization of costs and maximization of compute power, data centers must  run at maximum utilization to achieve an optimal compute/cost ratio. Inefficient routing can quickly lead to bufferbloat~\cite{bufferbloat} and the eventual collapse of a high-load network, requiring more sophisticated approaches to solve congestion control. 
+On the other hand, operators now have the ability to freely control and adapt their network architecture, leading to highly customized systems and fine-grained optimization. As a result , Software-Defined Networking (SDN) has emerged as a new networking paradigm. Moving away from the principle of distributed communication and routing, SDN introduces the notion of “centralized management”. A single controller with global knowledge is able to automatically modify and adapt the forwarding tables of all switches in the network, while notifying end hosts of changes in the network.
+These two new trends in system design facilitated impactful new innovation opportunities in the space of TCP congestion research. Traffic can now be managed in a  \textit{centralised} fashion based on \textit{global knowledge} of the entire topology and traffic patterns.
+
+A new line of centralised schedulers has emerged that  can achieve close to optimal bandwidth utilization.~\cite{hedera, fastpass, microte, b4, dionysus}
+However, these schedulers are still  \textit{reactive}  in nature. The central controller responds to changes in the network or requests by applications, which may cost valuable roundtrip latency. Often, short-term flows or bursts are unaccounted for, which causes undesirable packet loss and backpropagating congestion. 
+
+A much more desirable solution is a global, centralised arbiter which is able to predict and fairly distribute flows in the network before bursts or congestion occurs. By treating the network’s compute and forwarding power as a single finite resource, a controller acts like the OS scheduler distributing CPU time slices to processes. This design approach follows SDN’s aspiration of introducing operating systems abstractions to the networking domain space.
+
+In this project, we plan to explore the possibilities of a centralised, proactive flow scheduler. We ask ourselves the following research questions:
+\begin{enumerate}
+\item Is it possible to design a centralised token-based scheduling network?
+\item Is it possible to predict traffic and preemptively schedule flows and token distribution in a datacenter context?
+\item Using this approach, are we able to achieve better performance and utilization than existing solutions?
+\end{enumerate}
+
+In the scope of this course, we attempt to answer question one and design a simple token-based scheduler in Mininet. If successful, we will benchmark our results and evaluate the level of utilization compared to contemporary scheduling systems.

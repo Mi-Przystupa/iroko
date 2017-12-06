@@ -1,0 +1,10 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}
+\label{sec:related}
+
+Most of the work in congestion control relies on a centralised scheduler which periodically gets updates about the flows in the network and reserves specific paths for long running flows.
+
+MicroTE~\cite{microte} does predictive OpenFlow routing and scheduling using a central SDN controller. Hedera~\cite{hedera} schedules large so called "elephant" flows by gathering switch statistics. However it pays poor attention to short term flows and network latency. FastPass~\cite{fastpass} on the other hand, proposes a zero-queue network and promises a very low latency network. The feasibility of this proposal remains questionable when considering the high cost of implementation.
+
+Recent proposals on decentralised scheduling like ExpressPass~\cite{expresspass} have heavily influenced our research. ExpressPass posits a credit based system similar to TCPTokens in order to control the congestion in the network. Effecting flow rerouting using ML techniques in KDN~\cite{kdn} and other works shows promising signs of further improvements in this area.
+

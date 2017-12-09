@@ -1,6 +1,59 @@
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Evaluation}
 \label{sec:evaluation}
-To evaluate the effectiveness of our system, we plan to measure against existing centralized as well as decentralized solutions. We will run datacenter traffic on a fat-tree topology of various depth and observe the effect each congestion algorithm will have on the overall bandwidth utilization and latency.
-The centralized design will be based on Hedera~\cite{hedera}, a common and influential datacenter scheduler.
-The decentralized congestion control mechanism will be DCTCP~\cite{dctcp}, a state-of-the-art TCP congestion algorithm. As baseline we will also compare to the default TCP congestion algorithm to estimate how our scheduler fares against the default case. As our initial simple design is very constrained in its ability to route and control traffic we expect to achieve less optimality against DCTCP and Hedera, but gain a substantial advantage over common TCP.
+
+In the absence of a commercial data center, the implementation of our network 
+design is going to be done on top of mininet with simulated FatTree topologies 
+of varying size. We stress test with iPerf and simulate data center traffic 
+using tcpreplay and packet traces provided by~\cite{traffic} .
+
+To evaluate the general effectiveness of our system, we plan to measure against 
+existing centralized as well as decentralized solutions.
+The centralized design will be based on Hedera~\cite{hedera}, a common and 
+influential datacenter scheduler. The decentralized congestion control 
+mechanism will be DCTCP~\cite{dctcp}, a state-of-the-art TCP congestion 
+algorithm.
+
+Since we are primarily concerned about reducing the latency and packet drops 
+while keeping utilisation at maximum, the measurements to get a good insight 
+into how well the design can perform are as follows:
+\begin{enumerate}
+
+\item Latency: We are aiming for a low latency network which means that 99th 
+percentile latency in the network across all flows should as low as possible. 
+Latency should be measured when all hosts are sending packets at the maximum 
+limit and also with random traffic patterns. There should be low latency even 
+during sudden bursts as the transmission rate is limited by a base value.
+
+\item Packet drop rate: Ideally this metric will approach zero, as the 
+objective of Iroko is to minimize packet loss.
+
+\item Fairness: Fairness can be tested by introducing a new host to a 
+completely saturated network and increasing the transmission rate to see if all 
+the hosts gets fair share of the total bandwidth. We are assuming all flows 
+should be at equal priority. Differential priority is out of scope.
+
+\item Responsiveness: This metric depends on the predictive power and 
+efficiency of Iroko. It may be interesting to analyze the response time of the 
+central scheduler compared to decentralized DCTCP and TCP. In addition, it is 
+valuable to identify at what data center and flow size the central computing 
+node of the network may become a bottleneck.
+
+\item Network utilization: We will measure the used bandwidth and the total 
+load on the hosts. These metrics can be measured by varying the load from each 
+host. Load to utilization ratio should be 1 until the saturation point and 
+after that utilization should stay stable at the maximum bisection bandwidth.
+It is also important to check that there is no starvation happening in any 
+host. This can be measured by simulating random traffic patterns and plotting 
+residual bandwidth and excess load. We expect overall utilization to be lower 
+compared to Hedera and DCTCP. Although Iroko will maximize goodput, we do not 
+measure it on grounds of simplicity.
+
+\end{enumerate}
+
+As baseline we will also compare to the default TCP congestion algorithm to 
+estimate how our scheduler fares against the default case. As our initial 
+simple design is very constrained in its ability to route and control traffic 
+we expect to achieve less overall optimality against DCTCP and Hedera, but 
+still gain a substantial advantage over common TCP.

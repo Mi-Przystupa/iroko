@@ -15,7 +15,7 @@ class LearningAgentv2:
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.25) 
+        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.25, criticpath='critic', actorpath='actor') 
         
 
 

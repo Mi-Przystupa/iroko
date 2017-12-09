@@ -1,0 +1,78 @@
+from Actor import Actor
+from Critic import Critic
+from ReplayMemory import ReplayMemory
+import torch
+from torch.autograd import Variable
+import torch.optim as optim
+class DDPG:
+    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3):
+        self.gamma =gamma
+        self.memory = ReplayMemory(memory)
+        self.actor = Actor(state= s, actions = a)
+        self.critic = Critic(state = s, actions = a)
+        self.targetActor = Actor().load_state_dict(self.actor.state_dict())
+        self.targetCritic = Critic().load_state_dict(self.critic.state_dict())
+        self.tau = tau
+        self.actorOptimizer = optim.Adam(learningRate)
+        self.criticOptimizer = optim.Adam(learningRate)
+        #more a dimensionality thing
+        self.state = state
+        self.action = action 
+
+    def proccessNoise(self):
+        #this should be something more eloquent....
+        return torch.rand(self.actor)
+
+    def selectAction(self, state):
+        #remember, state better be an autograd Variable
+        return self.targetActor(state) + self.processNoise()
+
+    def addToMemory(self, state, action, reward, stateprime):
+        self.memory.push(state, action, reward, stateprime)
+    def primedToLearn(self):
+        return self.memory.isFull()
+
+    def PerformUpdate(self, batchsize):
+        #Mildly important, according to https://github.com/vy007vikas/PyTorch-ActorCriticRL
+        # the criterion on the actor is this: sum(-Q(s,a)) I'm assuming this is over the batch....
+        self.actorOptimizer.zero_grad() 
+        self.criticOptimizer.zer0_grad()
+ 
+        self.actorO
+        batch = self.memory.batch(batchsize)
+        Q = Variable(torch.zeros(len(batch),self.state + self.action ))
+        Qprime = Variable(torch.zeros(len(batch),self.state + self.action ))
+        rewards = Variable(torch.zeros(len(batch), 1))
+        # This loop should generate all Q values for the batch
+        i = 0
+        for sample in batch:
+            Q[i,:]= Variable(torch.cat((sample['s'], sample['a'])))
+            transition = self.actor(Variable(sample['sprime'],volatile=True)).data
+            Qprime[i,:]  = Variable(torch.cat((sample['sprime'], transition),dim=0))
+            rewards[i,0] = sample['r']
+            i += 1
+
+        Qprime = self.gamma * self.critic(Qprime).data + rewards.data
+        Qprime = Variable(Qprime)
+        Q = self.critic(Q)
+        criterion = torch.nn.MSELoss()
+        loss = criterion(Q, Qprime)
+        loss.backward()
+        criterion = torch.nn.MSELoss()
+        backward(self.actor.parameters(), loss) 
+
+    def UpdateTargetNetworks(self): 
+        criticDict = self.critic.state_dict()
+        tCriticDict = self.targetCritic.state_dict()
+        for param in criticDict.keys():
+            tCriticDict[param] = tCriticDict[param] * (1 - self.tau) + criticDict[param] * self.tau
+
+        actorDict = self.actor.state_dict()
+        tActorDict = self.targetActor.state_dict()
+        for param in actorDict.keys():
+            tActorDict = tActorDict[param] * (1 - self.tau) + actorDict[param] * self. tau
+
+        self.targetCritic.load_state_dict(tCriticDict)
+        self.targetActor.load_state_dict(tActorDict)
+
+

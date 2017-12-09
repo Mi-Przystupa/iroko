@@ -14,6 +14,7 @@ import numpy as np
 import torch
 import random
 from LearningAgent import LearningAgent
+from LearningAgentv2 import LearningAgentv2
 
 MAX_CAPACITY = 5e6   # Max capacity of link
 TOSHOW = True
@@ -266,7 +267,8 @@ if __name__ == '__main__':
     # ic.run()
 
     stats = StatsCollector()
-    Agent = LearningAgent(initMax=MAX_CAPACITY)
+    #Agent = LearningAgent(initMax=MAX_CAPACITY)
+    Agent = LearningAgentv2(initMax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     prevdrops = [] 
@@ -282,15 +284,15 @@ if __name__ == '__main__':
             # My Naive way to update bandwidth
             Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface] )
             # A supposedly more eloquent way of doing it
-            reward = 1
-            if(drops[interface] > 0.0):
+            reward = 0
+            if(drops[interface]  > 0.0):
                 reward = -1
             else:
                 reward = 1
 
-            
-            Agent.updateCritic(interface, data, reward)
-            Agent.updateActor(interface, reward)
+            Agent.update(interface,data,reward) 
+            #Agent.updateCritic(interface, data, reward)
+            #Agent.updateActor(interface, reward)
             # txrate = random.randint(1310720, 2621440)
             #ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
             ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
@@ -300,8 +302,8 @@ if __name__ == '__main__':
         # update the allocated bandwidth
         # wait for update to happen
 
-        Agent.displayAllHosts()
-        Agent.displayALLHostsBandwidths()
+        #Agent.displayAllHosts()
+        #Agent.displayALLHostsBandwidths()
         Agent.displayALLHostsPredictedBandwidths()
         Agent.displayAdjustments()
 

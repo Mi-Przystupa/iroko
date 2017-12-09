@@ -48,7 +48,6 @@ class LearningAgentv2:
         reward = torch.Tensor([reward])
         self.controller.addToMemory(state, action, reward, stateprime)
         if (self.controller.primedToLearn()): 
-            print('Learning is happening')
             self.controller.PerformUpdate(32)
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()
@@ -63,7 +62,8 @@ class LearningAgentv2:
         adjustment = self.controller.selectAction(state)[0]
         adjustment = max(min(adjustment, .90), -0.90)
         allocation = self.hosts[interface]['predictedAllocation']
-        allocation += max(min(adjustment * allocation, self.defaultmax), 0)
+        allocation += adjustment * allocation
+        allocation = max(min(allocation, self.defaultmax), 0)
         self.hosts[interface]['predictedAllocation'] = allocation 
         self.hosts[interface]['action'] = adjustment 
 

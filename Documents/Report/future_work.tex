@@ -1,0 +1,30 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Future Work}
+\label{sec:future}
+
+Predicting datacenter traffic online with machine learning shows promise, and we believe that 
+future widely deployed datacenter traffic control mechanisms will include
+machine learning in their toolkit. However machine learning alone may not
+be sufficient to achieve the best possible results. While we  
+compared our results to Hedera, the work remains largely
+orthogonal to our approach, and scheduling flows would likely 
+complement machine learning based bandwidth control. 
+
+For large, long-running workloads that require significant 
+network resources at the termination such as MAP-REDUCE
+workloads, host may have very predictable completion times
+for these jobs. In such cases, hosts could report these 
+estimated completion times to the central controller,
+allowing the controller to account for them pre-emptively
+rather than trying to infer them which may take a couple
+of epochs, and therefore reduce efficiency. Such a
+system would be complementary to \textit{Iroko} and
+allow for finer grained control.
+
+Finally employing a token or credit based system similar
+to that explored in \cite{expresspass} might yield excellent
+results when coupled with our machine learning based predictive
+central controller. This would allow hosts more ability to manage
+their own bandwidth with intertemporal substitution of flows,
+while still enforcing centralized predictive control.
+

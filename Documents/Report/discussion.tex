@@ -1,0 +1,23 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{sec:discussion}
+
+Rather predictably, Iroko struggles on random traffic patterns, however we
+do not see this as particularly concerning. Firstly \textit{Iroko} still outperforms
+both DCTCP and ECMP implementations. Further, as these traffic patterns
+were designed by the authors of the Hedera paper \cite{hedera}, it remains
+likely these patterns are somewhat amenable to the Hedera implementation.
+Finally random traffic patterns seem unlikely to be prevalent in a
+datacenter context. While the general predictability of datacenter
+traffic remains an area of open research, our results show that
+if there is sufficient predictability, we do get results better than
+random, and for truly random data, Iroko does no worse generally than
+incumbent solutions. 
+
+Our machine learning approach shows promise, but machine learning remains
+largely a black-box discipline. This nature makes it difficult for us
+to determine precisely which parameters to use, and what drives
+the improvements we've seen. Our current machine learning approach
+is remarkably light-weight and does not require vast resources
+in our test network. A heavier handed approach may yield better
+results, however these may come at the cost of scalability. 

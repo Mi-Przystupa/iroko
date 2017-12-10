@@ -46,20 +46,17 @@ network, requiring more sophisticated solutions. In fact, recent insights into
 datacenter network traffic have shown that buffer overruns and small 
 short-lived bursts are the primary factor of loss.\cite{fb_dc,msr_dc}
 Despite the innovation potential of data centers, TCP has dominated as 
-the congestion control protocol of choice.
+the congestion control algorithm of choice.
 TCP is a \textit{reactive protocol}, responding to indicators of packet drops
-latency in the network. However, the fact that loss and latency 
-surge in the network, already portends a problem. Overflowing queues in 
-forwarding elements or mismatched hardware capabilities imply that traffic has 
-not been optimally managed.
+latency. However, this surge of loss and latency in the network already 
+portends a problem. Overflowing queues in forwarding elements or mismatched 
+hardware capabilities imply that traffic has not been optimally managed.
 Ideally, a network should always be "zero-queue", i.e., latency 
 will merely be induced by propagation, and not queuing delay.
 
-Recent research insights and contributions may aid in achieving such a data 
-center network.
+While TCP has not fundamentally changed in 
 
 
-\paragraph{Software-Defined Networking}
 With the advent of Software-Defined Networking (SDN), operators now have the 
 ability to freely control and adapt their network architecture, leading to 
 highly customized systems and fine-grained optimization.~\cite{sdn_road}
@@ -69,36 +66,33 @@ introduces the notion of "centralized management". A single controller with
 global knowledge is able to automatically modify and adapt the forwarding 
 tables of all switches in the network, while notifying end hosts of changes in 
 the network.
-This full architectural control and centralized management facilitated new 
-opportunities in the space of TCP congestion research. Traffic can now be 
-managed in a  \textit{centralized} fashion based on \textit{global knowledge} 
-of the entire topology and traffic patterns.
+This full architectural control facilitated new opportunities in the space of 
+TCP congestion research. Traffic can now be managed in a  \textit{centralized} 
+fashion based on \textit{global knowledge} of the entire topology and traffic 
+patterns.
 
-\paragraph{Centralized Scheduling and Congestion Control}
-Following the rise of SDN, a new line of centralized schedulers that can 
-achieve close to optimal bandwidth utilization has emerged.~\cite{hedera, 
+Following SDN's rise in popularity, a new line of centralized schedulers that 
+can achieve close to optimal bandwidth utilization has emerged.~\cite{hedera, 
 fastpass, microte, b4, dionysus}
 However, these schedulers are still \textit{reactive} in nature. The central 
 controller responds to changes in the network or requests by applications, 
 which may cost valuable round-trip latency. Often, short-term flows or bursts 
 are unaccounted for, which causes undesirable packet loss and back-propagating 
-congestion.\cite{perc}
+congestion.~\cite{perc}
 
-\paragraph{Admission-control systems}
 In parallel, admission-control-based approaches have gained traction as a 
 viable alternative to the conventional burst-and-backoff mechanism of 
 TCP.~\cite{expresspass, fastpass, perc}
-The idea of admission control and service guarantees in networks is not 
-new.~\cite{access_limit, access_limit2}. These designs traditionally 
+While idea of admission control and service guarantees in networks is not 
+new,~\cite{access_limit, access_limit2} these designs traditionally 
 aim to assure quality and bandwidth guarantees in a contentious, decentralized, 
-and untrusted environments such as the internet. In a datacenter, these 
+and untrusted environments such as the internet. In a data center, these 
 conditions do not apply. End-hosts are generally considered reliable and 
 restricted in behaviour, which allows for great simplification of enforcement 
-and prioritization policies. Admission control systems give administrators the 
-benefit of tight control over the datacenter, mitigating the effects of 
+and prioritization policies. Admission control systems can give administrators 
+the benefit of tight control over the data center, mitigating the effects of 
 queue-buildup and bursts.
 
-\paragraph{Predictability of traffic}
 Although it is unclear how predictable data center traffic truly is, various 
 works have shown that repeated patterns may 
 exist.\cite{msr_dc,fb_dc,traffic,microte}
@@ -112,14 +106,16 @@ the next nth iterations, and adjusts traffic accordingly.
 %Benson et al.,~2014\cite{microte} analyzed data center traffic and inferred 
 %that around 30\% 
 
-A desirable solution is a global, centralized arbiter, able to predict and 
-fairly distribute flows in the network before bursts or congestion even occur. 
-By treating the network's compute and forwarding power as a single finite 
-resource, a controller acts akin to a OS scheduler distributing CPU time slices 
-to processes.
+An ideal culmination of these insights may be a global, 
+centralized arbiter, able to predict and fairly distribute flows in the 
+network. By only allowing a safe sending rate for each participant it minimizes 
+the amount of bursts and loss possible.
+Treating the network's compute and forwarding power as a single finite 
+resource, the controller acts akin to a OS scheduler distributing CPU time 
+slices to processes.
 
-In this project, we plan to explore the possibilities of a centralized, 
-proactive flow scheduler. We ask ourselves the following research questions:
+This project report details our exploration of such a centralized, 
+proactive flow scheduler. We asked ourselves the following research questions:
 \begin{enumerate}
     \item What are the requirements for such a centralized, predictive 
     scheduler to succeed?
@@ -127,8 +123,8 @@ proactive flow scheduler. We ask ourselves the following research questions:
     traffic patterns?
     \item What latency, packet loss and utilization are we able to achieve?
 \end{enumerate}
-
-In the scope of this course, we attempt to answer these questions and design a 
-simple predictive scheduler in Mininet. If successful, we will benchmark our 
-results and evaluate the level of utilization compared to contemporary 
-scheduling systems.
+In the scope of this report, we outline the design and implementation of our 
+flow scheduler and learning approach. We perform an analysis of its 
+effectiveness compared to DCTCP and Hedera and conclude with a discussion of 
+the benefits and drawbacks of centralized learning and admission control in the 
+data center context.

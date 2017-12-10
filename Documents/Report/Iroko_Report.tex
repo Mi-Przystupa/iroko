@@ -36,10 +36,29 @@
 \email{fruffy@cs.ubc.ca}
 
 \begin{abstract}
-Datacenter networks have become a hotbed for research in the recent past. Many works have been published on improving bisection bandwidth, cost, and latency. As a core contribution of this research, centralized scheduling has entered the stage as a dominant strategy to manage flows. Benefitting from a global view and full control over the network, centralized schedulers are able to enforce fine-grained traffic control, frequently achieving near-optimal bandwidth optimization. However, modern congestion control algorithms and schedulers are still fundamentally reactive. Many algorithms are designed to only respond to packet loss or significant increase in latency, not to actively prevent it.
-In this project, we plan to explore the opportunities of employing a preemptive and tightly controlling central network scheduler. Using tokens as a global tool to enforce traffic limits and admission control, the scheduler is able to proactively steer the flow of traffic. The notion of "knowledge" and predictive analysis in networks is a growing trend in research, which we intend to leverage in this system.
+Datacenter networks have become a hotbed of network research in the past 
+decade. Many works have been published on improving bisection bandwidth, cost, 
+and latency. As a core contribution of this research, centralized scheduling 
+has entered the stage as a dominant strategy to manage flows. Benefitting from 
+a global view and full control over the network, centralized schedulers are 
+able to enforce fine-grained traffic control, frequently achieving near-optimal 
+bandwidth optimization. However, modern congestion control algorithms and 
+schedulers are still fundamentally reactive. Many algorithms are designed to 
+only respond to packet loss or significant increase in latency, not to actively 
+prevent it.
+In this project, we plan to explore the opportunities of employing a preemptive 
+and tightly controlling central network scheduler. By enforcing traffic limits 
+and admission control, the scheduler is able to proactively steer the flow of 
+traffic. The notion of "knowledge" and predictive analysis in networks is a 
+growing trend in research, which we intend to leverage in this system.
 
-We investigate the potential in such a new form of interactive congestion control and analyze it against state-of-the-art solutions. Our tool of choice to model our system is Mininet, a rapid prototyping emulator for datacenter networks. We will compare our "Iroko" system against established TCP-congestion systems such as Hedera and DCTCP. Based on the findings and measurement results, we will reassess the feasibility and prospects of a predictive congestion control algorithm.
+We investigate the potential in such a new form of interactive congestion 
+control and analyze it against state-of-the-art solutions. Our tool of choice 
+to model our system is Mininet, a rapid prototyping emulator for datacenter 
+networks. We will compare our "Iroko" system against established TCP-congestion 
+systems such as Hedera and DCTCP. Based on the findings, measurement results, 
+and effectiveness of our reinforcement learning technique, we will reassess the 
+feasibility and prospects of a predictive congestion control algorithm.
 \end{abstract}
 
 

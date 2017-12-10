@@ -99,11 +99,18 @@ benefit of tight control over the datacenter, mitigating the effects of
 queue-buildup and bursts.
 
 \paragraph{Predictability of traffic}
-Remy\cite{remy} has shown that it is possible to learn optimal congestion 
-control parameters for various network topologies, but 
-Due the scarcity of public data center traffic sets, it is unclear how 
-predictable traffic truly is. 
+Although it is unclear how predictable data center traffic truly is, various 
+works have shown that repeated patterns may 
+exist.\cite{msr_dc,fb_dc,traffic,microte}
+If data center traffic exhibits predictable patterns over long time, it may be 
+possible to devise a proactive mechanism which predicts the traffic matrix of 
+the next nth iterations, and adjusts traffic accordingly.
 
+%Winstein and Balakrishnan,~2013\cite{remy} demonstrated that it is possible to 
+%learn optimal TCP congestion control parameters for various network 
+%topologies. 
+%Benson et al.,~2014\cite{microte} analyzed data center traffic and inferred 
+%that around 30\% 
 
 A desirable solution is a global, centralized arbiter, able to predict and 
 fairly distribute flows in the network before bursts or congestion even occur. 

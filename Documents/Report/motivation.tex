@@ -1,6 +1,42 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Motivation}
 \label{sec:motivation}
-Sed venenatis odio a augue porttitor, vel blandit tortor luctus. Pellentesque condimentum ante lacus, imperdiet commodo odio mattis a. Donec non consectetur libero. Donec efficitur erat nec dui convallis, sed efficitur nulla pharetra. Nullam sed feugiat est. Vestibulum est nisi, venenatis ac augue molestie, malesuada dignissim dolor. Aenean nisl ante, accumsan nec sagittis quis, euismod eleifend purus. Duis laoreet neque eros, non convallis nunc viverra eget. Sed eleifend neque neque, non faucibus justo vulputate vel. Fusce aliquam ultricies ligula ut efficitur. Nunc ut neque tristique, posuere sem vitae, consectetur nisl.
+Several recent contributions in networking research 
 
-Donec pretium ut enim ac congue. Suspendisse nisl est, malesuada sit amet posuere a, gravida vitae lacus. Suspendisse et risus mauris. Nam imperdiet sit amet augue sed sodales. Quisque ante orci, aliquet non interdum nec, gravida sed enim. Nunc interdum, purus et scelerisque malesuada, diam lorem efficitur orci, et consequat ligula augue sed lacus. Morbi malesuada eleifend diam eu rhoncus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. 
+\paragraph{Software-Defined Networking}
+With the advent of Software-Defined Networking (SDN), operators now have the 
+ability to freely control and adapt their network architecture, leading to 
+highly customized systems and fine-grained optimization.~\cite{sdn_road}
+
+Moving away from the principle of distributed communication and routing, SDN 
+introduces the notion of "centralized management". A single controller with 
+global knowledge is able to automatically modify and adapt the forwarding 
+tables of all switches in the network, while notifying end hosts of changes in 
+the network.
+This full architectural control and centralized management facilitated new 
+opportunities in the space of TCP congestion research. Traffic can now be 
+managed in a  \textit{centralized} fashion based on \textit{global knowledge} 
+of the entire topology and traffic patterns.
+
+\paragraph{Centralized Scheduling and Congestion Control}
+A new line of centralized schedulers has emerged that can achieve close to 
+optimal bandwidth utilization.~\cite{hedera, fastpass, microte, b4, dionysus}
+However, these schedulers are still  \textit{reactive}  in nature. The central 
+controller responds to changes in the network or requests by applications, 
+which may cost valuable round-trip latency. Often, short-term flows or bursts 
+are unaccounted for, which causes undesirable packet loss and back-propagating 
+congestion.
+
+\paragraph{Admission-control systems}
+In parallel, admission-control-based approaches have gained traction as a 
+viable alternative to the conventional burst-and-backoff mechanism of 
+TCP.~\cite{expresspass, fastpass, perc}
+The idea of admission control and service guarantees in networks is not 
+new.~\cite{access_limit, access_limit2}. However, such designs traditionally 
+aim to assure quality and bandwidth guarantees in a contentious, decentralized, 
+and untrusted environments such as the internet. In a datacenter, these 
+conditions do not apply. End-hosts are generally considered reliable and 
+restricted in behaviour, which allows for great simplification of enforcement 
+and prioritization policies.
+
+\paragraph{Predictability of traffic}

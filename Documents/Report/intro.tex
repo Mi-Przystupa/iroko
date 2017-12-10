@@ -54,8 +54,10 @@ hardware capabilities imply that traffic has not been optimally managed.
 Ideally, a network should always be "zero-queue", i.e., latency 
 will merely be induced by propagation, and not queuing delay.
 
-While TCP has not fundamentally changed in 
-
+TCP's algorithm as best-effort solution to globally maximize utilization has 
+not fundamentally changed over the last thirty years. However, new research 
+advancement raise the question if TCP and its assumptions about networks are 
+still a viable option.~\cite{pcc,bbr,perc}
 
 With the advent of Software-Defined Networking (SDN), operators now have the 
 ability to freely control and adapt their network architecture, leading to 
@@ -84,7 +86,7 @@ In parallel, admission-control-based approaches have gained traction as a
 viable alternative to the conventional burst-and-backoff mechanism of 
 TCP.~\cite{expresspass, fastpass, perc}
 While idea of admission control and service guarantees in networks is not 
-new,~\cite{access_limit, access_limit2} these designs traditionally 
+new~\cite{access_limit, access_limit2}, these designs traditionally 
 aim to assure quality and bandwidth guarantees in a contentious, decentralized, 
 and untrusted environments such as the internet. In a data center, these 
 conditions do not apply. End-hosts are generally considered reliable and 
@@ -96,9 +98,9 @@ queue-buildup and bursts.
 Although it is unclear how predictable data center traffic truly is, various 
 works have shown that repeated patterns may 
 exist.\cite{msr_dc,fb_dc,traffic,microte}
-If data center traffic exhibits predictable patterns over long time, it may be 
+If data center traffic exhibits predictable patterns, it may be 
 possible to devise a proactive mechanism which predicts the traffic matrix of 
-the next nth iterations, and adjusts traffic accordingly.
+next iterations, and adjusts traffic accordingly.
 
 %Winstein and Balakrishnan,~2013\cite{remy} demonstrated that it is possible to 
 %learn optimal TCP congestion control parameters for various network 
@@ -106,7 +108,7 @@ the next nth iterations, and adjusts traffic accordingly.
 %Benson et al.,~2014\cite{microte} analyzed data center traffic and inferred 
 %that around 30\% 
 
-An ideal culmination of these insights may be a global, 
+An ideal culmination of these insights is a global, 
 centralized arbiter, able to predict and fairly distribute flows in the 
 network. By only allowing a safe sending rate for each participant it minimizes 
 the amount of bursts and loss possible.

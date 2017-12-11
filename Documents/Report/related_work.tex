@@ -8,24 +8,25 @@ majority of our inspiration from the following four categories of research.
 \subsection{End-to-End TCP optimization}
 Many different TCP optimizations tailored to various environments and use-cases 
 exist. In general, these extensions share TCP's fundamental requirements of 
-scalability, decentralization, and fairness. Optimizations are generally 
-static, only on the end-host, and implemented "offline".~\cite{throwdown} This 
-family of modifications includes tweaks to the congestion window size and 
-growth, signal detection, and optimization goal(e.g., bandwidth, latency, or 
-convergence).~\cite{tcp_family}
+scalability, decentralization, and fairness. Optimizations are generally only 
+implemented on the end-host and the model itself is static and 
+"offline".~\cite{throwdown} This family of modifications includes tweaks to the 
+congestion window size and growth, signal detection, and optimization goal 
+(e.g., bandwidth, latency, or convergence).~\cite{tcp_family}
 
 In this project, we compare Iroko to two particular TCP protocols of interest.  
-Data Center TCP~\cite{dctcp}, a congestion control algorithm specialized to 
-reduce bufferbloat in data center networks. DCTCP leverages Explicit Congestion 
-Notifications (ECNs) as early warning signal to identify queue buildup and 
-adjusts its sending rate to the amount of ECN-marked packets on the receiving 
-side. As part of the static TCP congestion control family, DCTCP is fully 
-decentralized, does not limit host sending rates in advance and relies on a 
-static congestion control model.
+The first, Data Center TCP (DCTCP)~\cite{dctcp}, is a congestion control 
+algorithm developed to reduce bufferbloat in data center networks. DCTCP 
+leverages Explicit Congestion Notifications (ECNs) as early warning signal to 
+identify queue buildup and adjusts its sending rate to the amount of ECN-marked 
+packets on the receiving side. As part of the static TCP congestion control 
+family, DCTCP is fully decentralized, does not limit host sending rates in 
+advance and relies on a static congestion control model.
 
 The second algorithm we compare to is TCP CUBIC~\cite{cubic}, the default 
-congestion control protocol of the Linux kernel. CUBIC uses a cubic window size 
-function and serves as the baseline for Iroko.
+congestion control protocol of the Linux kernel. CUBIC uses a cubic function   
+to increase window size and serves as the baseline for Iroko. It is intended to 
+work well over high bandwidth, high latency networks.
 
 \subsection{Centralized Scheduling}
 Hedera~\cite{hedera} is an early example of a centralized scheduler working in 
@@ -35,7 +36,7 @@ collide with short-lived, bursty traffic. Hedera overrides the ECMP routing
 entry and moves the elephant flow to an underutilized link, thus reducing the 
 potential for flow collision and congestion.
 
-MicroTE~\cite{microte} is another central scheduler working under the 
+MicroTE~\cite{microte} is a central scheduler working under the 
 assumption that a subset of short-term traffic is predictable. The controller 
 isolates flows which it determined to be predictable and install a custom 
 optimal routing entry. The remaining unpredictable traffic is routed according 
@@ -49,9 +50,10 @@ frameworks.
 
 \subsection{Network Admission-Control}
 Recent contributions have shown that purely admission-based approaches 
-may work just as well as, if not better than, the conventional TCP fairness 
-principle. A large focus of these systems is to eliminate queuing and fast flow 
+may work as well as, if not better than, conventional unbounded TCP. A large 
+focus of these systems is to eliminate queuing and fast flow 
 convergence coupled with minimal round trip latency.
+
 FastPass~\cite{fastpass} employs an arbiter mechanism, in which hosts request 
 access to the network resources. For any new flow, the FastPass shim layer will 
 send a "admission request" to a central controller, which chooses an optimal 
@@ -88,15 +90,17 @@ possible to learn near-optimal TCP congestion control parameters for various
 network topologies. The system, Remy, represents an offline learning algorithm 
 inferring optimal TCP parameters based on pre-supplied topology and 
 traffic-model.
-While Remy only performed offline training, PCC~\cite{pcc,throwdown} aims to 
-develop a dynamic and actively improving congestion control algorithm. PCC 
-makes no prior assumption about the network and continuously reiterates over 
+While Remy only performed static offline training, PCC~\cite{pcc,throwdown} 
+aims to develop a dynamic and actively improving congestion control algorithm. 
+PCC makes no prior assumption about the network and continuously reiterates over
 its host-local optimization function to find optimal parameters.
-Furthermore, Benson et al.,~2014\cite{microte} analyzed data center traffic and 
+
+As part of the contribution of MicroTE, Benson et 
+al.,~2014~\cite{microte} analyzed data center traffic and 
 inferred that around 30\% of short-lived traffic is predictable over a period 
 of 1-2 seconds.
 
 In this work, we assume that traffic may be trainable to a degree that is 
-useful. We conjecture on the basis of the aforementioned work that it is 
+useful. On the basis of the aforementioned work we conjecture that it may be 
 possible to identify recurring patterns in a subset of traffic and adjust flow 
 and congestion control pre-emptively.

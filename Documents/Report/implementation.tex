@@ -26,9 +26,21 @@ Since we knew prior to testing which port connected to each host, we collected d
 
 Awk is a text parsing language available on most Linux distributions by default. Our awk script reads the /proc/net/dev file on each interface to collect the currently used  bandwidth on a link. We then used this to calculate free bandwidth which is the difference between theoretical maximum bisection bandwidth, and the reported bandwidth on a link.
 
-In addition, we used the following Linux command:
-texttt{tc\ -s\ qdisc\ show\ dev\ <interface>}
-where $<interface>$ is the current host we are polling from. Using the obtained text, we then applied regex expressions to collect the packet loss, packet overlimits, and interface queues. Each of these data provide further information to hint at the current state of the data center. Our goal was to eliminate dropped packets, and used this to help Iroko make rate-limiting decisions. Overlimit packets provides information on when a link goes over it’s allocated bandwidth, and adds a potentially useful feature for our controller to learn from. Interface queues provide Iroko with information on the queue length of the host, which measures how many packets are buffered to be processed.  These additional statistics we hoped would provide our controller enough data to make meaningful inferences of the appropriate bandwidth allocation to each host. 
+
+In addition, we used the following Linux command:\\
+\texttt{tc -s qdisc show dev <interface>}\\
+where \texttt{<interface>} is the current host we are polling from. Using the 
+obtained text, we then applied regex expressions to collect the packet loss, 
+packet overlimits, and interface queues. Each of these data provide further 
+information to hint at the current state of the data center. Our goal was to 
+eliminate dropped packets, and used this to help Iroko make rate-limiting 
+decisions. Overlimit packets provides information on when a link goes over it’s 
+allocated bandwidth, and adds a potentially useful feature for our controller 
+to learn from. Interface queues provide Iroko with information on the queue 
+length of the host, which measures how many packets are buffered to be 
+processed.  These additional statistics we hoped would provide our controller 
+enough data to make meaningful inferences of the appropriate bandwidth 
+allocation to each host. 
 
 \subsection{Bandwidth Allocation}
 Iroko rate limits traffic at the applications level, and thus uses UDP instead of TCP to communicate with hosts. It reads a traffic matrix shared among all the hosts and sends network traffic accordingly. Iroko also manages the current allocated bandwidth per host by sending a packet which updates their current allocated bandwidth.

@@ -69,17 +69,25 @@ to_plot = []
 
 def get_style(i):
     if i == 0:
+        return {'color': 'brown'}
+    elif i == 1:
         return {'color': 'red'}
+    elif i == 2:
+        return {'color': 'magenta'}
+    elif i == 3:
+        return {'color': 'green'}
+    elif i == 4:
+        return {'color': 'royalblue'}
     else:
         return {'color': 'black', 'ls': '-.'}
 
 
 for i, f in enumerate(args.files):
     data = read_list(f)
-    xaxis = map(float, col(0, data))
+    xaxis = map(float, col(1, data))
     start_time = xaxis[0]
     xaxis = map(lambda x: x - start_time, xaxis)
-    qlens = map(float, col(1, data))
+    qlens = map(float, col(2, data))
     if args.summarise or args.cdf:
         to_plot.append(qlens[10:-10])
     else:
@@ -93,6 +101,8 @@ plt.grid(True)
 #plt.yticks(yaxis, ylabels)
 # plt.ylim((0,1100))
 plt.ylim((args.miny, args.maxy))
+fig = plt.figure(1)
+fig.set_size_inches(8.5, 6.5)
 
 if args.summarise:
     plt.xlabel("Link Rates")
@@ -117,8 +127,8 @@ elif args.cdf:
         plt.plot(xs, ys, label=args.legend[i], lw=2, **get_style(i))
         plt.ylabel("Fraction")
         plt.xlabel("Packets")
-        plt.ylim((0, 1.0))
-        plt.legend(args.legend, loc="upper left")
+        plt.ylim((0.5, 1.0))
+        plt.legend(args.legend, loc="best")
         plt.title("")
 else:
     plt.xlabel("Seconds")

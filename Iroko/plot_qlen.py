@@ -5,11 +5,10 @@
 from monitor.helper import *
 from math import fsum
 import numpy as np
+from os import system
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
-parser.add_argument('--out', '-o', dest='out', default=None,
-                    help="Output png file for the plot.")
 
 args = parser.parse_args()
 
@@ -35,118 +34,17 @@ traffics=['stag_prob_0_2_3_data']
 labels=['stag0(0.2,0.3)']
 '''
 
-def get_qlen(input_file, pat_iface):
-    pat_iface = re.compile(pat_iface)
-
-    data = read_list(input_file)
-
-    rate = {}
-    column = 2
-    for row in data:
-        try:
-            ifname = row[0]
-        except:
-            break
-        if ifname not in ['eth0', 'lo']:
-            if not rate.has_key(ifname):
-                rate[ifname] = []
-            try:
-                rate[ifname].append(float(row[column]) / 100)
-            except:
-                break
-    vals = []
-    for k in rate.keys():
-        if pat_iface.match(k):
-            avg_qlen = avg(rate[k][10:-10])
-            vals.append(avg_qlen)
-    return max(vals)
-
-
 def plot_results(args):
 
-    fbb = 16. * 10  # 160 mbps
-
-    num_plot = 2
-    num_t = 20
-    n_t = num_t / num_plot
-
-    bb = {'nonblocking': [], 'hedera': [], 'iroko': [], 'dctcp': [], 'ecmp': []}
-
     # sw = '4h1h1'
-    sw = '1001'
-    for t in traffics:
-        print("Nonblocking:", t)
-        input_file = args.files + '/nonblocking/%s/qlen.txt' % t
-        vals = get_qlen(input_file, sw)
-        print(vals)
-        bb['nonblocking'].append(vals / fbb)
+    for i,t in enumerate(traffics):
+        nb_input = args.files + '/nonblocking/%s/qlen.txt' % t
+        ecmp_input = args.files + '/fattree-ecmp/%s/qlen.txt' % t
+        dctcp_input = args.files + '/fattree-dctcp/%s/qlen.txt' % t
+        iroko_input = args.files + '/fattree-iroko/%s/qlen.txt' % t
+        hedera_input = args.files + '/fattree-hedera/%s/qlen.txt' % t
 
-    # sw = '[0-3]h[0-1]h1'
-    sw = '300[1-9]'
-    for t in traffics:
-        print("ECMP:", t)
-        input_file = args.files + '/fattree-ecmp/%s/qlen.txt' % t
-        vals = get_qlen(input_file, sw)
-        print(vals)
-        bb['ecmp'].append(vals / fbb / 2)
-
-    for t in traffics:
-        print("DCTCP:", t)
-        input_file = args.files + '/fattree-dctcp/%s/qlen.txt' % t
-        vals = get_qlen(input_file, sw)
-        print(vals)
-        bb['dctcp'].append(vals / fbb / 2)
-
-    for t in traffics:
-        print("Iroko:", t)
-        input_file = args.files + '/fattree-iroko/%s/qlen.txt' % t
-        vals = get_qlen(input_file, sw)
-        print(vals)
-        bb['iroko'].append(vals / fbb / 2)
-
-    sw = '[0-3]h[0-1]h1'
-    for t in traffics:
-        print("Hedera:", t)
-        input_file = args.files + '/fattree-hedera/%s/qlen.txt' % t
-        vals = get_qlen(input_file, sw)
-        print(vals)
-        bb['hedera'].append(vals / fbb / 2)
-
-    ind = np.arange(n_t)
-    width = 0.15
-    fig = plt.figure(1)
-    fig.set_size_inches(8.5, 6.5)
-
-    for i in range(num_plot):
-        fig.set_size_inches(24, 12)
-
-        ax = fig.add_subplot(2, 1, i + 1)
-        ax.yaxis.grid()
-
-        plt.ylim(0.0, 0.1)
-        plt.xlim(0, 10)
-        plt.ylabel('Queue length')
-        plt.xticks(ind + 2.5 * width, labels[i * n_t:(i + 1) * n_t])
-
-        # Nonblocking
-        p1 = plt.bar(ind + 5.5 * width, bb['nonblocking'][i * n_t:(i + 1) * n_t], width=width,
-                     color='royalblue')
-
-        # FatTree + Hedera
-        p2 = plt.bar(ind + 4.5 * width, bb['hedera'][i * n_t:(i + 1) * n_t], width=width, color='green')
-
-        # FatTree + Iroko
-        p3 = plt.bar(ind + 3.5 * width, bb['iroko'][i * n_t:(i + 1) * n_t], width=width, color='magenta')
-
-        # FatTree + DCTCP
-        p5 = plt.bar(ind + 1.5 * width, bb['dctcp'][i * n_t:(i + 1) * n_t], width=width, color='brown')
-
-        # FatTree + ECMP
-        p4 = plt.bar(ind + 2.5 * width, bb['ecmp'][i * n_t:(i + 1) * n_t], width=width, color='red')
-
-        plt.legend([p1[0], p2[0], p3[0], p4[0], p5[0]], ['Non-blocking', 'Hedera', 'Iroko', 'ECMP', 'DCTCP'], loc='upper left')
-
-        plt.savefig(args.out)
-
+        os.system("python monitor/plot_queue.py -f %s %s %s %s %s -l dctcp ecmp iroko hedera nonblocking -o %s --cdf" % 
+                (dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input, t))
 
 plot_results(args)

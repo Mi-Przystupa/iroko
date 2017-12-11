@@ -59,19 +59,25 @@ def plot_queue(files, legends, out):
         xaxis = map(lambda x: x - start_time, xaxis)
         qlens = map(float, col(2, data))
         to_plot.append(qlens[10:-10])
-    
+
     plt.grid(True)
 
     for i, data in enumerate(to_plot):
         xs, ys = cdf(map(int, data))
         plt.plot(xs, ys, label=legends[i], lw=2, **get_style(i))
 
-    plt.legend(loc="best")
 
 
 def plot_results(args):
 
-    for i,t in enumerate(traffics):
+    num_plot = 2
+    num_t = 20
+    n_t = num_t / num_plot
+    ind = np.arange(n_t)
+
+    width = 0.15
+    j = 0
+    for i, t in enumerate(traffics):
         nb_input = args.files + '/nonblocking/%s/qlen.txt' % t
         ecmp_input = args.files + '/fattree-ecmp/%s/qlen.txt' % t
         dctcp_input = args.files + '/fattree-dctcp/%s/qlen.txt' % t
@@ -79,14 +85,17 @@ def plot_results(args):
         hedera_input = args.files + '/fattree-hedera/%s/qlen.txt' % t
 
         fig = plt.figure(1)
-        fig.set_size_inches(24, 12)
-        ax = fig.add_subplot(2, len(traffics)/2, i + 1)
+        fig.set_size_inches(36, 12)
+        ax = fig.add_subplot(2, len(traffics) / 2, i + 1)
         ax.yaxis.grid()
-        plt.ylim((0.5, 1.0))
+        plt.ylim((0.8, 1.0))
         plt.ylabel("Fraction")
+        plt.xlabel(labels[i])
         plot_queue([dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input],
-                ["dctcp", "ecmp", "iroko", "hedera", "nonblocking"], t)
-
+                   ["dctcp", "ecmp", "iroko", "hedera", "nonblocking"], t)
+    plt.legend(bbox_to_anchor=(1., 1.22, 1., 1.))
     plt.savefig("qlen.png")
+    plt.show()
+
 
 plot_results(args)

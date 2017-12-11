@@ -44,7 +44,7 @@ Inefficient routing and congestion control can quickly lead to
 bufferbloat~\cite{bufferbloat} and the eventual collapse of a high-load 
 network, requiring more sophisticated solutions. In fact, recent insights into 
 datacenter network traffic have shown that buffer overruns and small 
-short-lived bursts are the primary factor of loss.\cite{fb_dc,msr_dc}
+short-lived bursts are the primary factor of loss.\cite{fb_dc,msr_dc,dctcp}
 Despite the innovation potential of data centers, TCP has dominated as 
 the congestion control algorithm of choice.
 TCP is a \textit{reactive protocol}, responding to indicators of packet drops
@@ -101,12 +101,6 @@ exist.\cite{msr_dc,fb_dc,traffic,microte}
 If data center traffic exhibits predictable patterns, it may be 
 possible to devise a proactive mechanism which predicts the traffic matrix of 
 next iterations, and adjusts traffic accordingly.
-
-%Winstein and Balakrishnan,~2013\cite{remy} demonstrated that it is possible to 
-%learn optimal TCP congestion control parameters for various network 
-%topologies. 
-%Benson et al.,~2014\cite{microte} analyzed data center traffic and inferred 
-%that around 30\% 
 
 An ideal culmination of these insights is a global, 
 centralized arbiter, able to predict and fairly distribute flows in the 

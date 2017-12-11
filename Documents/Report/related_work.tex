@@ -3,8 +3,24 @@
 \label{sec:related}
 Network traffic congestion control and fairness has been an active topic of 
 research for several decades and exhibits a vast range of work. We draw the 
-majority of our inspiration from the following four categories.
+majority of our inspiration from the following four categories of research.
 \subsection{End-to-End TCP optimization}
-\subsection{Centralized Scheduling and Congestion Control}
+Many different TCP optimizations tailored to various environments and use-cases 
+exist. In general, these extensions share TCP's fundamental requirements of 
+scalability, decentralization, and fairness. Optimizations are generally 
+static, only on the end-host, and implemented "offline".~\cite{throwdown} This 
+family of modifications includes tweaks to the congestion window size and 
+growth, signal detection, and optimization goal(e.g., bandwidth, latency, or 
+convergence).~\cite{tcp_family}
+In this project we compare to two particular variants of the traditional TCP 
+protocol. Data Center TCP~\cite{dctcp}  
+
+\subsection{Centralized Scheduling}
+SDN
 \subsection{Network Admission-Control}
-\subsection{Datacenter Predictability and Learning}
+\subsection{Predicting and Learning Network Traffic}
+Winstein and Balakrishnan,~2013\cite{remy} demonstrated that it is possible to 
+learn optimal TCP congestion control parameters for various network 
+topologies. 
+Benson et al.,~2014\cite{microte} analyzed data center traffic and inferred 
+that around 30\% 

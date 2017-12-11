@@ -45,7 +45,7 @@ class DDPG:
         ret = self.targetActor(Variable(state)).data
         if(random.random() > .5):
             ret = ret + self.processNoise()
-        return torch.clamp(ret, -1.0, 1.0) 
+        return torch.clamp(ret, -0.9, 0.9) 
 
     def addToMemory(self, state, action, reward, stateprime):
         self.memory.push(state, action, reward, stateprime)

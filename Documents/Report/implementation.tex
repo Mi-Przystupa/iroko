@@ -26,7 +26,6 @@ Since we knew prior to testing which port connected to each host, we collected d
 
 Awk is a text parsing language available on most Linux distributions by default. Our awk script reads the /proc/net/dev file on each interface to collect the currently used  bandwidth on a link. We then used this to calculate free bandwidth which is the difference between theoretical maximum bisection bandwidth, and the reported bandwidth on a link.
 
-
 In addition, we used the following Linux command:\\
 \texttt{tc -s qdisc show dev <interface>}\\
 where \texttt{<interface>} is the current host we are polling from. Using the 
@@ -50,10 +49,10 @@ Iroko rate limits traffic at the applications level, and thus uses UDP instead o
 
 We chose to use the deep deterministic policy gradient policy algorithm (DDPG) almost entirely as described in ~\cite{DDPG} . DDPG is a form of actor-critic reinforcement learning algorithm ~\cite{Sutton:1998:IRL:551283} which uses neural networks to approximate $Q(s,a)$, and learns the policy by taking the actor network gradients relative to the critic $Q(s,a)$ approximations ~\cite{DDPG}.  Our agent learns using replay memory, which is a technique that helps deep reinforcement learning algorithms learn by making the data uncorrelated via random batch sampling ~\cite{DQLearning}. This decision might be unnecessary for a data center where authors have suggested that data center traffic is inherently unpredictable ~\cite{microte} and this suggests that we could assume data center data is inherently uncorrelated. We recognize these findings may also give an upper limit to the expected performance of Iroko. 
 
-To find the optimal values, an agent must balance exploiting the current best actions with exploring an environment with a new action which may lead to bigger future rewards ~\cite{Sutton:1998:IRL:551283}. Instead of using the exploration approach used in ~\cite{DDPG}, we use $\epsilon-greedy\ learning$, where an agent takes the best action with probability $\epsilon$ and a random action with probability $1 - \epsilon$ ~\cite{Sutton:1998:IRL:551283}. Our random action is then defined as follows:
+To find the optimal values, an agent must balance exploiting the current best actions with exploring an environment with a new action which may lead to bigger future rewards ~\cite{Sutton:1998:IRL:551283}. Instead of the exploration approach used in ~\cite{DDPG}, we use $\epsilon-greedy\ learning$, where an agent takes the best action with probability $\epsilon$ and a random action with probability $1 - \epsilon$ ~\cite{Sutton:1998:IRL:551283}. Our random action is then defined as follows:
 
 \[
-noise(x) = 
+noise = 
 \begin{cases}
 
 uniform(0,1), &\text{P(x = increase) = .333},\\

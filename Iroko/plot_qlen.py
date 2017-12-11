@@ -34,9 +34,43 @@ traffics=['stag_prob_0_2_3_data']
 labels=['stag0(0.2,0.3)']
 '''
 
+
+def get_style(i):
+    if i == 0:
+        return {'color': 'brown'}
+    elif i == 1:
+        return {'color': 'red'}
+    elif i == 2:
+        return {'color': 'magenta'}
+    elif i == 3:
+        return {'color': 'green'}
+    elif i == 4:
+        return {'color': 'royalblue'}
+    else:
+        return {'color': 'black', 'ls': '-.'}
+
+
+def plot_queue(files, legends, out):
+    to_plot = []
+    for i, f in enumerate(files):
+        data = read_list(f)
+        xaxis = map(float, col(1, data))
+        start_time = xaxis[0]
+        xaxis = map(lambda x: x - start_time, xaxis)
+        qlens = map(float, col(2, data))
+        to_plot.append(qlens[10:-10])
+    
+    plt.grid(True)
+
+    for i, data in enumerate(to_plot):
+        xs, ys = cdf(map(int, data))
+        plt.plot(xs, ys, label=legends[i], lw=2, **get_style(i))
+
+    plt.legend(loc="best")
+
+
 def plot_results(args):
 
-    # sw = '4h1h1'
     for i,t in enumerate(traffics):
         nb_input = args.files + '/nonblocking/%s/qlen.txt' % t
         ecmp_input = args.files + '/fattree-ecmp/%s/qlen.txt' % t
@@ -44,7 +78,15 @@ def plot_results(args):
         iroko_input = args.files + '/fattree-iroko/%s/qlen.txt' % t
         hedera_input = args.files + '/fattree-hedera/%s/qlen.txt' % t
 
-        os.system("python monitor/plot_queue.py -f %s %s %s %s %s -l dctcp ecmp iroko hedera nonblocking -o %s --cdf" % 
-                (dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input, t))
+        fig = plt.figure(1)
+        fig.set_size_inches(24, 12)
+        ax = fig.add_subplot(2, len(traffics)/2, i + 1)
+        ax.yaxis.grid()
+        plt.ylim((0.5, 1.0))
+        plt.ylabel("Fraction")
+        plot_queue([dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input],
+                ["dctcp", "ecmp", "iroko", "hedera", "nonblocking"], t)
+
+    plt.savefig("qlen.png")
 
 plot_results(args)

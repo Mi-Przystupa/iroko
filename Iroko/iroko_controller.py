@@ -285,7 +285,8 @@ if __name__ == '__main__':
             Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface] )
             # A supposedly more eloquent way of doing it
             reward = 0
-            if(drops[interface]  > 0.0):
+            #if(drops[interface]  > 0.0):
+            if(queues[interface]):
                 reward = -1
             else:
                 reward = 1

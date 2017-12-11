@@ -35,11 +35,11 @@ while keeping utilization at maximum, we measured bisection bandwidth and
 
 \subsection{Bisection Bandwidth}
 
-\begin{figure*} 
-	\centering 
-	\includegraphics[width=1\linewidth]{rate.png} 
-	\caption{}
-	\label{fig:rate} 
+\begin{figure*}
+	\centering
+	\includegraphics[width=1\linewidth]{rate.png}
+	\caption{Average bisection bandwidth}
+	\label{fig:rate}
 \end{figure*}
 
 In Figure \ref{fig:rate} we show the aggregate bisection bandwidth. Iroko
@@ -47,21 +47,52 @@ consistently provides better utilization compared to ECMP and DCTCP in almost
 all experiments. As expected non-blocking is providing the best performance out
 of all four techniques. Utilization of non-blocking is lower for traffic
 patterns with high incast. Hedera perform extremely well in all experiments
-except for some where Iroko outperforms Hedera. Interestingly enough, Hedera
-even outperforms non-blocking limit in stride8 experiment. ECMP does reasonably
-well when there is high probability of local communication for example smaller
-strides, but start to deteriorate as the stride length increases because of hash
-collisions.
+except for some like stride1, stag2$(0.5,0.3)$ where Iroko outperforms Hedera.
+Interestingly enough, Hedera even outperforms non-blocking limit in stride8
+experiment. ECMP does reasonably well when there is high probability of local
+communication for example smaller strides, but start to deteriorate as the
+stride length increases because of hash collisions.
 
 Another interesting observation is that DCTCP gives abysmal utilization for some
-experiments. Further investigation into this revealed that this is because of
-DCTCP's aggressive congestion window size reduction strategy on incast. The
-proposed solution for incast problem is to use dynamic buffer allocation in
-switches which is not implemented in our test setup. General performance of
-DCTCP is not satisfactory either. For some experiments it even under performs
-ECMP.  According to DCTCP paper it is optimized for some specific data center
-traffic patterns like web search, soft real-time applications, recommendation
-systems etc which we don't include in our experiments.
+experiments, for example randx2 and randx4. Further investigation into this
+revealed that this is because of DCTCP's aggressive congestion window size
+reduction strategy on incast. The proposed solution for incast problem is to use
+dynamic buffer allocation in switches which is not implemented in our test
+setup. General performance of DCTCP is not satisfactory either. For some
+experiments it even under performs ECMP.  According to DCTCP paper it is
+optimized for some specific data center traffic patterns like web search, soft
+real-time applications, recommendation systems etc which we don't include in our
+experiments.
+
+\subsection{Drop rate}
+
+\begin{figure*}
+	\centering
+	\includegraphics[width=1\linewidth]{qlen.png}
+	\caption{CDF of queue lengths}
+	\label{fig:qlen}
+\end{figure*}
+
+To analyze the drop rate we measured the number of packets built up in the queue
+on all switches for the same set of traffic patterns and plotted a cumulative
+distribution graph (Figure \ref{fig:qlen}). A high queue size is considered to
+be bad. We have fixed the maximum queue size to 50 packets.
+
+Iroko is not doing a good job here by consistently keeping $90\%$ of the queues
+empty and rest $10\%$ full. But it is interesting to note that Iroko performs
+really well for traffic patterns like stride1, stag2$(0.5,0.3)$ etc where it
+shows high utilization as well. DCTCP maintains the queues to the minimum across
+all experiments. This is not surprising considering the low utilization of
+DCTCP. ECMP and Hedera behaves almost the same. Nonblocking has the highest
+queue size out of all techniques. We believe that the CPU is the bottleneck here
+since it only uses a single switch to connect the entire network.
+
+Iroko definitely need more fine tuning for the prediction algorithm. We also
+need to investigate why the graph has a sudden jump from $0$ to $50$. Initial
+analysis shows that a small fixed set of switches are the bottleneck in all
+experiments. Our guess is that this happens because of the unfair bandwidth
+allocation across traffic flows. Analyzing fairness might provide better insight
+into this problem.
 
 \subsection{More Benchmarks}
 

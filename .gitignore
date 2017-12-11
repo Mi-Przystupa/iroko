@@ -168,5 +168,6 @@ Hedera/1
 Hedera/cluster_loadgen/loadgen
 Iroko/cluster_loadgen/loadgen
 Iroko/results/
+Iroko/graphs/reference_backups/
 
 Documents/Report/Iroko_Report\.pdf

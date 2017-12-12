@@ -42,7 +42,7 @@ enough data to make meaningful inferences of the appropriate bandwidth
 allocation to each host. 
 
 \subsection{Bandwidth Allocation}
-Iroko rate limits traffic at the applications level, and thus uses UDP instead of TCP to communicate with hosts. It reads a traffic matrix shared among all the hosts and sends network traffic accordingly. Iroko also manages the current allocated bandwidth per host by sending a packet which updates their current allocated bandwidth.
+Iroko rate limits traffic at the applications level, and thus uses UDP instead of TCP to communicate with hosts. Traffic is generated using a custom load generation application we wrote which reads a traffic matrix shared among all the hosts and sends network traffic accordingly. Iroko manages the current allocated bandwidth per host by sending a controller packet which updates their current allocated bandwidth.
 
 
 \subsection{Reinforcement Learning Algorithm}

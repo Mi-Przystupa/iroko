@@ -85,12 +85,12 @@ def plot_results(args):
         hedera_input = args.files + '/fattree-hedera/%s/qlen.txt' % t
 
         fig = plt.figure(1)
-        fig.set_size_inches(36, 12)
+        fig.set_size_inches(40, 12)
         ax = fig.add_subplot(2, len(traffics) / 2, i + 1)
         ax.yaxis.grid()
         plt.ylim((0.8, 1.0))
-        plt.ylabel("Fraction")
-        plt.xlabel(labels[i])
+        plt.ylabel("Fraction", fontsize=16)
+        plt.xlabel(labels[i], fontsize=18)
         plot_queue([dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input],
                    ["dctcp", "ecmp", "iroko", "hedera", "nonblocking"], t)
     plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')

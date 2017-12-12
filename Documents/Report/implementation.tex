@@ -42,7 +42,7 @@ enough data to make meaningful inferences of the appropriate bandwidth
 allocation to each host. 
 
 \subsection{Bandwidth Allocation}
-Iroko rate limits traffic at the applications level, and thus uses UDP instead of TCP to communicate with hosts. It reads a traffic matrix shared among all the hosts and sends network traffic accordingly. Iroko also manages the current allocated bandwidth per host by sending a packet which updates their current allocated bandwidth.
+Iroko rate limits traffic at the applications level, and thus uses UDP instead of TCP to communicate with hosts. Traffic is generated using a custom load generation application we wrote which reads a traffic matrix shared among all the hosts and sends network traffic accordingly. Iroko manages the current allocated bandwidth per host by sending a controller packet which updates their current allocated bandwidth.
 
 
 \subsection{Reinforcement Learning Algorithm}
@@ -64,9 +64,10 @@ uniform(-1,0), &\text{P(x = decrease) = .3333},\\
 where uniform(a,b) refers to taking a random value in the range between [a, b]
 This means we will take the best predicted value $(.5 * 1 + .5 * .33) =  ~.66.6\%$  and will increase $P(x= increase) * P(\epsilon) = 16. 667\%$ of the time or decrease $P(x= decrease) * P(\epsilon) = 16. 667\%$ of the time. It should be noted that the action value is still clamped between -0.9 and 0.9 regardless of the noise introduced. Alternative exploration policies could be used, but this one was chosen due it’s simplicity, and theoretical capability to explore the whole action space if allowed to run indefinitely.
 
-We represent a state from the data center as an array combining a bit vector corresponding to the current host and it's allocated bandwidth, free bandwidth, packet loss, packet overlimits, and queue length:
+We represent a state from the data center as an array combining a bit vector corresponding to the current host and it's allocated bandwidth, free bandwidth, packet loss, packet overlimits, and queue length:\\
+ 
+[$0 0 ... 1 ... 0$, b/w, free b/w, packet loss, overlimit, queue length ]\\
 
-\[ [0 0 0 ... 1 ... 0 0, bandwidth, free bandwidth, packet loss, overlimit, queue length ] \]
 The advantage of this is that Iroko will learn a policy which considers all hosts together in unified representation instead of using separate agents for each network which wouldn't consider bandwidth allocation to each separate host.
 
 The action Iroko takes at each step is the amount to increase or decrease the current hosts allocated bandwidth. Iroko will generate an adjustment value clamped between $-.9 - .9$. We chose this value range, because we wanted to avoid host starvation.  Iroko then modifies the allocated bandwidth similar to the approach used in ~\cite{remy} for congestion windows by using the action with allocated bandwidth as follows:

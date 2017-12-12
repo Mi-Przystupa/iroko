@@ -9,8 +9,8 @@ In our initial system, "Iroko", a centralized controller regulates all
 node traffic by rate-limiting end-hosts. We have opted for a centralized 
 manager in favor of a distributed protocol to leverage the advantages of a 
 global network view.~\footnote{For now, we do not expect our design to scale up 
-to thousands of switches. Iroko is intended for small to mid-tier size data 
-centers, which may benefit from a simplistic, centralized scheduling model.}
+to thousands of switches. Iroko is intended for small to mid-tier size datacenters,
+which may benefit from a simplistic, centralized scheduling model.}
 By polling each switch individually for port and utilization statistics we are 
 able to infer a global traffic matrix, which we can amalgamate with static 
 routing and topology information. 
@@ -37,11 +37,10 @@ requiring more bandwidth are allocated it, while host that are not currently
 utilizing all their allocated bandwidth have their allocated bandwidth reduced. 
 To avoid starving hosts, some small amount of bandwidth must always be 
 allocated to a given host even if it not utilizing network resources. Thus, the 
-network, by design, will never reach 100\% utilization.
-
-Conversely however one should rarely see dropped packets due to network 
+network, by design, will never reach 100\% utilization. Conversely, one should rarely see
+dropped packets due to network 
 congestion. Furthermore, the controller must be able to react quickly to 
-changing bandwidth needs for hosts. Ideally, using a predictive method.
+changing bandwidth needs for hosts, ideally, using a predictive method.
 
 
 \subsection{Reinforcement Learning}
@@ -53,17 +52,18 @@ can freely choose whatever actions are necessary to achieve this goal
 ~\cite{Sutton:1998:IRL:551283}.
 
 The environment in this case is defined as the statistics collected from each 
-switch and the current end-host to rate limit. This decision is based on the fact that these data are easy to collect and provides a current snapshot of the performance of the data center. Using this representation, we take full advantage of all the information provided in our data center.
+switch and the current end-host to rate limit. This decision is based on the fact that these data are easy to collect and provides a current snapshot of the performance of the datacenter. Using this representation, we take full advantage of all the information provided in our datacenter.
 
-We wish to optimize over the packet loss, and define the reward to be good (+1) if there is no loss and bad (-1) if there is any loss.  One limitation of the current reward signal is it's inability to distinguish cases when loss is 0 because no bandwidth was used in the epoch. This means, a more intricate reward functions can be devised for  a future work.
+We wish to optimize over the packet loss, and define the reward to be good (+1) if there is no loss and bad (-1) if there is any loss.  One limitation of the current reward signal is it's inability to distinguish cases when loss is 0 because no bandwidth was used in the epoch. This means, more intricate reward functions can be devised for  a future work.
 
-Given the data center assumption, the number of end-hosts is known in the 
+Given the datacenter assumption, the number of end-hosts is known in the 
 topology. We define our arbiter's actions as a single continuous value which will either increase 
 decrease, or maintain the allocated bandwidth to different end hosts. A continuous value allows our agent to make direct rate-limiting decisions, and reinforcement learning algorithms have been devised to learn continuous value actions such as this ~\cite{DDPG}. 
 
 Thus we frame our problem as one which can now be solved using techniques in reinforcement learning. Given full representation of our environment and 
 actions, we will store the state-action value, also referred to as the Q(s,a) function,  in an artificial neural network. The Q(s,a) function 
-stores the reward signal information that is used to make future action choices. We chose an artificial neural network to approximate this function, because of they are theoretically proven function approximators ~\cite{Cybenko1989} which have made intractable environmental representations manageable~\cite{Sutton:1998:IRL:551283}.
+stores the reward signal information that is used to make future action choices. We chose an artificial neural network to approximate this function. Neural networks are theoretically proven function
+approximators ~\cite{Cybenko1989} which have made intractable environmental representations manageable~\cite{Sutton:1998:IRL:551283}.
 
 
 
@@ -81,8 +81,8 @@ specifying the affected destination address flow, its bandwidth guarantee, and
 the expiration time. Tokens act as the rate-limiter of the system and form a 
 queue each end-host will cycle through.
 
-When a node opens a flow, it will look up the current bandwidth restriction for 
-the destination IP in its token database and calculate the maximum congestion 
+When a node opens a flow, it looks up the current bandwidth restriction for 
+the destination IP in its token database and calculates the maximum congestion 
 window possible for the particular TCP connection. In our simple design, flows 
 are always assigned a fair fraction.
 

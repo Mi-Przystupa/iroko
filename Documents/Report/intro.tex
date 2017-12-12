@@ -33,7 +33,7 @@
 %utilization.
 
 Developments in the past decade have changed the general networking 
-environment. Data centers have emerged as an exciting new research frontier, 
+environment. Datacenters have emerged as an exciting new research frontier, 
 posing novel design challenges and opportunities. Driven by minimization of 
 costs and maximization of compute power, they must run at the highest 
 possible utilization to achieve the ideal compute/cost ratio.
@@ -45,7 +45,7 @@ network, requiring more sophisticated solutions. In fact, recent insights into
 datacenter network traffic have shown that buffer overruns and small 
 short-lived bursts are the primary factor of loss.\cite{fb_dc,msr_dc,dctcp}
 
-Despite the innovation potential of data centers, TCP has dominated as 
+Despite the innovation potential of datacenters, TCP has dominated as 
 the congestion control algorithm of choice.
 Still, TCP is a \textit{reactive protocol}, only responding to signals of 
 congestion. A substantial and noticeable increase of loss and latency in the 
@@ -57,7 +57,8 @@ will merely be induced by propagation, and not queuing delay.
 
 TCP's algorithm is a best-effort solution to globally maximize utilization 
 under the fairness principle. This design has not fundamentally changed 
-over the last thirty years, and new research advancements raise the question if TCP can still be considered to be the most sensible option.~\cite{pcc,bbr,perc}
+over the last thirty years, and new research advancements raise the question whether TCP
+can still be considered the most sensible option.~\cite{pcc,bbr,perc}
 
 With the advent of Software-Defined Networking (SDN), operators now have the 
 ability to freely control and adapt their network architecture, leading to 
@@ -85,20 +86,20 @@ congestion.~\cite{perc}
 In parallel, admission-control-based approaches have gained traction as a 
 viable alternative to the conventional burst-and-backoff mechanism of 
 TCP.~\cite{expresspass, fastpass, perc}
-While idea of admission control and service guarantees in networks is not 
+While the idea of admission control and service guarantees in networks is not 
 new~\cite{access_limit, access_limit2}, these designs traditionally 
-aim to assure quality and bandwidth guarantees in a contentious, decentralized, 
-and untrusted environments such as the internet. In a data center, these 
+aim to assure quality and bandwidth guarantees in contentious, decentralized, 
+and untrusted environments such as the internet. In a datacenter, these 
 conditions do not apply. End-hosts are generally considered reliable and 
 restricted in behaviour, which allows for great simplification of enforcement 
 and prioritization policies. Admission-based systems can give administrators 
-the advantage of tight control over the data center, mitigating the effects of 
+the advantage of tight control over the datacenter, mitigating the effects of 
 queue-buildup and bursts.
 
-Although it is unclear how predictable data center traffic truly is, various 
+Although it is unclear how predictable datacenter traffic truly is, various 
 works have shown that repeated patterns may 
 exist.\cite{msr_dc,fb_dc,traffic,microte}
-If data center traffic exhibits predictable patterns, it may be 
+If datacenter traffic exhibits predictable patterns, it may be 
 possible to devise a proactive mechanism which forecasts the traffic matrix of 
 next iterations, and adjusts traffic accordingly.
 
@@ -123,4 +124,4 @@ In the scope of this report, we outline the design and implementation of our
 flow scheduler and learning approach. We perform an analysis of its 
 effectiveness compared to DCTCP and Hedera and conclude with a discussion of 
 the benefits and drawbacks of centralized learning and admission control in the 
-data center context.
+datacenter context.

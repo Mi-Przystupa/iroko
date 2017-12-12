@@ -93,7 +93,7 @@ def plot_results(args):
         plt.xlabel(labels[i])
         plot_queue([dctcp_input, ecmp_input, iroko_input, hedera_input, nb_input],
                    ["dctcp", "ecmp", "iroko", "hedera", "nonblocking"], t)
-    plt.legend(bbox_to_anchor=(1., 1.22, 1., 1.))
+    plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')
     plt.savefig("qlen.png")
     plt.show()
 

@@ -2,12 +2,13 @@
 \section{Discussion}
 \label{sec:discussion}
 
-Rather predictably, Iroko struggles on random traffic patterns, however we
-do not see this as particularly concerning. Firstly \textit{Iroko} still outperforms
-both DCTCP and ECMP implementations. Further, as these traffic patterns
+Not unexpectedly, Iroko struggles on a few random traffic patterns, however we
+do not see this as particularly concerning. Firstly Iroko still outperforms
+both DCTCP and ECMP implementations on most random traffic patterns, and in general.
+Further, as these traffic patterns
 were designed by the authors of the Hedera paper \cite{hedera}, it remains
 likely these patterns are somewhat amenable to the Hedera implementation.
-Finally random traffic patterns seem unlikely to be prevalent in a
+Finally as discussed, fully random traffic patterns seem unlikely to be prevalent in a
 datacenter context. While the general predictability of datacenter
 traffic remains an area of open research, our results show that
 if there is sufficient predictability, we do get results better than
@@ -20,4 +21,20 @@ to determine precisely which parameters to use, and what drives
 the improvements we've seen. Our current machine learning approach
 is remarkably light-weight and does not require vast resources
 in our test network. A heavier handed approach may yield better
-results, however these may come at the cost of scalability. 
+results, however these may come at the cost of scalability. We
+also noted that further tuning of the current implementation is
+likely to lead to stronger results. Due to testing limitations, 
+the controller had a very short number of periods to learn 
+on. In longer running cases, we full expect Iroko to 
+deliver stronger results as there is more time for machine learning 
+algorithms to converge. 
+
+For efficient routing, we used EMCP with Iroko, however betting
+routing regimes exist, in particular Hedera. While we compared
+Iroko to Hedera, in fact the two systems are largely orthogonal
+and may benefit, from one another. Iroko does not directly deal
+with routing or so called elephant flows. Thus Iroko could be
+futher improved by employing a routing scheme similar to that of
+Hedera, while still retaining bandwidth prediction capabilities.
+
+

@@ -35,10 +35,10 @@
 Developments in the past decade have changed the general networking 
 environment. Data centers have emerged as an exciting new research frontier, 
 posing novel design challenges and opportunities. Driven by minimization of 
-costs and maximization of compute power, data centers must run at the highest 
+costs and maximization of compute power, they must run at the highest 
 possible utilization to achieve the ideal compute/cost ratio.
-Optimizing the distribution of traffic and simultaneously guaranteeing fairness 
-is a perennial challenge for any network operator.
+
+Optimizing the distribution of traffic and simultaneously guaranteeing fairness is a perennial challenge for any network operator.
 Inefficient routing and congestion control can quickly lead to 
 bufferbloat~\cite{bufferbloat} and the eventual collapse of a high-load 
 network, requiring more sophisticated solutions. In fact, recent insights into 
@@ -56,9 +56,8 @@ Ideally, a network should always be "zero-queue", i.e., latency
 will merely be induced by propagation, and not queuing delay.
 
 TCP's algorithm is a best-effort solution to globally maximize utilization 
-under the fairness principle. While this design has not fundamentally changed 
-over the last thirty years, new research advancements raise the question if TCP 
-is still the most reliable option.~\cite{pcc,bbr,perc}
+under the fairness principle. This design has not fundamentally changed 
+over the last thirty years, and new research advancements raise the question if TCP can still be considered to be the most sensible option.~\cite{pcc,bbr,perc}
 
 With the advent of Software-Defined Networking (SDN), operators now have the 
 ability to freely control and adapt their network architecture, leading to 

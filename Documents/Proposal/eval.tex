@@ -1,6 +1,0 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Evaluation}
-\label{sec:evaluation}
-To evaluate the effectiveness of our system, we plan to measure against existing centralized as well as decentralized solutions. We will run datacenter traffic on a fat-tree topology of various depth and observe the effect each congestion algorithm will have on the overall bandwidth utilization and latency.
-The centralized design will be based on Hedera~\cite{hedera}, a common and influential datacenter scheduler.
-The decentralized congestion control mechanism will be DCTCP~\cite{dctcp}, a state-of-the-art TCP congestion algorithm. As baseline we will also compare to the default TCP congestion algorithm to estimate how our scheduler fares against the default case. As our initial simple design is very constrained in its ability to route and control traffic we expect to achieve less optimality against DCTCP and Hedera, but gain a substantial advantage over common TCP.

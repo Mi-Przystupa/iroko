@@ -72,6 +72,7 @@ if __name__ == '__main__':
     algorithms = get_test_config()
     if args.epoch:
         traffic_files = ['stag_prob_0_2_3_data']
+        print("Training the Iroko agent for %d epochs." % EPOCHS)
         train(INPUT_DIR, OUTPUT_DIR, DURATION, EPOCHS, algorithms['iroko'])
         iroko_plt.plot_epoch_results('results', 'plots/training', traffic_files, algorithms)
     else:

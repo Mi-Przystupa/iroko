@@ -148,18 +148,18 @@ Hedera/tcp\.txt
 results/
 .DS_Store
 
-Iroko/ecmp/client\.txt
-Iroko/ecmp/log/
-Iroko/ecmp/1
-Iroko/ecmp/tmp/
+iroko/ecmp/client\.txt
+iroko/ecmp/log/
+iroko/ecmp/1
+iroko/ecmp/tmp/
 *.sublime-workspace
 *.sublime-project
 
-Iroko/ecmp/reports\.txt
+iroko/ecmp/reports\.txt
 
-Iroko/ecmp/results\.txt
+iroko/ecmp/results\.txt
 
-Iroko/log/
+iroko/log/
 
 lodgen
 tags

@@ -81,7 +81,7 @@ if __name__ == '__main__':
             exit(1)
         print("Training the Iroko agent for %d epoch(s)." % args.epoch)
         train(INPUT_DIR, OUTPUT_DIR, DURATION, args.epoch, algorithms['iroko'])
-        iroko_plt.plot_train_results('results', 'plots/training', traffic_files, algorithms)
+        iroko_plt.plot_train_results('results', 'plots/training', traffic_files, algorithms, args.epoch)
     if args.test:
         print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
               % (DURATION, INPUT_DIR, OUTPUT_DIR))

@@ -87,7 +87,7 @@ def plot_test_results(input_dir, plt_name, traffic_files, labels, algorithms):
         p_legend = []
         index = 0
         for algo, conf in algorithms.iteritems():
-            print (conf['color'])
+            print(conf['color'])
             p = plt.bar(ind + (index + 1.5) * width, bb[algo][i * n_t:(i + 1) * n_t], width=width,
                         color=conf['color'])
             p_bar.append(p[0])
@@ -97,7 +97,7 @@ def plot_test_results(input_dir, plt_name, traffic_files, labels, algorithms):
         plt.savefig(plt_name)
 
 
-def plot_train_results(input_dir, plt_name, traffic_files, algorithms):
+def plot_train_results(input_dir, plt_name, traffic_files, algorithms, epochs):
     plt_dir = os.path.dirname(plt_name)
     if not os.path.exists(plt_dir):
         if not plt_dir == '':
@@ -105,8 +105,7 @@ def plot_train_results(input_dir, plt_name, traffic_files, algorithms):
     algo = 'iroko'
     conf = algorithms['iroko']
     fbb = 16. * 10  # 160 mbps
-    folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
-    epochs = 2 #len(folders)
+    # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
     bb = {}
     for tf in traffic_files:
         for e in range(epochs):

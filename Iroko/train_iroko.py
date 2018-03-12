@@ -63,7 +63,6 @@ def run_tests(input_dir, output_dir, duration, algorithms):
         for tf in traffic_files:
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
-            print 'sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo)
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune(out_dir, tf, conf['sw'])

@@ -269,7 +269,8 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_dir):
         print(args.output_dir)
         os.makedirs(args.output_dir)
-
+    if args.dctcp:
+        args.ECMP = True
     if os.getuid() != 0:
         logging.debug("You are NOT root")
         exit(1)

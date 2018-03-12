@@ -4,7 +4,6 @@ from operator import attrgetter
 import time
 import threading
 import socket
-import sys
 import subprocess
 import re
 
@@ -62,13 +61,8 @@ class StatsCollector():
         self.prev_overlimits_d = 0
         self.prev_loss_d = 0
         self.prev_util_d = 0
-	self.iface_list = []
-	self.prev_bandwidth = {}
-	
-
-
-
-
+        self.iface_list = []
+        self.prev_bandwidth = {}
 
     def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
         # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -135,16 +129,16 @@ class StatsCollector():
             bytes_new[iface] = float(output) / 1024
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
 
-	#Get bandwidth deltas
+        # Get bandwidth deltas
 
-	bandwidth_d = {} 
-	if self.prev_bandwidth == {}:
-		bandwidth_d = curr_bandwidth #base case
-	else:
-		for iface in curr_bandwidth:
-			bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface] #calculate delta
-	self.prev_bandwidth = curr_bandwidth 
-	
+        bandwidth_d = {}
+        if self.prev_bandwidth == {}:
+            bandwidth_d = curr_bandwidth  # base case
+        else:
+            for iface in curr_bandwidth:
+                bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface]  # calculate delta
+        self.prev_bandwidth = curr_bandwidth
+
         return curr_bandwidth, bandwidth_d
 
     def _get_free_bw(self, capacity, speed):
@@ -209,7 +203,7 @@ class StatsCollector():
         return drops, overlimits, queues
 
     def get_interface_stats(self):
-        #iface_list = self._get_interfaces()
+        # iface_list = self._get_interfaces()
         bandwidths, bandwidth_d = self._get_bandwidths(self.iface_list)
         free_bandwidths = self._get_free_bandwidths(bandwidths)
         drops, overlimits, queues = self._get_qdisc_stats(self.iface_list)
@@ -267,11 +261,11 @@ if __name__ == '__main__':
     # ic.run()
 
     stats = StatsCollector()
-    #Agent = LearningAgent(initMax=MAX_CAPACITY)
+    # Agent = LearningAgent(initMax=MAX_CAPACITY)
     Agent = LearningAgentv2(initMax=MAX_CAPACITY)
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
-    prevdrops = [] 
+    prevdrops = []
     while(1):
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
@@ -282,20 +276,20 @@ if __name__ == '__main__':
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # My Naive way to update bandwidth
-            Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface] )
+            Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface])
             # A supposedly more eloquent way of doing it
             reward = 0
-            #if(drops[interface]  > 0.0):
+            # if(drops[interface]  > 0.0):
             if(queues[interface]):
                 reward = -1
             else:
                 reward = 1
 
-            Agent.update(interface,data,reward) 
-            #Agent.updateCritic(interface, data, reward)
-            #Agent.updateActor(interface, reward)
+            Agent.update(interface, data, reward)
+            # Agent.updateCritic(interface, data, reward)
+            # Agent.updateActor(interface, reward)
             # txrate = random.randint(1310720, 2621440)
-            #ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
+            # ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
             ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
             # ic.send_cntrl_pckt(interface, txrate)
 
@@ -303,10 +297,10 @@ if __name__ == '__main__':
         # update the allocated bandwidth
         # wait for update to happen
 
-        #Agent.displayAllHosts()
-        #Agent.displayALLHostsBandwidths()
+        # Agent.displayAllHosts()
+        # Agent.displayALLHostsBandwidths()
         Agent.displayALLHostsPredictedBandwidths()
         Agent.displayAdjustments()
 
         prevdrops = drops
-       #print(stats.get_interface_stats())
+        # print(stats.get_interface_stats())

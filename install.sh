@@ -7,4 +7,4 @@ sudo -H pip install http://download.pytorch.org/whl/cu75/torch-0.2.0.post3-cp27-
 sudo -H pip install torchvision
 sudo -H pip install matplotlib
 sudo apt-get install -y bwm-ng
-make -C Iroko/cluster_loadgen
+make -C iroko/cluster_loadgen

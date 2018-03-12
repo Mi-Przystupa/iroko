@@ -51,7 +51,7 @@ def get_result_dict(file):
     return data
 
 
-def plot_full_results(input_dir, plt_name, traffic_files, labels, algorithms):
+def plot_test_results(input_dir, plt_name, traffic_files, labels, algorithms):
 
     fbb = 16. * 10  # 160 mbps
     num_plot = 2
@@ -97,7 +97,7 @@ def plot_full_results(input_dir, plt_name, traffic_files, labels, algorithms):
         plt.savefig(plt_name)
 
 
-def plot_epoch_results(input_dir, plt_name, traffic_files, algorithms):
+def plot_train_results(input_dir, plt_name, traffic_files, algorithms):
     plt_dir = os.path.dirname(plt_name)
     if not os.path.exists(plt_dir):
         if not plt_dir == '':
@@ -106,11 +106,11 @@ def plot_epoch_results(input_dir, plt_name, traffic_files, algorithms):
     conf = algorithms['iroko']
     fbb = 16. * 10  # 160 mbps
     folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
-    epochs = len(folders)
+    epochs = 2 #len(folders)
     bb = {}
-    for e in range(epochs):
-        bb['%s_%s' % (algo, e)] = []
-        for tf in traffic_files:
+    for tf in traffic_files:
+        for e in range(epochs):
+            bb['%s_%s' % (algo, e)] = []
             print("%s: %s" % (algo, tf))
             input_file = input_dir + '/%s_%d/%s/rate_final.txt' % (conf['pre'], e, tf)
             results = get_result_dict(input_file)
@@ -118,15 +118,16 @@ def plot_epoch_results(input_dir, plt_name, traffic_files, algorithms):
             print(avg)
             bb['%s_%s' % (algo, e)].append(avg / fbb / 2)
 
-    p_bar = []
-    p_legend = []
-    for i in range(epochs):
-        # FatTree + Iroko
-        p_bar.append(bb['iroko_%d' % i])
-        p_legend.append('Epoch %i' % i)
-    plt.plot(p_bar)
-    x_val = list(range(epochs))
-    plt.xticks(np.arange(min(x_val), max(x_val) + 1, 1.0))
-    plt.xlabel('Epoch')
-    plt.ylabel('Normalized Average Bisection Bandwidth')
-    plt.savefig(plt_name)
+        p_bar = []
+        p_legend = []
+        for i in range(epochs):
+            # FatTree + Iroko
+            p_bar.append(bb['iroko_%d' % i])
+            p_legend.append('Epoch %i' % i)
+        plt.plot(p_bar)
+        x_val = list(range(epochs))
+        plt.xticks(np.arange(min(x_val), max(x_val) + 1, 1.0))
+        plt.xlabel('Epoch')
+        plt.ylabel('Normalized Average Bisection Bandwidth')
+        plt.savefig("%s_%s" % (plt_name, tf))
+        plt.gcf().clear()

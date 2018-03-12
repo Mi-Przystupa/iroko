@@ -2,8 +2,14 @@ from monitor.helper import *
 import iroko_plt
 parser = argparse.ArgumentParser()
 # parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
-parser.add_argument('--epoch', '-e', dest='epoch', default=False,
+
+parser.add_argument('--train', '-tr', dest='train', default=False,
                     action='store_true', help='Train Iroko in epoch mode and measure the improvement.')
+parser.add_argument('--epoch', '-e', dest='epoch', type=int, default=0,
+                    help='Specify the number of epochs Iroko should be trained.')
+parser.add_argument('--test', '-t', dest='test', default=False,
+                    action='store_true', help='Run the full tests of the algorithm.')
+
 args = parser.parse_args()
 
 
@@ -23,12 +29,11 @@ labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)'
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
 
-#labels = ['stag0(0.2,0.3)']
+# labels = ['stag0(0.2,0.3)']
 
 INPUT_DIR = 'inputs'
 OUTPUT_DIR = 'results'
 DURATION = 60
-EPOCHS = 100
 NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
@@ -70,11 +75,17 @@ def run_tests(input_dir, output_dir, duration, algorithms):
 
 if __name__ == '__main__':
     algorithms = get_test_config()
-    if args.epoch:
-        traffic_files = ['stag_prob_0_2_3_data']
-        print("Training the Iroko agent for %d epochs." % EPOCHS)
-        train(INPUT_DIR, OUTPUT_DIR, DURATION, EPOCHS, algorithms['iroko'])
-        iroko_plt.plot_epoch_results('results', 'plots/training', traffic_files, algorithms)
-    else:
+    if args.train:
+        if args.epoch is 0:
+            print("Please specify the number of epochs you would like to train with (--epoch)!")
+            exit(1)
+        print("Training the Iroko agent for %d epoch(s)." % args.epoch)
+        #train(INPUT_DIR, OUTPUT_DIR, DURATION, args.epoch, algorithms['iroko'])
+        iroko_plt.plot_train_results('results', 'plots/training', traffic_files, algorithms)
+    if args.test:
+        print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
+              % (DURATION, INPUT_DIR, OUTPUT_DIR))
         run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, algorithms)
-        iroko_plt.plot_full_results('results', 'plots/rate', traffic_files, labels, algorithms)
+        iroko_plt.plot_test_results('results', 'plots/rate', traffic_files, labels, algorithms)
+    else:
+        print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

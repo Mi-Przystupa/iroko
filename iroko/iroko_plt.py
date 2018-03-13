@@ -17,7 +17,7 @@ def get_bw_stats(input_file, pat_iface):
         except Exception as e:
             break
         if ifname not in ['eth0', 'lo']:
-            if rate not in ifname:
+            if ifname not in rate:
                 rate[ifname] = []
             try:
                 rate[ifname].append(float(row[column]) * 8.0 / (1 << 20))
@@ -40,7 +40,7 @@ def get_bw_stats(input_file, pat_iface):
 
 
 def prune_bw(out_dir, t_file, switch):
-    print("Iroko:", t_file)
+    print("Pruning: %s:" % out_dir)
     input_file = out_dir + '/rate.txt'
     output_file = out_dir + '/rate_final.txt'
     vals = get_bw_stats(input_file, switch)

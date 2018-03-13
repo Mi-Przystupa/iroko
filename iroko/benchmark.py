@@ -99,8 +99,8 @@ if __name__ == '__main__':
         print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
               % (DURATION, INPUT_DIR, OUTPUT_DIR))
         run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
-        iroko_plt.plot_test_bw('results', 'plots/rate', traffic_files, labels, algorithms)
-        iroko_plt.plot_test_qlen('results', 'plots/qlen', qlen_traffics, qlen_labels, algorithms)
+        iroko_plt.plot_test_bw('results', 'plots/test_bw_sum', traffic_files, labels, algorithms)
+        iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum', qlen_traffics, qlen_labels, algorithms)
 
     elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

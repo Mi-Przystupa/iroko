@@ -163,7 +163,7 @@ def clean():
         try:
             pid = int(pid)
             Popen('kill %d' % pid, shell=True).wait()
-        except:
+        except Exception as e:
             pass
     Popen('killall iperf3', shell=True).wait()
     Popen('killall xterm', shell=True).wait()

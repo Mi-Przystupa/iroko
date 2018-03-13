@@ -12,7 +12,6 @@ import re
 import numpy as np
 import torch
 import random
-from LearningAgent import LearningAgent
 from LearningAgentv2 import LearningAgentv2
 
 MAX_CAPACITY = 5e6   # Max capacity of link
@@ -109,21 +108,21 @@ class StatsCollector():
         bytes_old = {}
         bytes_new = {}
         for iface in iface_list:
-            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 } else { print $2 } }\' /proc/net/dev" % (
-                iface)
+            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
+             else { print $2 } }\' /proc/net/dev" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
-            except:
+            except Exception as e:
                 print("Empty Request")
                 output = 0
             bytes_old[iface] = float(output) / 1024
         time.sleep(1)
         for iface in iface_list:
-            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 } else { print $2 } }\' /proc/net/dev" % (
-                iface)
+            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
+             else { print $2 } }\' /proc/net/dev" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
-            except:
+            except Exception as e:
                 print("Empty Request")
                 output = 0
             bytes_new[iface] = float(output) / 1024
@@ -192,7 +191,7 @@ class StatsCollector():
                 dr = re_dropped.findall(output)
                 ov = re_overlimit.findall(output)
                 qu = re_queued.findall(output)
-            except:
+            except Exception as e:
                 print("Empty Request")
                 dr[iface] = 0
                 ov[iface] = 0

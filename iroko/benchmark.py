@@ -29,6 +29,18 @@ labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)'
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
 
+qlen_traffics = ['stag_prob_2_2_3_data',
+                 'stag_prob_2_5_3_data', 'stride1_data',
+                 'stride2_data', 'random0_data',
+                 'random_2_flows_data',
+                 'random_3_flows_data', 'random_4_flows_data']
+
+qlen_labels = ['stag2(0.2,0.3)',
+               'stag2(0.5,0.3)', 'stride1', 'stride2',
+               'rand0',
+               'randx2', 'randx3', 'randx4']
+
+
 # labels = ['stag0(0.2,0.3)']
 
 INPUT_DIR = 'inputs'
@@ -48,7 +60,7 @@ def train(input_dir, output_dir, duration, epochs, conf):
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --iroko' % (input_file, out_dir, duration))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
-            iroko_plt.prune(out_dir, tf, conf['sw'])
+            iroko_plt.prune_bw(out_dir, tf, conf['sw'])
 
 
 def get_test_config():
@@ -61,7 +73,7 @@ def get_test_config():
     return algos
 
 
-def run_tests(input_dir, output_dir, duration, algorithms):
+def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
     os.system('sudo mn -c')
     for algo, conf in algorithms.iteritems():
         pre_folder = conf['pre']
@@ -70,7 +82,7 @@ def run_tests(input_dir, output_dir, duration, algorithms):
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
-            iroko_plt.prune(out_dir, tf, conf['sw'])
+            iroko_plt.prune_bw(out_dir, tf, conf['sw'])
 
 
 if __name__ == '__main__':
@@ -81,11 +93,14 @@ if __name__ == '__main__':
             exit(1)
         print("Training the Iroko agent for %d epoch(s)." % args.epoch)
         train(INPUT_DIR, OUTPUT_DIR, DURATION, args.epoch, algorithms['iroko'])
-        iroko_plt.plot_train_results('results', 'plots/training', traffic_files, algorithms, args.epoch)
+        iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch)
+        iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch)
     if args.test:
         print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
               % (DURATION, INPUT_DIR, OUTPUT_DIR))
-        run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, algorithms)
-        iroko_plt.plot_test_results('results', 'plots/rate', traffic_files, labels, algorithms)
-    else:
+        run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
+        iroko_plt.plot_test_bw('results', 'plots/rate', traffic_files, labels, algorithms)
+        iroko_plt.plot_test_qlen('results', 'plots/qlen', qlen_traffics, qlen_labels, algorithms)
+
+    elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

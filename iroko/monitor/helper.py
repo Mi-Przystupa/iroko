@@ -1,13 +1,15 @@
 '''
 Helper module for the plot scripts.
 '''
-import matplotlib.pyplot as plt
-import argparse
-import math
-import re
-import itertools
-import matplotlib as m
-import os
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as pl # noqa
+import argparse # noqa
+import math # noqa
+import re # noqa
+import itertools # noqa
+import matplotlib as m # noqa
+import os # noqa
 
 
 def read_list(fname, delim=','):

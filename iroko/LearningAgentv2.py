@@ -8,14 +8,15 @@ from DDPG.DDPG import DDPG
 
 
 class LearningAgentv2:
-    def __init__(self,gamma = .99, lam = .1,  memory= 1000 ,  initMax = 0, defaultmax = 10e6):
+    def __init__(self,gamma = .99, lam = .1,  memory= 1000 ,  initMax = 0, defaultmax = 10e6, cpath=None, apath=None):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.0001, criticpath='critic', actorpath='actor', useSig=True) 
+        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.0001,criticpath=cpath,actorpath=apath, useSig=True)
+                #criticpath='critic', actorpath='actor', useSig=True) 
         
 
 

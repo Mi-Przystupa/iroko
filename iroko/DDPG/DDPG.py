@@ -14,9 +14,19 @@ class DDPG:
         self.actor = Actor(state= s, actions = a, useSigmoid=useSig)
         self.critic = Critic(state = s, actions = a)
         if(not(criticpath== None)):
-            self.critic.load_state_dict(torch.load(criticpath))
+            try:
+                self.critic.load_state_dict(torch.load(criticpath))
+            except RuntimeError, e:
+                print('Failed to load requested Critic: {}'.format(str(e)))
+            except KeyError, e:
+                print('Failed to load requested Critic: {}'.format(str(e)))
         if(not(actorpath==None)):
-            self.actor.load_state_dict(torch.load(actorpath))
+            try:
+                self.actor.load_state_dict(torch.load(actorpath))
+            except RuntimeError, e:
+                print('Failed to load requested Actor: {}'.format(str(e)))
+            except KeyError, e:
+                print('Failed to load requested Actor: {}'.format(str(e)))
         self.targetActor = Actor(state= s, actions = a, useSigmoid=useSig)
         self.targetActor.load_state_dict(self.actor.state_dict())
         self.targetCritic = Critic(state= s, actions = a)

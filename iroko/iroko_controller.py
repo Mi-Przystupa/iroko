@@ -288,7 +288,6 @@ if __name__ == '__main__':
             # Agent.updateCritic(interface, data, reward)
             # Agent.updateActor(interface, reward)
             # txrate = random.randint(1310720, 2621440)
-            # ic.send_cntrl_pckt(interface, Agent.getHostsBandwidth(interface))
             ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
             # ic.send_cntrl_pckt(interface, txrate)
 

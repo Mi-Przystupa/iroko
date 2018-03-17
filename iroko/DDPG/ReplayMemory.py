@@ -4,7 +4,7 @@ class ReplayMemory:
     def __init__(self, size = 40, dims = 41):
         self.memory = []
         self.indx = 0
-        self.size = size 
+        self.size = int(size)
 
     def push(self, s, a, r, sprime):
         mem = {'s': s, 'a': a, 'r': r, 'sprime': sprime}

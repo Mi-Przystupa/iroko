@@ -8,14 +8,14 @@ from DDPG.DDPG import DDPG
 
 
 class LearningAgentv2:
-    def __init__(self,gamma = .9, lam = .1,  memory= 100 ,  initMax = 0, defaultmax = 10e6):
+    def __init__(self,gamma = .99, lam = .1,  memory= 1000 ,  initMax = 0, defaultmax = 10e6):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.25, criticpath='critic', actorpath='actor') 
+        self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.0001, criticpath='critic', actorpath='actor', useSig=True) 
         
 
 
@@ -59,44 +59,22 @@ class LearningAgentv2:
 
     def predictBandwidthOnHost(self, interface):
         state = self.hosts[interface]['state']
-        adjustment = self.controller.selectAction(state)[0]
-        adjustment = max(min(adjustment, .90), -0.90)
-        allocation = self.hosts[interface]['predictedAllocation']
-        allocation += adjustment * allocation
-        allocation = max(min(allocation, self.defaultmax), 0)
-        self.hosts[interface]['predictedAllocation'] = allocation 
-        self.hosts[interface]['action'] = adjustment 
+        action = self.controller.selectAction(state)[0]
+        action = np.clip(action, 0.0, 1.0)
+        #adjustment = max(min(adjustment, .90), -0.90)
+        #allocation = self.hosts[interface]['predictedAllocation']
+        #allocation += adjustment * allocation
+        #allocation = max(min(allocation, self.defaultmax), 0)
+        #self.hosts[interface]['predictedAllocation'] = allocation 
+        self.hosts[interface]['predictedAllocation'] = self.defaultmax * action 
+        self.hosts[interface]['action'] = action 
 
-    def getHostsBandwidth(self, interface):
-        return int(math.ceil(self.hosts[interface]['alloctBandwidth']))
+    #def getHostsBandwidth(self, interface):
+    #    return int(math.ceil(self.hosts[interface]['alloctBandwidth']))
 
     def getHostsPredictedBandwidth(self, interface):
         return int(math.ceil(self.hosts[interface]['predictedAllocation']))
 
-    def updateHostsBandwidth(self, interface, freebandwidth, loss):
-        key = str(interface)
-        if(not (key in self.hosts.keys())):
-            self.hosts[key] = self.createHost()
-            print("New port added: " + key)
-        else:
-            currhost = self.hosts[key]
-            #loss is increasing
-            if(loss > 0.0):
-                R = -1000
-            else:
-                R = 1000 
-            #assumes freebandwidth = allocatedbandwidth - used bandwidth
-            sTrue = currhost['alloctBandwidth'] - freebandwidth
-            #V(s) = V(s) + alpha*e * (R + gamma* V(s') - V(s))
-            delta = R + self.gamma *  currhost['alloctBandwidth'] - sTrue
-
-            currhost['e'] += 1
-
-            currhost['alloctBandwidth'] = sTrue +   delta * currhost['e']
-            currhost['e'] = self.gamma* self.lam * currhost['e']
-            currhost['alloctBandwidth'] = min( max(self.defaultmax / 100, currhost['alloctBandwidth']), self.defaultmax)
-
-            self.hosts[key] = currhost
 
     def displayAllHosts(self):
         allnames = ""

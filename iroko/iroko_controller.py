@@ -16,6 +16,7 @@ from LearningAgentv2 import LearningAgentv2
 
 MAX_CAPACITY = 5e6   # Max capacity of link
 TOSHOW = True
+EXPLOIT = False
 
 ###########################################
 
@@ -264,14 +265,18 @@ if __name__ == '__main__':
 
     stats = StatsCollector()
     # Agent = LearningAgent(initMax=MAX_CAPACITY)
-    Agent = LearningAgentv2(initMax=MAX_CAPACITY, cpath='critic', apath='actor')
+    Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     prevdrops = []
     while(1):
+        #perform action
+        Agent.predictBandwidthOnHosts()
+        for interface in i_h_map:
+            ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
+
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-
         if not prevdrops:
             prevdrops = drops
         for interface in i_h_map:
@@ -281,25 +286,19 @@ if __name__ == '__main__':
             reward = 0
             # if(drops[interface]  > 0.0):
             if(queues[interface]):
-                reward = -1
+                reward = -1.0
             else:
-                reward = 1
+                reward = 1.0
 
             Agent.update(interface, data, reward)
-            # Agent.updateCritic(interface, data, reward)
-            # Agent.updateActor(interface, reward)
-            # txrate = random.randint(1310720, 2621440)
-            ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
-            # ic.send_cntrl_pckt(interface, txrate)
-
-        Agent.predictBandwidthOnHosts()
+            
         # update the allocated bandwidth
         # wait for update to happen
 
         # Agent.displayAllHosts()
         # Agent.displayALLHostsBandwidths()
-        Agent.displayALLHostsPredictedBandwidths()
-        Agent.displayAdjustments()
+        #Agent.displayALLHostsPredictedBandwidths()
+        #Agent.displayAdjustments()
 
         prevdrops = drops
         # print(stats.get_interface_stats())

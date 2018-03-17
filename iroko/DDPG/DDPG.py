@@ -93,7 +93,7 @@ class DDPG:
     def PerformUpdate(self,batchsize):
         actions = torch.zeros(batchsize, self.action)
         states = torch.zeros(batchsize, self.state)
-        rewards = torch.zeros(batchsize)
+        rewards = torch.zeros(batchsize, 1)
         statesP = torch.zeros(batchsize, self.state) 
         for i, sample in enumerate(self.memory.batch(batchsize)):
             actions[i] = sample['a']
@@ -104,7 +104,7 @@ class DDPG:
         #critic update
         self.criticOptimizer.zero_grad()
         targets = self.targetCritic(Variable(statesP), self.targetActor(Variable(statesP)).detach()).detach()
-        y = Variable(rewards + self.gamma * targets.data, volatile=True).detach()
+        y = Variable(rewards + self.gamma * targets.data).detach()
         Q = self.critic(Variable(states), Variable(actions))
         criterion = torch.nn.MSELoss()
         loss = criterion(Q, y)
@@ -117,7 +117,6 @@ class DDPG:
         Q = -self.critic(Variable(states), A ) 
         Q = Q.mean() #-torch.sum(Q)#backward()
         Q.backward()
-        #Q.backward()
         self.actorOptimizer.step()
         
 
@@ -178,5 +177,5 @@ class DDPG:
 
         self.targetActor.load_state_dict(tActorDict)
     def saveActorCritic(self):
-        torch.save(self.critic.state_dict(), './critic')
-        torch.save(self.actor.state_dict(), './actor')
+        torch.save(self.critic.state_dict(), 'critic')
+        torch.save(self.actor.state_dict(), 'actor')

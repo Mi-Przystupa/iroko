@@ -8,7 +8,7 @@ from DDPG.DDPG import DDPG
 
 
 class LearningAgentv2:
-    def __init__(self,gamma = .99, lam = .1,  memory= 1000 ,  initMax = 0, defaultmax = 10e6, cpath=None, apath=None):
+    def __init__(self,gamma = .99, lam = .1,  memory= 1000 ,  initMax = 0, defaultmax = 10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
@@ -17,6 +17,10 @@ class LearningAgentv2:
         self.initmax = initMax
         self.controller = DDPG(gamma,memory,5 + 16, 1,tau=.0001,criticpath=cpath,actorpath=apath, useSig=True)
                 #criticpath='critic', actorpath='actor', useSig=True) 
+        if(toExploit):
+            self.controller.exploit()
+        else:
+            self.controller.explore()
         
 
 
@@ -47,9 +51,10 @@ class LearningAgentv2:
         action = self.hosts[interface]['action']
         action = torch.Tensor([action])
         reward = torch.Tensor([reward])
+        #seriously, why won't above work? 
         self.controller.addToMemory(state, action, reward, stateprime)
         if (self.controller.primedToLearn()): 
-            self.controller.PerformUpdate(32)
+            self.controller.PerformUpdate(64)
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()
         self.hosts[interface]['state'] = stateprime

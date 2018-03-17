@@ -20,12 +20,17 @@ class DDPG:
                 print('Failed to load requested Critic: {}'.format(str(e)))
             except KeyError, e:
                 print('Failed to load requested Critic: {}'.format(str(e)))
+            except IOError, e:
+                print('Failed to load requested Critic: {}'.format(str(e)))
+                
         if(not(actorpath==None)):
             try:
                 self.actor.load_state_dict(torch.load(actorpath))
             except RuntimeError, e:
                 print('Failed to load requested Actor: {}'.format(str(e)))
             except KeyError, e:
+                print('Failed to load requested Actor: {}'.format(str(e)))
+            except IOError, e:
                 print('Failed to load requested Actor: {}'.format(str(e)))
         self.targetActor = Actor(state= s, actions = a, useSigmoid=useSig)
         self.targetActor.load_state_dict(self.actor.state_dict())

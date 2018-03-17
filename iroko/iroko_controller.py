@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
     stats = StatsCollector()
     # Agent = LearningAgent(initMax=MAX_CAPACITY)
-    Agent = LearningAgentv2(initMax=MAX_CAPACITY)
+    Agent = LearningAgentv2(initMax=MAX_CAPACITY, cpath='critic', apath='actor')
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     prevdrops = []

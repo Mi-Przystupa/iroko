@@ -3,7 +3,7 @@ Helper module for the plot scripts.
 '''
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as pl # noqa
+import matplotlib.pyplot as plt # noqa
 import argparse # noqa
 import math # noqa
 import re # noqa

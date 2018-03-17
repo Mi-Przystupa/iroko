@@ -186,6 +186,9 @@ class StatsCollector():
             # cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
+            dr = {} 
+            ov = {}
+            qu = {}
             try:
                 output = subprocess.check_output(cmd, shell=True)
                 dr = re_dropped.findall(output)
@@ -193,9 +196,9 @@ class StatsCollector():
                 qu = re_queued.findall(output)
             except Exception as e:
                 print("Empty Request")
-                dr[iface] = 0
-                ov[iface] = 0
-                qu[iface] = 0
+                dr[0] = 0
+                ov[0] = 0
+                qu[0] = 0
             drops[iface] = int(dr[0])
             overlimits[iface] = int(ov[0])
             queues[iface] = int(qu[0])
@@ -274,8 +277,6 @@ if __name__ == '__main__':
         for interface in i_h_map:
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
-            # My Naive way to update bandwidth
-            Agent.updateHostsBandwidth(interface, free_bandwidths[interface], drops[interface])
             # A supposedly more eloquent way of doing it
             reward = 0
             # if(drops[interface]  > 0.0):

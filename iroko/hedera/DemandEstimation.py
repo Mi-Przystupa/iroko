@@ -28,7 +28,7 @@ def demand_estimation(flows, hostsList):
                     NoChange = True
                     M[i][j]['demandInit'] = M[i][j]['demand']
 
-    print"********************estimated demands*********************\n", demandsPrinting(M, hostsList)
+    # print"********************estimated demands*********************\n", demandsPrinting(M, hostsList)
     return (M, flows)
 
 
@@ -118,5 +118,5 @@ if __name__ == '__main__':
 
     # pdb.set_trace()
     M, flows_estimated = demand_estimation(flows, hostsList)
-    demandsPrinting(M, hostsList)
+    # demandsPrinting(M, hostsList)
     # pdb.set_trace()

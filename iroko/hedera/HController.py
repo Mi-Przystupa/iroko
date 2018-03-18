@@ -62,7 +62,7 @@ class Switch(EventMixin):
         msg.actions.append(of.ofp_action_output(port=port))
         if deleteFlow:
             msg.command = of.OFPFC_DELETE
-        #msg.buffer_id = buf
+        # msg.buffer_id = buf
         msg.flags = of.OFPFF_SEND_FLOW_REM
 
         self.connection.send(msg)
@@ -107,7 +107,7 @@ class HController(EventMixin):
 
     def _flood(self, event):
         ''' Broadcast to every output port '''
-        packet = event.parsed
+        # packet = event.parsed
         dpid = event.dpid
         in_port = event.port
         t = self.t
@@ -129,8 +129,8 @@ class HController(EventMixin):
         route = self.r.get_route(in_name, out_name, hash_)
         # print "Route:",route
         # print '-'*80
-        if route == None:
-            print None, "route between", in_name, "and", out_name
+        if route is None:
+            # print None, "route between", in_name, "and", out_name
             return
 
         match = of.ofp_match.from_packet(packet)
@@ -149,7 +149,7 @@ class HController(EventMixin):
 
     def _handle_PacketIn(self, event):
         if not self.all_switches_up:
-            #log.info("Saw PacketIn before all switches were up - ignoring." )
+            # log.info("Saw PacketIn before all switches were up - ignoring." )
             return
 
         packet = event.parsed
@@ -158,7 +158,7 @@ class HController(EventMixin):
 
         # Learn MAC address of the sender on every packet-in.
         self.macTable[packet.src] = (dpid, in_port)
-        sw_name = self.t.node_gen(dpid=dpid).name_str()
+        # sw_name = self.t.node_gen(dpid=dpid).name_str()
         # print "Sw:", sw_name, packet.src, packet.dst,"port", in_port, packet.dst.isMulticast(),"macTable", packet.dst in self.macTable
         # print '-'*80
 
@@ -182,7 +182,7 @@ class HController(EventMixin):
             log.warn("Ignoring unknown switch %s" % sw_str)
             return
 
-        #log.info("A new switch came up: %s", sw_str)
+        # log.info("A new switch came up: %s", sw_str)
         if sw is None:
             log.info("Added a new switch %s" % sw_name)
             sw = Switch()
@@ -198,7 +198,7 @@ class HController(EventMixin):
                 self.statMonitorLock.release()
 
     def _collectFlowStats(self):
-        log.info("attempt to capture STATS")
+        # log.info("attempt to capture STATS")
         ''' this function send the flow stat requests'''
         if not self.statMonitorLock.locked():
             # log.info("here it goes to monitor flow stats")
@@ -209,7 +209,7 @@ class HController(EventMixin):
             self.hostsList = []
             for sw_name in self.t.layer_nodes(self.t.LAYER_EDGE):
                 sw_dpid = self.t.node_gen(name=sw_name).dpid
-                print 'sw_dpid', sw_dpid, 'sw_name', sw_name
+                # print 'sw_dpid', sw_dpid, 'sw_name', sw_name
                 for port in range(1, self.t.k + 1):
                     if not self.t.isPortUp(port):
                         msg = of.ofp_stats_request()
@@ -239,7 +239,9 @@ class HController(EventMixin):
             if flowLivingTime <= 1:
                 flowLivingTime = 1
             flowDemand = 8 * float(stat.byte_count) / flowLivingTime / self.bw
-            # print 'stat.match.in_port:', stat.match.in_port,'flow byte_count',stat.byte_count,'flowLivingTime:', flowLivingTime, 'flowDemand:', flowDemand, 'stat.match.scrIP:', stat.match.nw_src, 'stat.match.dstIP', stat.match.nw_dst
+            # print 'stat.match.in_port:', stat.match.in_port,'flow byte_count',
+            # stat.byte_count,'flowLivingTime:', flowLivingTime, 'flowDemand:', flowDemand,
+            # 'stat.match.scrIP:', stat.match.nw_src, 'stat.match.dstIP', stat.match.nw_dst
             src_name, src = self.IP2name_dpid(stat.match.nw_src)
             dst_name, dst = self.IP2name_dpid(stat.match.nw_dst)
             # print 'src_name:',src_name,'dst_name:', dst_name,'src_dpid:', src,'dst_dpid:', dst
@@ -254,7 +256,7 @@ class HController(EventMixin):
                 self.flows.append({'demand': flowDemand, 'converged': False, 'src': src,
                                    'dst': dst, 'recLimited': False, 'match': stat.match})
         if self.statCntr == 0:
-            print "****flows processed, Estimating demands begins"
+            # print "****flows processed, Estimating demands begins"
             self._demandEstimator()
 
     def _demandEstimator(self):
@@ -273,7 +275,7 @@ class HController(EventMixin):
         '''do the Hedera global first fit here'''
         src_name = self.t.node_gen(dpid=flow['src']).name_str()
         dst_name = self.t.node_gen(dpid=flow['dst']).name_str()
-        print 'Global Fisrt Fit for the elephant flow from ', src_name, 'to', dst_name
+        # print 'Global Fisrt Fit for the elephant flow from ', src_name, 'to', dst_name
         paths = self.r.routes(src_name, dst_name)
         # print 'all routes found for the big flow:\n',paths
         GFF_route = None
@@ -282,23 +284,23 @@ class HController(EventMixin):
 
             for i in range(1, len(path)):
                 fitCheck = False
-                if self.bwReservation.has_key(path[i - 1]) and self.bwReservation[path[i - 1]].has_key(path[i]):
+                if path[i - 1] in self.bwReservation and path[i] in self.bwReservation[path[i - 1]]:
                     if self.bwReservation[path[i - 1]][path[i]]['reserveDemand'] + flow['demand'] > 1:
                         break
                     else:
-                        #self.bwReservation[path[i-1]][path[i]]['reserveDemand'] += flow['demand']
+                        # self.bwReservation[path[i-1]][path[i]]['reserveDemand'] += flow['demand']
                         fitCheck = True
                 else:
                     self.bwReservation[path[i - 1]] = {}
                     self.bwReservation[path[i - 1]][path[i]] = {'reserveDemand': 0}
                     fitCheck = True
-            if fitCheck == True:
+            if fitCheck:
                 for i in range(1, len(path)):
                     self.bwReservation[path[i - 1]][path[i]]['reserveDemand'] += flow['demand']
                 GFF_route = path
-                print "GFF route found:", path
+                # print "GFF route found:", path
                 break
-        if GFF_route != None:
+        if GFF_route is not None:
             """install new GFF_path between source and destintaion"""
             self. _install_GFF_path(GFF_route, flow['match'])
 
@@ -307,12 +309,12 @@ class HController(EventMixin):
         flow_match = match
         _route, match = self.matchDict[match.nw_src, match.nw_dst, match.tp_src, match.tp_dst]
         if _route != GFF_route[1:-1] and not self.statMonitorLock.locked():
-            print "old route", _route
-            print "match info:", match.nw_src, match.nw_dst, match.tp_src, match.tp_dst
+            # print "old route", _route
+            # print "match info:", match.nw_src, match.nw_dst, match.tp_src, match.tp_dst
             self.statMonitorLock.acquire()
             ''' Install entries on route between two switches. '''
             route = GFF_route[1:-1]
-            print"GFF route to be installed between switches:", route
+            # print"GFF route to be installed between switches:", route
 
             for i, node in enumerate(route):
                 node_dpid = self.t.node_gen(name=node).dpid
@@ -327,7 +329,7 @@ class HController(EventMixin):
 
             self.statMonitorLock.release()
             self.matchDict[flow_match.nw_src, flow_match.nw_dst, flow_match.tp_src, flow_match.tp_dst] = (route, match)
-        print '_' * 20
+        # print '_' * 20
 
 
 def launch(topo=None, routing=None, bw=None):
@@ -337,7 +339,7 @@ def launch(topo=None, routing=None, bw=None):
     else:
         t = buildTopo(topo)
     r = getRouting(routing, t)
-    if bw == None:
+    if bw is None:
         bw = 10.0  # Mb/s
         bw = float(bw / 1000)  # Gb/s
     else:

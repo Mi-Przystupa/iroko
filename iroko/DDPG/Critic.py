@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Critic(nn.Module):
-    def __init__(self, state = 54, actions = 18, hidden1=100, hidden2 = 30):
+    def __init__(self, state = 54, actions = 18, hidden1=400, hidden2 = 300):
         super(Critic, self).__init__()
         #paper claims 1st layer they do not put action through 1st layer
         self.normalize = nn.BatchNorm1d(state)

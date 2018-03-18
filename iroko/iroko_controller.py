@@ -44,7 +44,7 @@ class IrokoController(threading.Thread):
         ip = "192.168.10." + i_h_map[interface].split('.')[-1]
         port = 20130
         pckt = str(txrate) + '\0'
-        print("interface: %s, ip: %s, rate: %s") % (interface, ip, txrate)
+        # print("interface: %s, ip: %s, rate: %s") % (interface, ip, txrate)
         self.sock.sendto(pckt, (ip, port))
 
 
@@ -100,8 +100,8 @@ class StatsCollector():
         self.prev_util = curr_util
 
         # print
-        print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
-        print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
+        # print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
+        # print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
         return loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase
 
     def _get_bandwidths(self, iface_list):

@@ -7,6 +7,8 @@ parser.add_argument('--train', '-tr', dest='train', default=False,
                     action='store_true', help='Train Iroko in epoch mode and measure the improvement.')
 parser.add_argument('--epoch', '-e', dest='epoch', type=int, default=0,
                     help='Specify the number of epochs Iroko should be trained.')
+parser.add_argument('--offset', '-o', dest='offset', type=int, default=0,
+                    help='Intended to start epochs from an offset.')
 parser.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
 
@@ -51,9 +53,9 @@ HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
 
 
-def train(input_dir, output_dir, duration, epochs, conf):
+def train(input_dir, output_dir, duration, offset, epochs, conf):
     os.system('sudo mn -c')
-    for e in range(epochs):
+    for e in range(offset, epochs + offset):
         for tf in traffic_files:
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             pre_folder = "%s_%d" % (conf['pre'], e)
@@ -92,9 +94,9 @@ if __name__ == '__main__':
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         print("Training the Iroko agent for %d epoch(s)." % args.epoch)
-        train(INPUT_DIR, OUTPUT_DIR, DURATION, args.epoch, algorithms['iroko'])
-        iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch)
-        iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch)
+        train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, algorithms['iroko'])
+        iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch + args.offset)
+        iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch + args.offset)
     if args.test:
         print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
               % (DURATION, INPUT_DIR, OUTPUT_DIR))

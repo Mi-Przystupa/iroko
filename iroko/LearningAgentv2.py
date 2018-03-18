@@ -43,7 +43,7 @@ class LearningAgentv2:
 
     def update(self, interface, data, reward):
         # assumes data is a pytorch.tensor
-        hostvector = torch.Tensor(self.hostcount)
+        hostvector = torch.zeros(self.hostcount)
         hostvector[self.hosts[interface]['id']] = 1.0
         stateprime = torch.cat((data, hostvector), dim=0)
  

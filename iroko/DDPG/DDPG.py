@@ -8,11 +8,11 @@ import torch.optim as optim
 import random
 import numpy as np
 class DDPG:
-    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False):
+    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False, h1=400, h2=300):
         self.gamma =gamma
         self.memory = ReplayMemory(memory)
-        self.actor = Actor(state= s, actions = a, useSigmoid=useSig)
-        self.critic = Critic(state = s, actions = a)
+        self.actor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,  useSigmoid=useSig)
+        self.critic = Critic(state = s, actions = a, hidden1=h1, hidden2=h2)
         if(not(criticpath== None)):
             try:
                 self.critic.load_state_dict(torch.load(criticpath))
@@ -32,9 +32,9 @@ class DDPG:
                 print('Failed to load requested Actor: {}'.format(str(e)))
             except IOError, e:
                 print('Failed to load requested Actor: {}'.format(str(e)))
-        self.targetActor = Actor(state= s, actions = a, useSigmoid=useSig)
+        self.targetActor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2, useSigmoid=useSig)
         self.targetActor.load_state_dict(self.actor.state_dict())
-        self.targetCritic = Critic(state= s, actions = a)
+        self.targetCritic = Critic(state= s, actions = a,hidden1=h1, hidden2=h2)
         self.targetCritic.load_state_dict(self.critic.state_dict())
         self.tau = tau
 
@@ -79,7 +79,9 @@ class DDPG:
 
     def selectAction(self, state, toExplore=True):
         #remember, state better be an autograd Variable
+        self.targetActor.eval()
         ret = self.targetActor(Variable(state)).data
+        self.targetActor.train()
         if (toExplore):
             ret = ret + torch.from_numpy(self.OUProcess.noise()).float()
         #self.step += 1
@@ -99,7 +101,7 @@ class DDPG:
             actions[i] = sample['a']
             states[i] = sample['s']
             rewards[i] = sample['r']
-            statesP = sample['sprime']
+            statesP[i] = sample['sprime']
 
         #critic update
         self.criticOptimizer.zero_grad()
@@ -114,9 +116,9 @@ class DDPG:
         #actor update
         self.actorOptimizer.zero_grad()
         A = self.actor(Variable(states))
-        Q = -self.critic(Variable(states), A ) 
-        Q = Q.mean() #-torch.sum(Q)#backward()
-        Q.backward()
+        J = -self.critic(Variable(states), A ) 
+        J = J.mean() #-torch.sum(Q)#backward()
+        J.backward()
         self.actorOptimizer.step()
         
 

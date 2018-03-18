@@ -63,7 +63,8 @@ class LearningAgentv2:
 
     def predictBandwidthOnHost(self, interface):
         state = self.hosts[interface]['state']
-        action = self.controller.selectAction(state)[0]
+        action = self.controller.selectAction(state.unsqueeze(0))
+        action = action.squeeze()[0]
         action = np.clip(action, 0.0, 1.0)
         # adjustment = max(min(adjustment, .90), -0.90)
         # allocation = self.hosts[interface]['predictedAllocation']

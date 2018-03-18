@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Actor(nn.Module):
-    def __init__(self, state = 54, actions = 18,  hidden1=400, hidden2= 300, useSigmoid=False):
+    def __init__(self, state = 54, actions = 18,  hidden1=400 , hidden2= 300 , useSigmoid=False):
         super(Actor, self).__init__()
         self.useSigmoid=True
         self.normalize = nn.BatchNorm1d(state)
@@ -17,9 +17,9 @@ class Actor(nn.Module):
 
 
     def forward(self,  state):
-        #x = self.normalize(state)
+        x = self.normalize(state)
         x = F.relu(self.hidden1(state))
-        #x = self.normalize2(x)
+        x = self.normalize2(x)
         x = F.relu(self.hidden2(x))
         if (self.useSigmoid):
             return F.sigmoid(self.outputs(x))

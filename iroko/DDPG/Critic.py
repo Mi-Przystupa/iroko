@@ -19,7 +19,7 @@ class Critic(nn.Module):
 
 
     def forward(self, state, action):
-        #x = self.normalize(state)
+        x = self.normalize(state)
         x = F.relu(self.hidden1(state))
         x = torch.cat((x, action),dim=-1)
         #x = self.normalize2(torch.cat(x, action))

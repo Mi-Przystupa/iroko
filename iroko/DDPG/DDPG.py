@@ -77,12 +77,12 @@ class DDPG:
 #        if(turnOff):
 #            self.OUarray = np.zeros((length, self.action), dtype="f")
 
-    def selectAction(self, state, toExplore=True):
+    def selectAction(self, state):
         #remember, state better be an autograd Variable
         self.targetActor.eval()
         ret = self.targetActor(Variable(state)).data
         self.targetActor.train()
-        if (toExplore):
+        if (self.isExplore):
             ret = ret + torch.from_numpy(self.OUProcess.noise()).float()
         #self.step += 1
         return ret

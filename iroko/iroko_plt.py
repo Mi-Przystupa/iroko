@@ -182,7 +182,8 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithms, epochs):
             p_legend.append('Epoch %i' % i)
         plt.plot(p_bar)
         x_val = list(range(epochs))
-        plt.xticks(np.arange(min(x_val), max(x_val) + 1, 1.0))
+        x_step = x_val[0::5]
+        plt.xticks(np.arange(min(x_step), max(x_step) + 1, 1.0))
         plt.xlabel('Epoch')
         plt.ylabel('Normalized Average Bisection Bandwidth')
         plt.savefig("%s_%s" % (plt_name, tf))
@@ -216,7 +217,8 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithms, epochs):
             p_legend.append('Epoch %i' % i)
         plt.plot(p_bar)
         x_val = list(range(epochs))
-        plt.xticks(np.arange(min(x_val), max(x_val) + 1, 1.0))
+        x_step = x_val[0::5]
+        plt.xticks(np.arange(min(x_step), max(x_step) + 1, 1.0))
         plt.xlabel('Epoch')
         plt.ylabel('Average Queue Length')
         plt.savefig("%s_%s" % (plt_name, tf))

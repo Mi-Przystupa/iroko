@@ -4,7 +4,7 @@ import torch.nn.functional as F
 class Actor(nn.Module):
     def __init__(self, state = 54, actions = 18,  hidden1=400 , hidden2= 300 , useSigmoid=False):
         super(Actor, self).__init__()
-        self.useSigmoid=True
+        self.useSigmoid=useSigmoid
         self.normalize = nn.BatchNorm1d(state)
         self.normalize2 = nn.BatchNorm1d(hidden1)
         self.hidden1 = nn.Linear(state, hidden1)  

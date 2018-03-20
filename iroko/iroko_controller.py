@@ -13,6 +13,7 @@ import numpy as np
 import torch
 import random
 from LearningAgentv2 import LearningAgentv2
+from LearningAgentv3 import LearningAgentv3
 
 MAX_CAPACITY = 5e6   # Max capacity of link
 TOSHOW = True
@@ -266,6 +267,8 @@ if __name__ == '__main__':
     stats = StatsCollector()
     # Agent = LearningAgent(initMax=MAX_CAPACITY)
     Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
+    #Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
+
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     prevdrops = []

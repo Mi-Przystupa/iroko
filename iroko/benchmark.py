@@ -24,12 +24,13 @@ traffic_files = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_
                  'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
                  'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
                  'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
-
+traffic_files = ['stag_prob_0_2_3_data']
 
 labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
           'stag1(0.5,0.3)', 'stag2(0.5,0.3)', 'stride1', 'stride2',
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
+labels = ['stag0(0.2,0.3)']
 
 qlen_traffics = ['stag_prob_2_2_3_data',
                  'stag_prob_2_5_3_data', 'stride1_data',
@@ -68,7 +69,7 @@ def train(input_dir, output_dir, duration, offset, epochs, conf):
 def get_test_config():
     algos = {}
     algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
-    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
+    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-iroko', 'color': 'green'}
     algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
     algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
     algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
@@ -94,7 +95,7 @@ if __name__ == '__main__':
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         print("Training the Iroko agent for %d epoch(s)." % args.epoch)
-        train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, algorithms['iroko'])
+        #train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, algorithms['iroko'])
         iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch + args.offset)
         iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch + args.offset)
     if args.test:

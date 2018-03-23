@@ -95,7 +95,7 @@ if __name__ == '__main__':
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         print("Training the Iroko agent for %d epoch(s)." % args.epoch)
-        #train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, algorithms['iroko'])
+        train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, algorithms['iroko'])
         iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch + args.offset)
         iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch + args.offset)
     if args.test:

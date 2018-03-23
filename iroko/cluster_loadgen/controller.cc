@@ -7,6 +7,7 @@
 int cntrl_sock;
 struct sockaddr_in cntrl_addr;
 size_t tx_rate;
+extern const char *net_interface;
 
 int cntrl_init()
 {
@@ -30,6 +31,13 @@ int cntrl_init()
         goto exit;
     }
 
+    printf("Interface: %s\n", net_interface);
+
+    char cmd[200];
+    sprintf(cmd, "sudo tc qdisc add dev %s root tbf rate 100gbit burst 32kbit latency 400ms", net_interface);
+    printf("cmd: %s\n", cmd);
+    system(cmd);
+
 exit:
     return ret;
 
@@ -48,6 +56,11 @@ void *cntrl_thread_main(void *arg)
         }
         tx_rate = atol(pckt.buf_size);
         printf("tx_rate: %lu\n", tx_rate);
+        char cmd[200];
+        sprintf(cmd, "sudo tc qdisc change dev %s root tbf rate %d burst 32kbit latency 400ms", net_interface, tx_rate);
+        printf("cmd: %s\n", cmd);
+        system(cmd);
+
     }
 
     return NULL;

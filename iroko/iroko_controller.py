@@ -15,10 +15,10 @@ import random
 from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
 
-MAX_CAPACITY = 5e6   # Max capacity of link
+MAX_CAPACITY = 10e6   # Max capacity of link
 TOSHOW = True
 EXPLOIT = False
-
+MAX_QUEUE = 50
 ###########################################
 
 i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
@@ -188,7 +188,7 @@ class StatsCollector():
             # cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
-            dr = {} 
+            dr = {}
             ov = {}
             qu = {}
             try:
@@ -266,14 +266,14 @@ if __name__ == '__main__':
 
     stats = StatsCollector()
     # Agent = LearningAgent(initMax=MAX_CAPACITY)
-    Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
-    #Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
+    Agent = LearningAgentv2(initMax=(MAX_CAPACITY / 2), memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
+    # Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
 
     Agent.initializePorts(i_h_map)
     stats._set_interfaces()
     prevdrops = []
     while(1):
-        #perform action
+        # perform action
         Agent.predictBandwidthOnHosts()
         for interface in i_h_map:
             ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
@@ -286,22 +286,16 @@ if __name__ == '__main__':
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # A supposedly more eloquent way of doing it
-            reward = 0
-            # if(drops[interface]  > 0.0):
-            if(queues[interface]):
-                reward = -1.0
-            else:
-                reward = 1.0
-
+            reward = MAX_QUEUE - queues[interface] - ((10 * free_bandwidths[interface]) / MAX_CAPACITY)
             Agent.update(interface, data, reward)
-            
+
         # update the allocated bandwidth
         # wait for update to happen
 
         # Agent.displayAllHosts()
         # Agent.displayALLHostsBandwidths()
-        #Agent.displayALLHostsPredictedBandwidths()
-        #Agent.displayAdjustments()
+        # Agent.displayALLHostsPredictedBandwidths()
+        # Agent.displayAdjustments()
 
         prevdrops = drops
         # print(stats.get_interface_stats())

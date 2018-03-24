@@ -163,7 +163,8 @@ def createNonBlockTopo(pod, cpu=-1, bw_h2c=10):
 
     # Start Mininet
     host = custom(CPULimitedHost, cpu=cpu)
-    net = Mininet(topo=topo, host=host, link=TCLink, controller=RemoteController, autoSetMacs=True)
+    link = custom(TCLink, max_queue=MAX_QUEUE)
+    net = Mininet(topo=topo, host=host, link=link, controller=RemoteController, autoSetMacs=True)
     # net.start()
 
     return net, topo

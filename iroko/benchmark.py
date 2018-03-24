@@ -71,8 +71,8 @@ def get_test_config():
     algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
     algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-iroko', 'color': 'green'}
     algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
-    algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
-    algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
+    # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
+    # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
     return algos
 
 
@@ -99,11 +99,12 @@ if __name__ == '__main__':
         iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch + args.offset)
         iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch + args.offset)
     if args.test:
-        print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
-              % (DURATION, INPUT_DIR, OUTPUT_DIR))
-        run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
-        iroko_plt.plot_test_bw('results', 'plots/test_bw_sum', traffic_files, labels, algorithms)
-        iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum', qlen_traffics, qlen_labels, algorithms)
+        for e in range(args.epoch):
+            print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
+                  % (DURATION, INPUT_DIR, OUTPUT_DIR))
+            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
+            iroko_plt.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
+            iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms)
 
     elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

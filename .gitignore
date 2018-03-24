@@ -181,3 +181,5 @@ iroko/critic
 iroko/buffer\.npy
 
 iroko/index\.npy
+
+iroko/plots/

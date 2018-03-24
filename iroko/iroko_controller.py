@@ -16,6 +16,7 @@ from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
 
 MAX_CAPACITY = 10e6   # Max capacity of link
+MIN_RATE = 6.25e5
 TOSHOW = True
 EXPLOIT = False
 MAX_QUEUE = 50
@@ -289,7 +290,6 @@ if __name__ == '__main__':
             reward = MAX_QUEUE - queues[interface] + 0.5 * (bandwidths[interface] / MAX_CAPACITY)
             print("Reward Iface %s: %d" % (interface, reward))
             Agent.update(interface, data, reward)
-
         # update the allocated bandwidth
         # wait for update to happen
 

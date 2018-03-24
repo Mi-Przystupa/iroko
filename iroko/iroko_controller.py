@@ -118,7 +118,7 @@ class StatsCollector():
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_old[iface] = float(output) / 1024
+            bytes_old[iface] = float(output)
         time.sleep(1)
         for iface in iface_list:
             cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
@@ -128,7 +128,7 @@ class StatsCollector():
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_new[iface] = float(output) / 1024
+            bytes_new[iface] = float(output)
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
 
         # Get bandwidth deltas
@@ -287,8 +287,10 @@ if __name__ == '__main__':
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # A supposedly more eloquent way of doing it
-            reward = MAX_QUEUE - queues[interface] + 10 * (bandwidths[interface] / MAX_CAPACITY)
-            print("Reward Iface %s: %d" % (interface, reward))
+            # print("CURR BANDWIDTH %d " % bandwidths[interface])
+            reward = MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
+            # print("CALCULATION %f" % (10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))))
+            # print("Reward Iface %s: %d" % (interface, reward))
             Agent.update(interface, data, reward)
         # update the allocated bandwidth
         # wait for update to happen

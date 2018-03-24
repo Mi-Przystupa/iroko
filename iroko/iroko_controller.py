@@ -287,7 +287,7 @@ if __name__ == '__main__':
             data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                  drops[interface], overlimits[interface], queues[interface]])
             # A supposedly more eloquent way of doing it
-            reward = MAX_QUEUE - queues[interface] + 0.5 * (bandwidths[interface] / MAX_CAPACITY)
+            reward = MAX_QUEUE - queues[interface] + 10 * (bandwidths[interface] / MAX_CAPACITY)
             print("Reward Iface %s: %d" % (interface, reward))
             Agent.update(interface, data, reward)
         # update the allocated bandwidth

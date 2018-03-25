@@ -9,6 +9,7 @@ import re
 ###########################################
 # Stuff for learning
 import numpy as np
+import signal
 import torch
 import random
 from argparse import ArgumentParser
@@ -258,14 +259,26 @@ class StatsCollector():
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
 
 
+class GracefullSave:
+    kill_now = False
+
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit)
+        signal.signal(signal.SIGTERM, self.exit)
+
+    def exit(self, signum, frame):
+        print("Time to die...")
+        self.kill_now = True
+
+
 if __name__ == '__main__':
-    # Spawning Iroko controller
+        # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
     # ic.run()
     # set any configuration things
     # just incase
     args.agent = args.agent.lower()
-
+    saver = GracefullSave()
     stats = StatsCollector()
     stats._set_interfaces()
     interfaces = stats.iface_list
@@ -334,7 +347,8 @@ if __name__ == '__main__':
             # v4 the fully connected input of v2 mixed with the single output of v3
             data = data.view(-1)
             Agent.update(i_h_map, data, reward)
-
+        if saver.kill_now:
+            break
         # update the allocated bandwidth
         # wait for update to happen
 

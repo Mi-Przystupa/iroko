@@ -167,6 +167,7 @@ def kill_controller():
 
 
 def clean():
+    kill_controller()
     ''' Clean any the running instances of POX '''
     if args.dctcp:
         disable_dctcp()
@@ -199,7 +200,7 @@ def FatTreeTest(args, controller=None):
     if controller is not None:
         topo_ecmp.connect_controller(net, topo, c0)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py --agent %s > controller.log" % args.agent, shell=True)
+            Popen("sudo python iroko_controller.py --agent %s" % args.agent, shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
         info('** Waiting for switches to connect to the controller\n')
@@ -213,7 +214,6 @@ def FatTreeTest(args, controller=None):
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
     trafficGen(args, hosts, net)
-    kill_controller()
     net.stop()
 
 
@@ -263,12 +263,10 @@ def HederaTest(args):
     #     iperfTrafficGen(args, hosts, net)
     # else:
     trafficGen(args, hosts, net)
-    kill_controller()
     net.stop()
 
 
 if __name__ == '__main__':
-    kill_controller()
     clean()
     setLogLevel('info')
     if not os.path.exists(args.output_dir):

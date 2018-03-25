@@ -14,7 +14,7 @@ class Critic(nn.Module):
 
         nn.init.xavier_normal(self.hidden1.weight.data, gain=2)
         nn.init.xavier_normal(self.hidden2.weight.data, gain=2)
-        nn.init.xavier_normal(self.outputs.weight.data)
+        nn.init.uniform(self.outputs.weight.data, -1e-3, 1e-3)
 
 
 

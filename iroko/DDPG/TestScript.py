@@ -6,7 +6,7 @@ import gym
 import time
 
 #(self, inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001):
-numSimulation = 100000000
+numSimulation = 800
 
 simulationLengths = torch.zeros(numSimulation);
 simulationCount = 0
@@ -21,7 +21,7 @@ print('states: {} actions:{}'.format(S_DIM, A_DIM))
 print('max: {} min: {}'.format(A_MAX, A_MIN))
 #Agent = LearningController(4, 2,8 , 15, .000001, .9, epsilon = .7, decay = 1e-8 )
 
-Agent = DDPG(.99,1e3,S_DIM, A_DIM,tau=.001,criticpath='critic', actorpath='actor')#,h1=100, h2=50) 
+Agent = DDPG(.99,1e5,S_DIM, A_DIM,tau=.001,criticpath='critic', actorpath='actor')#,h1=100, h2=50) 
 sigma = .2#.3 #.3- makes it between -.5 - .5
 theta = .15#.2 #.2
 mu = 0.0
@@ -39,16 +39,7 @@ prevV = 0.0
 t = .001
 avgReward = 0
 steps = 0
-isExploitOn=False
-switch = 0
 for i in range(1, numSimulation):
-    if(switch >= 100 ):
-        if(isExploitOn):
-            Agent.explore()
-        else:
-            Agent.exploit()
-        isExploitOn = not isExploitOn
-        switch = 0
 
     Agent.setExploration(scale, sigma, theta, mu)
     #do the thing
@@ -90,7 +81,6 @@ for i in range(1, numSimulation):
             Agent.PerformUpdate(64)
             Agent.UpdateTargetNetworks()
 
-    switch += 1
     if (steps > 2.5e6):
         print('that is enough training')
         break

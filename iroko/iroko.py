@@ -58,6 +58,8 @@ parser.add_argument('--iroko', dest='iroko', default=False,
 parser.add_argument('--dctcp', dest='dctcp', default=False,
                     action='store_true', help='Run the experiment with DCTCP congestion control')
 
+parser.add_argument('--agent', dest='agent', default='v2', help='options are v0, v2,v3, v4')
+
 args = parser.parse_args()
 
 
@@ -194,7 +196,7 @@ def FatTreeTest(args, controller=None):
     if controller is not None:
         topo_ecmp.connect_controller(net, topo, c0)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py | tee controller.log", shell=True)
+            Popen("sudo python iroko_controller.py --agent %s | tee controller.log" % args.agent, shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
         info('** Waiting for switches to connect to the controller\n')

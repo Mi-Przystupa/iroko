@@ -4,11 +4,11 @@ from torch.autograd import Variable
 import random
 import numpy as np
 import math
-from DDPG.DDPGConv import DDPGConv
+from DDPG.DDPG import DDPG
 
 
-#the convolution agent
-class LearningAgentv3:
+#This one is v2 + v3 so it does not use convolution layer but instead predicts all action from traffic treated as a single row instead of a matrix
+class LearningAgentv4:
     def __init__(self, gamma=.99, lam=.1, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
@@ -16,7 +16,7 @@ class LearningAgentv3:
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPGConv(gamma, memory, 608, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
+        self.controller = DDPG(gamma, memory, 400 , 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()
@@ -26,7 +26,6 @@ class LearningAgentv3:
         self.state = []
         self.prevState = []
         self.actionVector = []
-        self.frames = 0
 
     def initializePorts(self, ports):
         # cleans out old ports and creates maps for new ones
@@ -41,9 +40,8 @@ class LearningAgentv3:
             #features: number of metrics per interface
             #frames: number of previous frames to track
         #to make input space multi-dimensional  
-        self.state = torch.zeros(frames,interfaceCount, features) 
-        self.prevState = torch.zeros(frames, interfaceCount, features)
-        self.frames = frames
+        self.state = torch.zeros( interfaceCount * features) 
+        self.prevState = torch.zeros( interfaceCount * features)
         
         
 
@@ -61,15 +59,7 @@ class LearningAgentv3:
     def update(self, interface, data, reward):
         # assumes data is a pytorch.tensor
         self.prevState= self.state
-        #push back previous frames
-        if (self.frames > 1):
-            #might have this backwards...
-            #as long as it's working like a queue it should be fine...
-            # that implicity velocity stuff is kinda hand wavy anyways.
-            for f in range(0,self.frames - 1):
-                self.state[f] = self.state[f+1] 
-
-        self.state[self.frames - 1] = data
+        self.state = data
         #set action
         for i in interface:
             self.actionVector[self.hosts[i]['id']] = self.hosts[i]['action']

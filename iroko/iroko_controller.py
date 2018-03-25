@@ -5,19 +5,23 @@ import time
 import threading
 import socket
 import subprocess
-import re
-
+import re 
 ###########################################
 # Stuff for learning
 import numpy as np
 import torch
 import random
+from argparse import ArgumentParser
 from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
+from LearningAgentv4 import LearningAgentv4
 
 MAX_CAPACITY = 5e6   # Max capacity of link
 TOSHOW = True
 EXPLOIT = False
+ACTIVEAGENT = 'v2' 
+FRAMES = 3 # number of previous matrices to use
+FEATURES = 5 # number of statistics we are using
 
 ###########################################
 
@@ -25,6 +29,15 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
+
+parser = ArgumentParser()
+parser.add_argument('--agent', dest='agent', default=ACTIVEAGENT, help='options are v0, v2,v3, v4')
+
+parser.add_argument('--frames', dest='frames', default=FRAMES, type=int, help='number of previous traffic matrices to track')
+parser.add_argument('--features', dest='features', default=FEATURES, type=int, help='number of statistics there will be per interface')
+parser.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT,type=bool,help ='flag to use explore or expoit environment')
+
+args = parser.parse_args()
 
 
 class IrokoController(threading.Thread):
@@ -239,39 +252,41 @@ class StatsCollector():
         total_util_avg = (bw_sum) / bandwidths.__len__()
         print("Current Average Utilization: %f" % total_util_avg)
         print("Current Ratio of Utilization: %f" % total_util_ratio)
-
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
-
-
-def HandleDataCollection(self, bodys):
-    for dpid in sorted(bodys.keys()):
-        # you have device id 300*
-        # Also port between 1 - 4 use these
-        if(dpid - 3000 >= 0):
-            for stat in sorted(bodys[dpid], key=attrgetter('port_no')):
-                data = np.array(stat)
-                if(stat.port_no < 30):
-                    self.Agent.addMemory(data)
-                    fb = self.free_bandwidth[dpid][stat.port_no]
-                    self.Agent.updateHostsBandwidth(dpid, stat.port_no, fb)
-    self.Agent.displayAllHosts()
-    self.Agent.displayALLHostsBandwidths()
 
 
 if __name__ == '__main__':
     # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
     # ic.run()
+    #set any configuration things
+    #just incase
+    args.agent = args.agent.lower()
 
     stats = StatsCollector()
-    # Agent = LearningAgent(initMax=MAX_CAPACITY)
-    Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
-    #Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=EXPLOIT)
+    stats._set_interfaces()    
+    interfaces = stats.iface_list
+
+    #interfaces = stats.get_interface_stats()
+
+    #initialize the Agent  
+    if args.agent  == 'v2' or  args.agent == 'v0': 
+        Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+    elif args.agent == 'v3': 
+        Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+        Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
+    elif args.agent == 'v4':
+        Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+        Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
+
+    else:
+        #you had 3 options of 2 characters length and still messed up. Be humbled, take a deep breadth and center yourself 
+        raise ValueError('Invalid agent, options are v2,v3,v4')
+
 
     Agent.initializePorts(i_h_map)
-    stats._set_interfaces()
-    prevdrops = []
+    
     while(1):
         #perform action
         Agent.predictBandwidthOnHosts()
@@ -280,20 +295,48 @@ if __name__ == '__main__':
 
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-        if not prevdrops:
-            prevdrops = drops
-        for interface in i_h_map:
-            data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
-                                 drops[interface], overlimits[interface], queues[interface]])
-            # A supposedly more eloquent way of doing it
-            reward = 0
-            # if(drops[interface]  > 0.0):
-            if(queues[interface]):
-                reward = -1.0
-            else:
-                reward = 1.0
 
-            Agent.update(interface, data, reward)
+        data = torch.zeros(len(interfaces), FEATURES)   
+        reward = 0.0
+        for i, interfaces in enumerate(interfaces):
+            data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],\
+                                drops[interface], overlimits[interface], queues[interface]])
+            if(queues[interface]):
+                reward += -1.0
+            else:
+                reward += 1.0
+
+        if ACTIVEAGENT == 'v0': 
+            #the historic version
+            for interface in i_h_map:
+                data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
+                                     drops[interface], overlimits[interface], queues[interface]])
+                # A supposedly more eloquent way of doing it
+                # A supposedly more eloquent way of doing it
+                reward = 0
+                # if(drops[interface]  > 0.0):
+                if(queues[interface]):
+                    reward = -1.0
+                else:
+                    reward = 1.0
+                Agent.update(interface, data, reward)
+        elif args.agent == 'v2':
+            #fully connected agent that  uses full matrix for each action but uses current host as input 
+            data = data.view(-1)
+            for interface in i_h_map:
+                Agent.update(interface, data, reward)
+        elif args.agent =='v3':
+            #just dump in traffic matrix and let a rip
+            Agent.update(i_h_map, data, reward)
+        elif args.agent == 'v4':
+            #flatten the matrix & feed it in
+            #v4 the fully connected input of v2 mixed with the single output of v3 
+            data = data.view(-1)
+            Agent.update(i_h_map, data, reward)
+
+            
+
+
             
         # update the allocated bandwidth
         # wait for update to happen
@@ -303,5 +346,4 @@ if __name__ == '__main__':
         #Agent.displayALLHostsPredictedBandwidths()
         #Agent.displayAdjustments()
 
-        prevdrops = drops
         # print(stats.get_interface_stats())

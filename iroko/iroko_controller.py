@@ -269,7 +269,7 @@ if __name__ == '__main__':
     stats = StatsCollector()
     stats._set_interfaces()    
     interfaces = stats.iface_list
-
+    SIZE = len(interfaces)
     #interfaces = stats.get_interface_stats()
 
     #initialize the Agent  
@@ -296,7 +296,7 @@ if __name__ == '__main__':
 
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-        data = torch.zeros(len(interfaces), FEATURES)   
+        data = torch.zeros(SIZE, FEATURES)   
         reward = 0.0
         for i, interfaces in enumerate(interfaces):
             data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],\

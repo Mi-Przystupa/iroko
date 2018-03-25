@@ -93,7 +93,7 @@ class Critic(nn.Module):
         return self.outputs(x)
 
 class DDPGConv:
-    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False, h1=400, h2=300, h=5, w=16):
+    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False, h1=400, h2=300, h=80, w=5):
         self.gamma =gamma
         self.memory = ReplayMemory(memory)
         self.height = h

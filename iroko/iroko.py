@@ -145,10 +145,7 @@ def trafficGen(args, hosts, net):
         h.cmd('killall loadgen')
 
 
-def clean():
-    ''' Clean any the running instances of POX '''
-    if args.dctcp:
-        disable_dctcp()
+def kill_controller():
     p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko_controller' | awk '{print $2}'",
                   stdout=PIPE, shell=True)
     p_pox.wait()
@@ -167,6 +164,12 @@ def clean():
             Popen('kill %d' % pid, shell=True).wait()
         except Exception as e:
             pass
+
+
+def clean():
+    ''' Clean any the running instances of POX '''
+    if args.dctcp:
+        disable_dctcp()
     Popen('killall iperf3', shell=True).wait()
     Popen('killall xterm', shell=True).wait()
     Popen('killall python2.7', shell=True).wait()
@@ -210,6 +213,7 @@ def FatTreeTest(args, controller=None):
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
     trafficGen(args, hosts, net)
+    kill_controller()
     net.stop()
 
 
@@ -224,7 +228,6 @@ def NonBlockingTest(args):
 
     hosts = net.hosts
     trafficGen(args, hosts, net)
-
     net.stop()
 
 
@@ -239,7 +242,6 @@ def HederaNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
 
     net = Mininet(topo, host=host, link=link, switch=OVSKernelSwitch,
                   controller=None)
-
     return net
 
 
@@ -261,11 +263,12 @@ def HederaTest(args):
     #     iperfTrafficGen(args, hosts, net)
     # else:
     trafficGen(args, hosts, net)
-
+    kill_controller()
     net.stop()
 
 
 if __name__ == '__main__':
+    kill_controller()
     clean()
     setLogLevel('info')
     if not os.path.exists(args.output_dir):

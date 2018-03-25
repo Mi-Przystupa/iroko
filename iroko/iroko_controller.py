@@ -5,7 +5,7 @@ import time
 import threading
 import socket
 import subprocess
-import re 
+import re
 ###########################################
 # Stuff for learning
 import numpy as np
@@ -20,9 +20,9 @@ MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
 TOSHOW = True
 EXPLOIT = False
-ACTIVEAGENT = 'v2' 
-FRAMES = 3 # number of previous matrices to use
-FEATURES = 5 # number of statistics we are using
+ACTIVEAGENT = 'v2'
+FRAMES = 3  # number of previous matrices to use
+FEATURES = 5  # number of statistics we are using
 MAX_QUEUE = 50
 
 ###########################################
@@ -37,7 +37,7 @@ parser.add_argument('--agent', dest='agent', default=ACTIVEAGENT, help='options 
 
 parser.add_argument('--frames', dest='frames', default=FRAMES, type=int, help='number of previous traffic matrices to track')
 parser.add_argument('--features', dest='features', default=FEATURES, type=int, help='number of statistics there will be per interface')
-parser.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT,type=bool,help ='flag to use explore or expoit environment')
+parser.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT, type=bool, help='flag to use explore or expoit environment')
 
 args = parser.parse_args()
 
@@ -262,20 +262,20 @@ if __name__ == '__main__':
     # Spawning Iroko controller
     ic = IrokoController("Iroko_Thead")
     # ic.run()
-    #set any configuration things
-    #just incase
+    # set any configuration things
+    # just incase
     args.agent = args.agent.lower()
 
     stats = StatsCollector()
-    stats._set_interfaces()    
+    stats._set_interfaces()
     interfaces = stats.iface_list
     SIZE = len(interfaces)
-    #interfaces = stats.get_interface_stats()
+    # interfaces = stats.get_interface_stats()
 
-    #initialize the Agent  
-    if args.agent  == 'v2' or  args.agent == 'v0': 
+    # initialize the Agent
+    if args.agent == 'v2' or args.agent == 'v0':
         Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
-    elif args.agent == 'v3': 
+    elif args.agent == 'v3':
         Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
     elif args.agent == 'v4':
@@ -283,11 +283,11 @@ if __name__ == '__main__':
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
 
     else:
-        #you had 3 options of 2 characters length and still messed up. Be humbled, take a deep breadth and center yourself 
+        # you had 3 options of 2 characters length and still messed up. Be humbled, take a deep breadth and center yourself
         raise ValueError('Invalid agent, options are v2,v3,v4')
 
     Agent.initializePorts(i_h_map)
-    
+
     while(1):
         # perform action
         Agent.predictBandwidthOnHosts()
@@ -296,19 +296,19 @@ if __name__ == '__main__':
 
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-        data = torch.zeros(SIZE, FEATURES)   
+        data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
         for i, interfaces in enumerate(interfaces):
-            data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],\
-                                drops[interface], overlimits[interface], queues[interface]])
+            data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
+                                    drops[interface], overlimits[interface], queues[interface]])
             if(queues[interface]):
-                reward +=MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
- #-1.0
+                reward += MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
+            # -1.0
             else:
                 reward += MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
 
-        if ACTIVEAGENT == 'v0': 
-            #the historic version
+        if ACTIVEAGENT == 'v0':
+            # the historic version
             for interface in i_h_map:
                 data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                      drops[interface], overlimits[interface], queues[interface]])
@@ -322,20 +322,18 @@ if __name__ == '__main__':
                     reward = 1.0
                 Agent.update(interface, data, reward)
         elif args.agent == 'v2':
-            #fully connected agent that  uses full matrix for each action but uses current host as input 
+            # fully connected agent that  uses full matrix for each action but uses current host as input
             data = data.view(-1)
             for interface in i_h_map:
                 Agent.update(interface, data, reward)
-        elif args.agent =='v3':
-            #just dump in traffic matrix and let a rip
+        elif args.agent == 'v3':
+            # just dump in traffic matrix and let a rip
             Agent.update(i_h_map, data, reward)
         elif args.agent == 'v4':
-            #flatten the matrix & feed it in
-            #v4 the fully connected input of v2 mixed with the single output of v3 
+            # flatten the matrix & feed it in
+            # v4 the fully connected input of v2 mixed with the single output of v3
             data = data.view(-1)
             Agent.update(i_h_map, data, reward)
-
-            
 
         # update the allocated bandwidth
         # wait for update to happen

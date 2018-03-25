@@ -64,6 +64,8 @@ def transpose(l):
 
 
 def avg(lst):
+    if len(lst) == 0:
+        return 0
     return sum(map(float, lst)) / len(lst)
 
 

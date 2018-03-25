@@ -16,12 +16,14 @@ from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
 from LearningAgentv4 import LearningAgentv4
 
-MAX_CAPACITY = 5e6   # Max capacity of link
+MAX_CAPACITY = 10e6   # Max capacity of link
+MIN_RATE = 6.25e5
 TOSHOW = True
 EXPLOIT = False
 ACTIVEAGENT = 'v2' 
 FRAMES = 3 # number of previous matrices to use
 FEATURES = 5 # number of statistics we are using
+MAX_QUEUE = 50
 
 ###########################################
 
@@ -130,7 +132,7 @@ class StatsCollector():
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_old[iface] = float(output) / 1024
+            bytes_old[iface] = float(output)
         time.sleep(1)
         for iface in iface_list:
             cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
@@ -140,7 +142,7 @@ class StatsCollector():
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_new[iface] = float(output) / 1024
+            bytes_new[iface] = float(output)
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
 
         # Get bandwidth deltas
@@ -201,7 +203,7 @@ class StatsCollector():
             # cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
-            dr = {} 
+            dr = {}
             ov = {}
             qu = {}
             try:
@@ -284,27 +286,26 @@ if __name__ == '__main__':
         #you had 3 options of 2 characters length and still messed up. Be humbled, take a deep breadth and center yourself 
         raise ValueError('Invalid agent, options are v2,v3,v4')
 
-
     Agent.initializePorts(i_h_map)
     
     while(1):
-        #perform action
+        # perform action
         Agent.predictBandwidthOnHosts()
         for interface in i_h_map:
             ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
 
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
-
         data = torch.zeros(len(interfaces), FEATURES)   
         reward = 0.0
         for i, interfaces in enumerate(interfaces):
             data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],\
                                 drops[interface], overlimits[interface], queues[interface]])
             if(queues[interface]):
-                reward += -1.0
+                reward +=MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
+ #-1.0
             else:
-                reward += 1.0
+                reward += MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
 
         if ACTIVEAGENT == 'v0': 
             #the historic version
@@ -336,14 +337,12 @@ if __name__ == '__main__':
 
             
 
-
-            
         # update the allocated bandwidth
         # wait for update to happen
 
         # Agent.displayAllHosts()
         # Agent.displayALLHostsBandwidths()
-        #Agent.displayALLHostsPredictedBandwidths()
-        #Agent.displayAdjustments()
+        # Agent.displayALLHostsPredictedBandwidths()
+        # Agent.displayAdjustments()
 
         # print(stats.get_interface_stats())

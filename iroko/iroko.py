@@ -190,17 +190,17 @@ def FatTreeTest(args, controller=None):
 
     net.start()
 
-    sleep(2)
+    sleep(1)
     topo_ecmp.configureTopo(net, topo, ovs_v, is_ecmp)
 
     if controller is not None:
         topo_ecmp.connect_controller(net, topo, c0)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py --agent %s | tee controller.log" % args.agent, shell=True)
+            Popen("sudo python iroko_controller.py --agent %s > controller.log" % args.agent, shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
         info('** Waiting for switches to connect to the controller\n')
-        sleep(2)
+        sleep(1)
     hosts = net.hosts
     if args.dctcp:
         enable_dctcp()

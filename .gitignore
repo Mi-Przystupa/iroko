@@ -173,3 +173,13 @@ iroko/DDPG/actor
 iroko/DDPG/critic
 Documents/Report/Iroko_Report\.pdf
 
+
+iroko/actor
+
+iroko/critic
+
+iroko/buffer\.npy
+
+iroko/index\.npy
+
+iroko/plots/

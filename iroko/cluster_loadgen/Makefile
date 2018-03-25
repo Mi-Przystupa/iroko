@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -O3 -g
+CFLAGS=-Wall -O3 -g -fpermissive
 LFLAGS=-pthread
 
 loadgen: main.o server.o client.o controller.o

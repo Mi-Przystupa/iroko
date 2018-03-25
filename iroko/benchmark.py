@@ -11,7 +11,7 @@ parser.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
 parser.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
-
+parser.add_argument('--agent', dest='agent', default='v2', help='v0,v2,v3,v4')
 args = parser.parse_args()
 
 
@@ -24,12 +24,13 @@ traffic_files = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_
                  'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
                  'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
                  'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
-
+# traffic_files = ['stag_prob_0_2_3_data']
 
 labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
           'stag1(0.5,0.3)', 'stag2(0.5,0.3)', 'stride1', 'stride2',
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
+# labels = ['stag0(0.2,0.3)']
 
 qlen_traffics = ['stag_prob_2_2_3_data',
                  'stag_prob_2_5_3_data', 'stride1_data',
@@ -60,7 +61,7 @@ def train(input_dir, output_dir, duration, offset, epochs, conf):
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             pre_folder = "%s_%d" % (conf['pre'], e)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
-            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --iroko' % (input_file, out_dir, duration))
+            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --iroko --agent %s' % (input_file, out_dir, duration, args.agent))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
 
@@ -70,8 +71,8 @@ def get_test_config():
     algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
     algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
     algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
-    algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
-    algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
+    # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
+    # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
     return algos
 
 
@@ -98,11 +99,12 @@ if __name__ == '__main__':
         iroko_plt.plot_train_bw('results', 'plots/train_bw', traffic_files, algorithms, args.epoch + args.offset)
         iroko_plt.plot_train_qlen('results', 'plots/train_qlen', traffic_files, algorithms, args.epoch + args.offset)
     if args.test:
-        print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
-              % (DURATION, INPUT_DIR, OUTPUT_DIR))
-        run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
-        iroko_plt.plot_test_bw('results', 'plots/test_bw_sum', traffic_files, labels, algorithms)
-        iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum', qlen_traffics, qlen_labels, algorithms)
+        for e in range(args.epoch):
+            print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
+                  % (DURATION, INPUT_DIR, OUTPUT_DIR))
+            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
+            iroko_plt.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
+            iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms, FATTREE_SW)
 
     elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

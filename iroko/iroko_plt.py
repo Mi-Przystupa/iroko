@@ -60,10 +60,29 @@ def get_bw_dict(file):
     return data
 
 
-def get_qlen_stats(input_file):
-    vals = {}
+def get_qlen_stats(input_file, pat_iface):
     data = read_list(input_file)
-    qlens = map(float, col(2, data))[10:-10]
+    pat_iface = re.compile(pat_iface)
+    qlen = {}
+    for row in data:
+        try:
+            ifname = row[0]
+        except Exception as e:
+            break
+        if ifname not in ['eth0', 'lo']:
+            if ifname not in qlen:
+                qlen[ifname] = []
+            try:
+                qlen[ifname].append(int(row[2]))
+            except Exception as e:
+                break
+    vals = {}
+    qlens = []
+    for k in qlen.keys():
+        if pat_iface.match(k):
+            qlens.append(qlen[k])
+    # qlens = map(float, col(2, data))[10:-10]
+    qlens = list(itertools.chain.from_iterable(qlens))
     vals["avg_qlen"] = avg(qlens)
     vals["median_qlen"] = np.median(qlens)
     vals["max_qlen"] = max(qlens)
@@ -129,11 +148,11 @@ def plot_test_bw(input_dir, plt_name, traffic_files, labels, algorithms):
             index += 1
         plt.legend(p_bar, p_legend, loc='upper left')
         plt.savefig(plt_name)
-
     plt.grid(True)
+    plt.gcf().clear()
 
 
-def plot_test_qlen(input_dir, plt_name, traffic_files, labels, algorithms):
+def plot_test_qlen(input_dir, plt_name, traffic_files, labels, algorithms, iface):
     fig = plt.figure(1)
     fig.set_size_inches(8.5, 6.5)
     for i, tf in enumerate(traffic_files):
@@ -148,10 +167,11 @@ def plot_test_qlen(input_dir, plt_name, traffic_files, labels, algorithms):
         for algo, conf in algorithms.iteritems():
             print("%s:%s" % (algo, tf))
             input_file = input_dir + '/%s/%s/qlen.txt' % (conf['pre'], tf)
-            results = get_qlen_stats(input_file)
+            results = get_qlen_stats(input_file, conf['sw'])
             plt.plot(results['xcdf_qlen'], results['ycdf_qlen'], label=labels[i], color=conf['color'], lw=2)
         plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')
         plt.savefig(plt_name)
+    plt.gcf().clear()
 
 
 def plot_train_bw(input_dir, plt_name, traffic_files, algorithms, epochs):
@@ -204,7 +224,7 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithms, epochs):
             bb['%s_%s' % (algo, e)] = []
             print("%s: %s" % (algo, tf))
             input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
-            results = get_qlen_stats(input_file)
+            results = get_qlen_stats(input_file, conf['sw'])
             avg = float(results['avg_qlen'])
             print(avg)
             bb['%s_%s' % (algo, e)].append(avg)

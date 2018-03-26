@@ -167,7 +167,6 @@ def kill_controller():
 
 
 def clean():
-    kill_controller()
     ''' Clean any the running instances of POX '''
     if args.dctcp:
         disable_dctcp()
@@ -214,6 +213,7 @@ def FatTreeTest(args, controller=None):
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
     trafficGen(args, hosts, net)
+    kill_controller()
     net.stop()
 
 
@@ -263,10 +263,12 @@ def HederaTest(args):
     #     iperfTrafficGen(args, hosts, net)
     # else:
     trafficGen(args, hosts, net)
+    kill_controller()
     net.stop()
 
 
 if __name__ == '__main__':
+    kill_controller()
     clean()
     setLogLevel('info')
     if not os.path.exists(args.output_dir):

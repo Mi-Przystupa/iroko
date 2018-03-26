@@ -130,20 +130,20 @@ class StatsCollector():
              else { print $2 } }\' /proc/net/dev" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
+                bytes_old[iface] = float(output)
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_old[iface] = float(output)
         time.sleep(1)
         for iface in iface_list:
             cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
              else { print $2 } }\' /proc/net/dev" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
+                bytes_new[iface] = float(output)
             except Exception as e:
                 print("Empty Request")
                 output = 0
-            bytes_new[iface] = float(output)
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
 
         # Get bandwidth deltas
@@ -259,7 +259,7 @@ class StatsCollector():
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
 
 
-class GracefullSave:
+class GracefulSave:
     kill_now = False
 
     def __init__(self):
@@ -278,7 +278,7 @@ if __name__ == '__main__':
     # set any configuration things
     # just incase
     args.agent = args.agent.lower()
-    saver = GracefullSave()
+    saver = GracefulSave()
     stats = StatsCollector()
     stats._set_interfaces()
     interfaces = stats.iface_list

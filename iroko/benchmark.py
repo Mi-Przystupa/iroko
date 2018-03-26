@@ -56,6 +56,7 @@ FATTREE_SW = '300[1-9]'
 
 def train(input_dir, output_dir, duration, offset, epochs, conf):
     os.system('sudo mn -c')
+    f = open("reward.txt", "w+")
     for e in range(offset, epochs + offset):
         for tf in traffic_files:
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
@@ -64,6 +65,7 @@ def train(input_dir, output_dir, duration, offset, epochs, conf):
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --iroko --agent %s' % (input_file, out_dir, duration, args.agent))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
+    f.close()
 
 
 def get_test_config():
@@ -78,6 +80,7 @@ def get_test_config():
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
     os.system('sudo mn -c')
+    f = open("reward.txt", "w+")
     for algo, conf in algorithms.iteritems():
         pre_folder = conf['pre']
         for tf in traffic_files:
@@ -86,6 +89,7 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
+    f.close()
 
 
 if __name__ == '__main__':

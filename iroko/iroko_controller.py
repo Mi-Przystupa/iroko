@@ -283,6 +283,8 @@ if __name__ == '__main__':
     stats._set_interfaces()
     interfaces = stats.iface_list
     SIZE = len(interfaces)
+    total_reward = 0
+    total_iters = 0
     # interfaces = stats.get_interface_stats()
 
     # initialize the Agent
@@ -315,7 +317,7 @@ if __name__ == '__main__':
             data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
                                     drops[iface], overlimits[iface], queues[iface]])
             reward += MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
-
+        print("Current Reward %d" % reward)
         if ACTIVEAGENT == 'v0':
             # the historic version
             for interface in i_h_map:
@@ -343,7 +345,12 @@ if __name__ == '__main__':
             # v4 the fully connected input of v2 mixed with the single output of v3
             data = data.view(-1)
             Agent.update(i_h_map, data, reward)
+        total_reward += reward
+        total_iters += 1
         if saver.kill_now:
+            f = open('reward.txt', 'a+')
+            f.write('%f\n' % (total_reward / total_iters))
+            f.close()
             break
         # update the allocated bandwidth
         # wait for update to happen

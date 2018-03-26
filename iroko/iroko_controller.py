@@ -304,17 +304,17 @@ if __name__ == '__main__':
     while(1):
         # perform action
         Agent.predictBandwidthOnHosts()
-        for interface in i_h_map:
-            ic.send_cntrl_pckt(interface, Agent.getHostsPredictedBandwidth(interface))
+        for h_iface in i_h_map:
+            ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
 
         # update Agents internal representations
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
-        for i, interfaces in enumerate(interfaces):
-            data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
-                                    drops[interface], overlimits[interface], queues[interface]])
-            reward = MAX_QUEUE - queues[interface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
+        for i, iface in enumerate(interfaces):
+            data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
+                                    drops[iface], overlimits[iface], queues[iface]])
+            reward = MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
 
         if ACTIVEAGENT == 'v0':
             # the historic version

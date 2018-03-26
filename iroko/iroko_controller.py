@@ -314,7 +314,7 @@ if __name__ == '__main__':
         for i, iface in enumerate(interfaces):
             data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
                                     drops[iface], overlimits[iface], queues[iface]])
-            reward = MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
+            reward += MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
 
         if ACTIVEAGENT == 'v0':
             # the historic version

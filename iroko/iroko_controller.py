@@ -313,10 +313,14 @@ if __name__ == '__main__':
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
-        for i, iface in enumerate(interfaces):
-            data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
-                                    drops[iface], overlimits[iface], queues[iface]])
-            reward += MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
+        try:
+            for i, iface in enumerate(interfaces):
+                data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
+                                        drops[iface], overlimits[iface], queues[iface]])
+                reward += MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
+        except Exception:
+            print("Time to go.")
+            break
         print("Current Reward %d" % reward)
         if ACTIVEAGENT == 'v0':
             # the historic version
@@ -348,9 +352,6 @@ if __name__ == '__main__':
         total_reward += reward
         total_iters += 1
         if saver.kill_now:
-            f = open('reward.txt', 'a+')
-            f.write('%f\n' % (total_reward / total_iters))
-            f.close()
             break
         # update the allocated bandwidth
         # wait for update to happen
@@ -361,3 +362,7 @@ if __name__ == '__main__':
         # Agent.displayAdjustments()
 
         # print(stats.get_interface_stats())
+
+    f = open('reward.txt', 'a+')
+    f.write('%f\n' % (total_reward / total_iters))
+    f.close()

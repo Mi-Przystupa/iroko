@@ -317,26 +317,29 @@ if __name__ == '__main__':
             for i, iface in enumerate(interfaces):
                 data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
                                         drops[iface], overlimits[iface], queues[iface]])
-                reward += MAX_QUEUE - queues[iface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
+                if queues[iface] == 0:
+                    reward += MAX_QUEUE + 10.0 * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                else:
+                    reward -= queues[iface]
         except Exception:
             print("Time to go.")
             break
         print("Current Reward %d" % reward)
-        if ACTIVEAGENT == 'v0':
-            # the historic version
-            for interface in i_h_map:
-                data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
-                                     drops[interface], overlimits[interface], queues[interface]])
-                # A supposedly more eloquent way of doing it
-                # A supposedly more eloquent way of doing it
-                reward = 0
-                # if(drops[interface]  > 0.0):
-                if(queues[interface]):
-                    reward = -1.0
-                else:
-                    reward = 1.0
-                Agent.update(interface, data, reward)
-        elif args.agent == 'v2':
+        # if ACTIVEAGENT == 'v0':
+        #     # the historic version
+        #     for interface in i_h_map:
+        #         data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
+        #                              drops[interface], overlimits[interface], queues[interface]])
+        #         # A supposedly more eloquent way of doing it
+        #         # A supposedly more eloquent way of doing it
+        #         reward = 0
+        #         # if(drops[interface]  > 0.0):
+        #         if(queues[interface]):
+        #             reward = -1.0
+        #         else:
+        #             reward = 1.0
+        #         Agent.update(interface, data, reward)
+        if args.agent == 'v2':
             # fully connected agent that  uses full matrix for each action but uses current host as input
             data = data.view(-1)
             for interface in i_h_map:

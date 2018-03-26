@@ -314,11 +314,7 @@ if __name__ == '__main__':
         for i, interfaces in enumerate(interfaces):
             data[i] = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
                                     drops[interface], overlimits[interface], queues[interface]])
-            if(queues[interface]):
-                reward += MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
-            # -1.0
-            else:
-                reward += MAX_QUEUE - queues[interface] + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY))
+            reward = MAX_QUEUE - queues[interface]  # + 10.0 * (float(bandwidths[interface]) / float(MAX_CAPACITY)
 
         if ACTIVEAGENT == 'v0':
             # the historic version

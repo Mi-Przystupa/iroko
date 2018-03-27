@@ -174,13 +174,12 @@ def plot_test_qlen(input_dir, plt_name, traffic_files, labels, algorithms, iface
     plt.gcf().clear()
 
 
-def plot_train_bw(input_dir, plt_name, traffic_files, algorithms, epochs):
+def plot_train_bw(input_dir, plt_name, traffic_files, conf, epochs):
     plt_dir = os.path.dirname(plt_name)
     if not os.path.exists(plt_dir):
         if not plt_dir == '':
             os.makedirs(plt_dir)
     algo = 'iroko'
-    conf = algorithms['iroko']
     fbb = 16. * 10  # 160 mbps
     # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
     bb = {}
@@ -210,13 +209,12 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithms, epochs):
         plt.gcf().clear()
 
 
-def plot_train_qlen(input_dir, plt_name, traffic_files, algorithms, epochs):
+def plot_train_qlen(input_dir, plt_name, traffic_files, conf, epochs):
     plt_dir = os.path.dirname(plt_name)
     if not os.path.exists(plt_dir):
         if not plt_dir == '':
             os.makedirs(plt_dir)
     algo = 'iroko'
-    conf = algorithms['iroko']
     # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
     bb = {}
     for tf in traffic_files:

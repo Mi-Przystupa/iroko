@@ -23,7 +23,7 @@ TOSHOW = True
 EXPLOIT = False
 ACTIVEAGENT = 'v2'
 FRAMES = 3  # number of previous matrices to use
-FEATURES = 5  # number of statistics we are using
+FEATURES = 4  # number of statistics we are using
 MAX_QUEUE = 50
 
 ###########################################

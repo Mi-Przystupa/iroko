@@ -91,7 +91,7 @@ class StatsCollector(threading.Thread):
                 output = subprocess.check_output(cmd, shell=True)
                 bytes_old[iface] = float(output)
             except Exception as e:
-                print("Empty Request")
+                # print("Empty Request %s" % e)
                 output = 0
         time.sleep(1)
         for iface in iface_list:
@@ -101,7 +101,7 @@ class StatsCollector(threading.Thread):
                 output = subprocess.check_output(cmd, shell=True)
                 bytes_new[iface] = float(output)
             except Exception as e:
-                print("Empty Request")
+                # print("Empty Request %s" % e)
                 output = 0
         curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
 
@@ -167,7 +167,7 @@ class StatsCollector(threading.Thread):
                 ov = re_overlimit.findall(output)
                 qu = re_queued.findall(output)
             except Exception as e:
-                print("Empty Request")
+                # print("Empty Request %s" % e)
                 dr[0] = 0
                 ov[0] = 0
                 qu[0] = 0

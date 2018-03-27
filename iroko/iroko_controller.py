@@ -121,7 +121,7 @@ if __name__ == '__main__':
                 data[i] = torch.Tensor([bandwidths[iface], drops[iface], overlimits[iface], queues[iface]])
                 if queues[iface] == 0:
                     reward += MAX_QUEUE
-                    bw_reward += MAX_QUEUE * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                    bw_reward += (MAX_QUEUE / 10) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 else:
                     reward += MAX_QUEUE - queues[iface]
         except Exception as e:

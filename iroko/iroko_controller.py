@@ -317,8 +317,7 @@ if __name__ == '__main__':
         bw_reward = 0
         try:
             for i, iface in enumerate(interfaces):
-                data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
-                                        drops[iface], overlimits[iface], queues[iface]])
+                data[i] = torch.Tensor([bandwidths[iface], drops[iface], overlimits[iface], queues[iface]])
                 if queues[iface] == 0:
                     reward += MAX_QUEUE
                     bw_reward += MAX_QUEUE * float(bandwidths[iface]) / float(MAX_CAPACITY)

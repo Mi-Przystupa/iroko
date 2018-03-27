@@ -8,7 +8,7 @@ from DDPG.DDPG import DDPG
 
 
 class LearningAgentv2:
-    def __init__(self, gamma=.99, lam=.1, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
+    def __init__(self, gamma=.99, lam=.1, s=336, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma

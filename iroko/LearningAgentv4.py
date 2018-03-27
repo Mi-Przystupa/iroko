@@ -7,22 +7,23 @@ import math
 from DDPG.DDPG import DDPG
 
 
-#This one is v2 + v3 so it does not use convolution layer but instead predicts all action from traffic treated as a single row instead of a matrix
+# This one is v2 + v3 so it does not use convolution layer but
+# instead predicts all action from traffic treated as a single row instead of a matrix
 class LearningAgentv4:
-    def __init__(self, gamma=.99, lam=.1, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
+    def __init__(self, gamma=.99, lam=.1, s=320, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPG(gamma, memory, 400 , 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
+        self.controller = DDPG(gamma, memory, 400, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()
         else:
             self.controller.explore()
-        #lol can you say hacking??
+        # lol can you say hacking??
         self.state = []
         self.prevState = []
         self.actionVector = []
@@ -35,15 +36,13 @@ class LearningAgentv4:
         self.actionVector = torch.Tensor(self.hostcount)
 
     def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
-        #inputs:
-            #interfaceCount: number of rows in the traffic matrix
-            #features: number of metrics per interface
-            #frames: number of previous frames to track
-        #to make input space multi-dimensional  
-        self.state = torch.zeros( interfaceCount * features) 
-        self.prevState = torch.zeros( interfaceCount * features)
-        
-        
+        # inputs:
+            # interfaceCount: number of rows in the traffic matrix
+            # features: number of metrics per interface
+            # frames: number of previous frames to track
+        # to make input space multi-dimensional
+        self.state = torch.zeros(interfaceCount * features)
+        self.prevState = torch.zeros(interfaceCount * features)
 
     def createHost(self):
         self.hostcount += 1
@@ -58,20 +57,20 @@ class LearningAgentv4:
 
     def update(self, interface, data, reward):
         # assumes data is a pytorch.tensor
-        self.prevState= self.state
+        self.prevState = self.state
         self.state = data
-        #set action
+        # set action
         for i in interface:
             self.actionVector[self.hosts[i]['id']] = self.hosts[i]['action']
 
-        self.controller.addToMemory(self.prevState, self.actionVector, reward, self.state )
+        self.controller.addToMemory(self.prevState, self.actionVector, reward, self.state)
         if (self.controller.primedToLearn()):
             self.controller.PerformUpdate(64)
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()
 
     def predictBandwidthOnHosts(self):
-        state = self.state 
+        state = self.state
         action = self.controller.selectAction(state.unsqueeze(0))
         action = action.squeeze()
 
@@ -80,8 +79,6 @@ class LearningAgentv4:
             a = np.clip(a, 0.1, 1.0)
             self.hosts[interface]['predictedAllocation'] = self.defaultmax * a
             self.hosts[interface]['action'] = a
-
-
 
     def getHostsPredictedBandwidth(self, interface):
         return int(math.ceil(self.hosts[interface]['predictedAllocation']))

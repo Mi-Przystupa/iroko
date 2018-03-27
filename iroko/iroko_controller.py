@@ -36,9 +36,12 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
 parser = ArgumentParser()
 parser.add_argument('--agent', dest='agent', default=ACTIVEAGENT, help='options are v0, v2,v3, v4')
 
-parser.add_argument('--frames', dest='frames', default=FRAMES, type=int, help='number of previous traffic matrices to track')
-parser.add_argument('--features', dest='features', default=FEATURES, type=int, help='number of statistics there will be per interface')
-parser.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT, type=bool, help='flag to use explore or expoit environment')
+parser.add_argument('--frames', dest='frames', default=FRAMES, type=int,
+                    help='number of previous traffic matrices to track')
+parser.add_argument('--features', dest='features', default=FEATURES, type=int,
+                    help='number of statistics there will be per interface')
+parser.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT,
+                    type=bool, help='flag to use explore or expoit environment')
 
 args = parser.parse_args()
 
@@ -229,7 +232,6 @@ class StatsCollector():
         drops, overlimits, queues = self._get_qdisc_stats(self.iface_list)
         return bandwidths, free_bandwidths, drops, overlimits, queues
 
-
     def show_stat(self):
         '''
                 Show statistics information according to data type.
@@ -242,7 +244,8 @@ class StatsCollector():
         bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
         bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(
             bandwidths, free_bandwidths, drops, overlimits, queues)
-        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(loss_sum, overlimit_sum, bw_sum)
+        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(
+            loss_sum, overlimit_sum, bw_sum)
         print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
         print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
         print("Backlog: %d" % queued_sum)
@@ -290,16 +293,20 @@ if __name__ == '__main__':
 
     # initialize the Agent
     if args.agent == 'v2' or args.agent == 'v0':
-        Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+        Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, s=SIZE * FEATURES +
+                                len(i_h_map), cpath='critic', apath='actor', toExploit=args.exploit)
     elif args.agent == 'v3':
-        Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+        Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, s=3 * SIZE / 8 * (FEATURES - 2),
+                                cpath='critic', apath='actor', toExploit=args.exploit)
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
     elif args.agent == 'v4':
-        Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, cpath='critic', apath='actor', toExploit=args.exploit)
+        Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, s=SIZE * FEATURES, cpath='critic',
+                                apath='actor', toExploit=args.exploit)
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
 
     else:
-        # you had 3 options of 2 characters length and still messed up. Be humbled, take a deep breadth and center yourself
+        # you had 3 options of 2 characters length and still messed up.
+        # Be humbled, take a deep breath and center yourself
         raise ValueError('Invalid agent, options are v2,v3,v4')
 
     Agent.initializePorts(i_h_map)

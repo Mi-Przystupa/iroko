@@ -7,9 +7,9 @@ import math
 from DDPG.DDPGConv import DDPGConv
 
 
-#the convolution agent
+# the convolution agent
 class LearningAgentv3:
-    def __init__(self, gamma=.99, lam=.1, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
+    def __init__(self, gamma=.99, lam=.1, s=608, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
@@ -22,7 +22,7 @@ class LearningAgentv3:
             self.controller.exploit()
         else:
             self.controller.explore()
-        #lol can you say hacking??
+        # lol can you say hacking??
         self.state = []
         self.prevState = []
         self.actionVector = []
@@ -36,16 +36,14 @@ class LearningAgentv3:
         self.actionVector = torch.Tensor(self.hostcount)
 
     def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
-        #inputs:
-            #interfaceCount: number of rows in the traffic matrix
-            #features: number of metrics per interface
-            #frames: number of previous frames to track
-        #to make input space multi-dimensional  
-        self.state = torch.zeros(frames,interfaceCount, features) 
+        # inputs:
+            # interfaceCount: number of rows in the traffic matrix
+            # features: number of metrics per interface
+            # frames: number of previous frames to track
+        # to make input space multi-dimensional
+        self.state = torch.zeros(frames, interfaceCount, features)
         self.prevState = torch.zeros(frames, interfaceCount, features)
         self.frames = frames
-        
-        
 
     def createHost(self):
         self.hostcount += 1
@@ -60,28 +58,28 @@ class LearningAgentv3:
 
     def update(self, interface, data, reward):
         # assumes data is a pytorch.tensor
-        self.prevState= self.state
-        #push back previous frames
+        self.prevState = self.state
+        # push back previous frames
         if (self.frames > 1):
-            #might have this backwards...
-            #as long as it's working like a queue it should be fine...
+            # might have this backwards...
+            # as long as it's working like a queue it should be fine...
             # that implicity velocity stuff is kinda hand wavy anyways.
-            for f in range(0,self.frames - 1):
-                self.state[f] = self.state[f+1] 
+            for f in range(0, self.frames - 1):
+                self.state[f] = self.state[f + 1]
 
         self.state[self.frames - 1] = data
-        #set action
+        # set action
         for i in interface:
             self.actionVector[self.hosts[i]['id']] = self.hosts[i]['action']
 
-        self.controller.addToMemory(self.prevState, self.actionVector, reward, self.state )
+        self.controller.addToMemory(self.prevState, self.actionVector, reward, self.state)
         if (self.controller.primedToLearn()):
             self.controller.PerformUpdate(64)
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()
 
     def predictBandwidthOnHosts(self):
-        state = self.state 
+        state = self.state
         action = self.controller.selectAction(state.unsqueeze(0))
         action = action.squeeze()
 
@@ -90,8 +88,6 @@ class LearningAgentv3:
             a = np.clip(a, 0.1, 1.0)
             self.hosts[interface]['predictedAllocation'] = self.defaultmax * a
             self.hosts[interface]['action'] = a
-
-
 
     def getHostsPredictedBandwidth(self, interface):
         return int(math.ceil(self.hosts[interface]['predictedAllocation']))

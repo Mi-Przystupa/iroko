@@ -101,8 +101,8 @@ if __name__ == '__main__':
         for algo, conf in algorithms.iteritems():
             print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
             train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, conf)
-            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, conf, args.epoch + args.offset)
-            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, conf, args.epoch + args.offset)
+            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
     if args.test:
         for e in range(args.epoch):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"

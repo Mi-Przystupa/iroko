@@ -183,3 +183,5 @@ iroko/buffer\.npy
 iroko/index\.npy
 
 iroko/plots/
+
+iroko/reward\.txt

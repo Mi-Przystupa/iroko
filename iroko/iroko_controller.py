@@ -229,6 +229,7 @@ class StatsCollector():
         drops, overlimits, queues = self._get_qdisc_stats(self.iface_list)
         return bandwidths, free_bandwidths, drops, overlimits, queues
 
+
     def show_stat(self):
         '''
                 Show statistics information according to data type.
@@ -313,17 +314,21 @@ if __name__ == '__main__':
         bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
+        bw_reward = 0
         try:
             for i, iface in enumerate(interfaces):
                 data[i] = torch.Tensor([bandwidths[iface], free_bandwidths[iface],
                                         drops[iface], overlimits[iface], queues[iface]])
                 if queues[iface] == 0:
-                    reward += MAX_QUEUE + 10.0 * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                    reward += MAX_QUEUE
+                    bw_reward += MAX_QUEUE * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 else:
                     reward += MAX_QUEUE - queues[iface]
-        except Exception:
-            print("Time to go.")
+        except Exception as e:
+            print("Time to go: %s" % e)
             break
+        reward += bw_reward
+        print("BW Reward %d" % bw_reward)
         print("Current Reward %d" % reward)
         # if ACTIVEAGENT == 'v0':
         #     # the historic version

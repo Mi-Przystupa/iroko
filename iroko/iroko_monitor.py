@@ -180,9 +180,10 @@ class StatsCollector(threading.Thread):
         # iface_list = self._get_interfaces()
         self.bandwidths, bandwidth_d = self._get_bandwidths(self.iface_list)
         self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
-        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
+        # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
 
     def get_interface_stats(self):
+        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
         return self.bandwidths, self.free_bandwidths, self.drops, self.overlimits, self.queues
 
     def show_stat(self):

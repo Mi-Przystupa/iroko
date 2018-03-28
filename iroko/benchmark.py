@@ -52,6 +52,29 @@ HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
 
 
+def get_test_config():
+    algos = {}
+    # algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
+    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
+    # algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
+    # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
+    # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
+    return algos
+
+
+def plot_reward(fname, pltname):
+    reward = []
+    with open(fname) as f:
+        content = f.readlines()
+    # you may also want to remove whitespace characters like `\n` at the end of each line
+    content = [x.strip() for x in content]
+    for i, r in enumerate(content):
+        reward.append(float(r))
+    plt.plot(reward)
+    plt.ylabel('Reward')
+    plt.savefig(pltname)
+
+
 def train(input_dir, output_dir, duration, offset, epochs, algorithm):
     os.system('sudo mn -c')
     f = open("reward.txt", "w+")
@@ -66,16 +89,7 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm):
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
     f.close()
-
-
-def get_test_config():
-    algos = {}
-    # algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
-    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
-    # algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
-    # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
-    # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
-    return algos
+    plot_reward("reward.txt", "reward_%s_%s" % (algo, epochs))
 
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):

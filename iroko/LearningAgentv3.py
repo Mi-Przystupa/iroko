@@ -9,14 +9,14 @@ from DDPG.DDPGConv import DDPGConv
 
 # the convolution agent
 class LearningAgentv3:
-    def __init__(self, gamma=.99, lam=.1, s=608, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
+    def __init__(self, gamma=.99, lam=.1, s=2560, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPGConv(gamma, memory, 608, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
+        self.controller = DDPGConv(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()

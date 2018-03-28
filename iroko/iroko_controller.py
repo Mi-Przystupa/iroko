@@ -21,6 +21,7 @@ EXPLOIT = False
 ACTIVEAGENT = 'v2'
 FRAMES = 3  # number of previous matrices to use
 FEATURES = 4  # number of statistics we are using
+FEATURE_MAPS = 32 # this is internal to v3 convolution filters...probably should be defined in the model
 MAX_QUEUE = 50
 
 ###########################################
@@ -92,7 +93,7 @@ if __name__ == '__main__':
         Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, s=SIZE * FEATURES +
                                 len(i_h_map), cpath='critic', apath='actor', toExploit=args.exploit)
     elif args.agent == 'v3':
-        Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, s=3 * SIZE / 8 * (FEATURES - 2),
+        Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, s=(FEATURE_MAPS * SIZE * FEATURES) / 8,
                                 cpath='critic', apath='actor', toExploit=args.exploit)
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
     elif args.agent == 'v4':

@@ -18,9 +18,9 @@ class Actor(nn.Module):
         self.normalize = nn.BatchNorm1d(state)
         self.normalize2 = nn.BatchNorm1d(hidden1)
         
-        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1))
-        self.conv2 = nn.Conv2d(32,32, 3, stride=(2,1))
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1))
+        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1), padding=1)
+        self.conv2 = nn.Conv2d(32,32, 3, stride=(2,1), padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1),padding=1)
 
         self.hidden1 = nn.Linear(state, hidden1)  
         self.hidden2 = nn.Linear(hidden1, hidden2)
@@ -28,7 +28,7 @@ class Actor(nn.Module):
 
         nn.init.xavier_normal(self.hidden1.weight.data, gain=2)
         nn.init.xavier_normal(self.hidden2.weight.data, gain=2)
-        nn.init.uniform(self.outputs.weight.data, -3e-3, 3e3)
+        nn.init.uniform(self.outputs.weight.data, -3e-3, 3e-3)
 
 
     def forward(self,  state):
@@ -38,9 +38,8 @@ class Actor(nn.Module):
         x = self.convNorm2(F.relu(x))
         x = self.conv2(x)
         x = self.convNorm3(F.relu(x))
-        #x = self.conv3(x)
+        x = self.conv3(x)
         x = x.view(x.size()[0], -1)
-
         #fully connected layers
         x = self.normalize(x)
         x = F.relu(self.hidden1(x))
@@ -60,9 +59,9 @@ class Critic(nn.Module):
         self.normalize = nn.BatchNorm1d(state)
         self.normalize2 = nn.BatchNorm1d(hidden1)
         
-        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1))
-        self.conv2 = nn.Conv2d(32, 32, 3, stride=(2,1))
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1))
+        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1),padding=1)
+        self.conv2 = nn.Conv2d(32, 32, 3, stride=(2,1), padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1), padding=1)
 
         #paper claims 1st layer they do not put action through 1st layer
         self.hidden1 = nn.Linear(state, hidden1)
@@ -71,7 +70,7 @@ class Critic(nn.Module):
 
         nn.init.xavier_normal(self.hidden1.weight.data, gain=2)
         nn.init.xavier_normal(self.hidden2.weight.data, gain=2)
-        nn.init.uniform(self.outputs.weight.data, -3e-3, 3e3)
+        nn.init.uniform(self.outputs.weight.data, -3e-3, 3e-3)
 
 
 
@@ -81,7 +80,7 @@ class Critic(nn.Module):
         x = self.convNorm2(F.relu(x))
         x = self.conv2(x)
         x = self.convNorm3(F.relu(x))
-        #x = self.conv3(x)
+        x = self.conv3(x)
         x = x.view(x.size()[0], -1)
 
         #Fully connected layers
@@ -98,6 +97,8 @@ class DDPGConv:
         self.memory = ReplayMemory(memory)
         self.height = h
         self.width = w
+        s = int(s)
+        a = int(a)
         self.actor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,  useSigmoid=useSig)
         self.critic = Critic(state = s, actions = a, hidden1=h1, hidden2=h2)
         if(not(criticpath== None)):

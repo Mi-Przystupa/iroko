@@ -87,6 +87,7 @@ if __name__ == '__main__':
     SIZE = len(interfaces)
     total_reward = 0
     total_iters = 0
+    f = open('reward.txt', 'a+')
 
     # initialize the Agent
     if args.agent == 'v2' or args.agent == 'v0':
@@ -130,7 +131,8 @@ if __name__ == '__main__':
             break
         reward += bw_reward
         print("BW Reward %d" % bw_reward)
-        print("Current Reward %d" % reward)
+        # print("Current Reward %d" % reward)
+        f.write('%f\n' % (reward))
         # if ACTIVEAGENT == 'v0':
         #     # the historic version
         #     for interface in i_h_map:
@@ -172,6 +174,4 @@ if __name__ == '__main__':
         # Agent.displayAdjustments()
 
         # print(stats.get_interface_stats())
-    f = open('reward.txt', 'a+')
-    f.write('%f\n' % (total_reward / total_iters))
     f.close()

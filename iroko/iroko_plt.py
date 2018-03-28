@@ -205,6 +205,8 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithm, epochs):
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Normalized Average Bisection Bandwidth')
+        axes = plt.gca()
+        axes.set_ylim([0, 1])
         plt.savefig("%s_%s" % (plt_name, tf))
         plt.gcf().clear()
 
@@ -239,5 +241,7 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithm, epochs):
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Average Queue Length')
+        axes = plt.gca()
+        axes.set_ylim([0, 50])
         plt.savefig("%s_%s" % (plt_name, tf))
         plt.gcf().clear()

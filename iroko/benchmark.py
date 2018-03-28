@@ -73,6 +73,7 @@ def plot_reward(fname, pltname):
     plt.plot(reward)
     plt.ylabel('Reward')
     plt.savefig(pltname)
+    plt.gcf().clear()
 
 
 def train(input_dir, output_dir, duration, offset, epochs, algorithm):

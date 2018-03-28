@@ -145,6 +145,9 @@ class StatsCollector(threading.Thread):
         queued_sum = sum(queues.itervalues())
         return bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum
 
+# The next big thing??????
+# sudo tcpdump -l -i 3003-eth3 -n -c 5 ip 2>/dev/null | grep -P -o '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' | grep -P -o '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | xargs -n 2 echo | awk '!a[$0]++'
+
     def _get_qdisc_stats(self, iface_list):
         drops = {}
         overlimits = {}

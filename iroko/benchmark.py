@@ -89,7 +89,7 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm):
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
     f.close()
-    plot_reward("reward.txt", "reward_%s_%s" % (algo, epochs))
+    plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, epochs))
 
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):

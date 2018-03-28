@@ -24,13 +24,13 @@ traffic_files = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_
                  'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
                  'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
                  'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
-# traffic_files = ['stag_prob_0_2_3_data']
+traffic_files = ['stag_prob_0_2_3_data']
 
 labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
           'stag1(0.5,0.3)', 'stag2(0.5,0.3)', 'stride1', 'stride2',
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
-# labels = ['stag0(0.2,0.3)']
+labels = ['stag0(0.2,0.3)']
 
 qlen_traffics = ['stag_prob_2_2_3_data',
                  'stag_prob_2_5_3_data', 'stride1_data',
@@ -44,8 +44,6 @@ qlen_labels = ['stag2(0.2,0.3)',
                'randx2', 'randx3', 'randx4']
 
 
-# labels = ['stag0(0.2,0.3)']
-
 INPUT_DIR = 'inputs'
 OUTPUT_DIR = 'results'
 DURATION = 60
@@ -54,15 +52,17 @@ HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
 
 
-def train(input_dir, output_dir, duration, offset, epochs, conf):
+def train(input_dir, output_dir, duration, offset, epochs, algorithm):
     os.system('sudo mn -c')
     f = open("reward.txt", "w+")
+    algo = algorithm[0]
+    conf = algorithm[1]
     for e in range(offset, epochs + offset):
         for tf in traffic_files:
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             pre_folder = "%s_%d" % (conf['pre'], e)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
-            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --iroko --agent %s' % (input_file, out_dir, duration, args.agent))
+            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' % (input_file, out_dir, duration, algo, args.agent))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
     f.close()
@@ -70,9 +70,9 @@ def train(input_dir, output_dir, duration, offset, epochs, conf):
 
 def get_test_config():
     algos = {}
-    algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
+    # algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
     algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
-    algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
+    # algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
     # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
     # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
     return algos
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             exit(1)
         for algo, conf in algorithms.iteritems():
             print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
-            train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, conf)
+            train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
             iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
     if args.test:

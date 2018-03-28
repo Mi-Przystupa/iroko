@@ -197,8 +197,7 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithm, epochs):
         p_bar = []
         p_legend = []
         for i in range(epochs):
-            # FatTree + Iroko
-            p_bar.append(bb['iroko_%d' % i])
+            p_bar.append(bb['%s_%d' % (algo, i)])
             p_legend.append('Epoch %i' % i)
         plt.plot(p_bar)
         x_val = list(range(epochs))
@@ -232,8 +231,7 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithm, epochs):
         p_bar = []
         p_legend = []
         for i in range(epochs):
-            # FatTree + Iroko
-            p_bar.append(bb['iroko_%d' % i])
+            p_bar.append(bb['%s_%d' % (algo, i)])
             p_legend.append('Epoch %i' % i)
         plt.plot(p_bar)
         x_val = list(range(epochs))

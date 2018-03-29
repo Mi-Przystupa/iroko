@@ -12,7 +12,7 @@ parser.add_argument('--offset', '-o', dest='offset', type=int, default=0,
 parser.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
 parser.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
-parser.add_argument('--plot', '-p', dest='plot', action='store_true', default='False', help='Only plot the results for training.')
+parser.add_argument('--plot', '-pl', dest='plot', action='store_true', default='False', help='Only plot the results for training.')
 
 args = parser.parse_args()
 
@@ -111,13 +111,13 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
 
 if __name__ == '__main__':
     algorithms = get_test_config()
-    if args.plot:
+    if args.plot is True:
         for algo, conf in algorithms.iteritems():
             iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch))
         exit(0)
-    if args.train:
+    if args.train is True:
         if args.epoch is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
             iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-    if args.test:
+    if args.test is True:
         for e in range(args.epoch):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))

@@ -16,7 +16,7 @@ class LearningAgentv3:
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPGConv(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
+        self.controller = DDPGConv(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True, w=4)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()

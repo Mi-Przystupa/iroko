@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # fetch and install mininet
-sudo git submodule update --init --recursive
+git submodule update --init --recursive
 cd mininet
 sudo mininet/util/install.sh -nfv
 cd ..

@@ -11,7 +11,9 @@ parser.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
 parser.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
-parser.add_argument('--agent', dest='agent', default='v2', help='v0,v2,v3,v4')
+parser.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
+parser.add_argument('--plot', '-p', dest='plot', action='store_true', default='False', help='Only plot the results for training.')
+
 args = parser.parse_args()
 
 
@@ -109,6 +111,12 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
 
 if __name__ == '__main__':
     algorithms = get_test_config()
+    if args.plot:
+        for algo, conf in algorithms.iteritems():
+            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch))
+        exit(0)
     if args.train:
         if args.epoch is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")

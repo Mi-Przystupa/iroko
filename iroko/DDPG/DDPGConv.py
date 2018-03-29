@@ -9,16 +9,16 @@ import random
 import numpy as np
 
 class Actor(nn.Module):
-    def __init__(self, state = 54, actions = 18,  hidden1=400 , hidden2= 300 , useSigmoid=False):
+    def __init__(self, state = 54, actions = 18,  hidden1=400 , hidden2= 300 , useSigmoid=False,f=3):
         super(Actor, self).__init__()
         self.useSigmoid=useSigmoid
-        self.convNorm = nn.BatchNorm2d(3)
+        self.convNorm = nn.BatchNorm2d(f)
         self.convNorm2= nn.BatchNorm2d(32)
         self.convNorm3 = nn.BatchNorm2d(32)
         self.normalize = nn.BatchNorm1d(state)
         self.normalize2 = nn.BatchNorm1d(hidden1)
         
-        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1), padding=1)
+        self.conv1 = nn.Conv2d(f, 32, 3,stride=(2,1), padding=1)
         self.conv2 = nn.Conv2d(32,32, 3, stride=(2,1), padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1),padding=1)
 
@@ -51,15 +51,15 @@ class Actor(nn.Module):
             return F.tanh( self.outputs(x))
 
 class Critic(nn.Module):
-    def __init__(self, state = 54, actions = 18, hidden1=400, hidden2 = 300):
+    def __init__(self, state = 54, actions = 18, hidden1=400, hidden2 = 300, f=3):
         super(Critic, self).__init__()
-        self.convNorm = nn.BatchNorm2d(3)
+        self.convNorm = nn.BatchNorm2d(f)
         self.convNorm2= nn.BatchNorm2d(32)
         self.convNorm3 = nn.BatchNorm2d(32)
         self.normalize = nn.BatchNorm1d(state)
         self.normalize2 = nn.BatchNorm1d(hidden1)
         
-        self.conv1 = nn.Conv2d(3, 32, 3,stride=(2,1),padding=1)
+        self.conv1 = nn.Conv2d(f, 32, 3,stride=(2,1),padding=1)
         self.conv2 = nn.Conv2d(32, 32, 3, stride=(2,1), padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=(2,1), padding=1)
 
@@ -92,15 +92,15 @@ class Critic(nn.Module):
         return self.outputs(x)
 
 class DDPGConv:
-    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False, h1=400, h2=300, h=80, w=5):
+    def __init__(self, gamma, memory, s, a, tau, learningRate = 1e-3,criticpath=None, actorpath=None, useSig=False, h1=400, h2=300, h=80, w=5, f=3):
         self.gamma =gamma
         self.memory = ReplayMemory(memory)
         self.height = h
         self.width = w
         s = int(s)
         a = int(a)
-        self.actor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,  useSigmoid=useSig)
-        self.critic = Critic(state = s, actions = a, hidden1=h1, hidden2=h2)
+        self.actor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,  useSigmoid=useSig, f=f)
+        self.critic = Critic(state = s, actions = a, hidden1=h1, hidden2=h2, f=f)
         if(not(criticpath== None)):
             try:
                 self.critic.load_state_dict(torch.load(criticpath))
@@ -120,9 +120,9 @@ class DDPGConv:
                 print('Failed to load requested Actor: {}'.format(str(e)))
             except IOError, e:
                 print('Failed to load requested Actor: {}'.format(str(e)))
-        self.targetActor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2, useSigmoid=useSig)
+        self.targetActor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2, useSigmoid=useSig,f=f)
         self.targetActor.load_state_dict(self.actor.state_dict())
-        self.targetCritic = Critic(state= s, actions = a,hidden1=h1, hidden2=h2)
+        self.targetCritic = Critic(state= s, actions = a,hidden1=h1, hidden2=h2, f=f)
         self.targetCritic.load_state_dict(self.critic.state_dict())
         self.tau = tau
 
@@ -134,6 +134,7 @@ class DDPGConv:
         #self.OUarray = np.zeros((1000, self.action),dtype="f")
         self.OUProcess = OUNoise(a,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
         self.isExplore = True
+        self.frames = f
         #self.step = 0
 
     def setExploration(self, scale, sigma, theta, mu):
@@ -160,9 +161,9 @@ class DDPGConv:
 
     def PerformUpdate(self,batchsize):
         actions = torch.zeros(batchsize, self.action)
-        states = torch.zeros(batchsize, 3, self.height, self.width)
+        states = torch.zeros(batchsize, self.frames, self.height, self.width)
         rewards = torch.zeros(batchsize, 1)
-        statesP = torch.zeros(batchsize, 3, self.height,  self.width) 
+        statesP = torch.zeros(batchsize, self.frames, self.height,  self.width) 
         for i, sample in enumerate(self.memory.batch(batchsize)):
             actions[i] = sample['a']
             states[i] = sample['s']

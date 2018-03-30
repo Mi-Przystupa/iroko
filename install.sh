@@ -13,8 +13,9 @@ sudo -H pip install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp27-cp27mu-
 sudo -H pip install torchvision
 # for generating plots
 sudo -H pip install matplotlib
-# traffic monitor
+# traffic monitors
 sudo apt-get install -y bwm-ng
+sudo apt-get install -y ifstat
 # traffic generator
 make -C iroko/cluster_loadgen
 # reset accidental root files to the original user

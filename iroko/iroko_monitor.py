@@ -107,9 +107,13 @@ class StatsCollector(threading.Thread):
             p.wait()
             output, err = p.communicate()
             bw = output.split(',')
-            bws_rx[iface] = float(bw[0]) * 1000
-            bws_tx[iface] = float(bw[1]) * 1000
-
+            try:
+                bws_rx[iface] = float(bw[0]) * 1000
+                bws_tx[iface] = float(bw[1]) * 1000
+            except Exception as e:
+                # print("Empty Request %s" % e)
+                bws_rx[iface] = 0
+                bws_tx[iface] = 0
         return bws_rx, bws_tx
 
     def _get_bandwidths_old(self, iface_list):

@@ -25,14 +25,13 @@ class ReplayMemory:
         else:
             self.memory[self.indx] = mem
         self.indx = (self.indx + 1) % self.size
-        if (self.toSave > 16):
+        if (self.toSave > 8):
             self.toSave = 0
             np.save('buffer', self.memory)
             np.save('index', self.indx)
-            print('saving')
         else:
             self.toSave += 1
-                def batch(self, batchSize):
+    def batch(self, batchSize):
         return random.sample(self.memory, batchSize)
 
     def singleSample(self):

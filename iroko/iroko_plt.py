@@ -190,18 +190,19 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithm, epochs):
             print("%s: %s" % (algo, tf))
             input_file = input_dir + '/%s_%d/%s/rate_final.txt' % (conf['pre'], e, tf)
             results = get_bw_dict(input_file)
-            avg = float(results['avg_bw'])
-            print(avg)
-            bb['%s_%s' % (algo, e)].append(avg / fbb / 2)
+            avg_bw = float(results['avg_bw'])
+            print(avg_bw)
+            bb['%s_%s' % (algo, e)].append(avg_bw / fbb / 2)
 
         p_bar = []
         p_legend = []
         for i in range(epochs):
-            p_bar.append(bb['%s_%d' % (algo, i)])
+            p_bar.append(bb['%s_%d' % (algo, i)][0])
             p_legend.append('Epoch %i' % i)
+        print("Total Average Bandwidth: %f" % avg(p_bar))
         plt.plot(p_bar)
-        x_val = list(range(epochs))
-        x_step = x_val[0::5]
+        x_val = list(range(epochs + 1))
+        x_step = x_val[0::(epochs / 10)]
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Normalized Average Bisection Bandwidth')
@@ -226,18 +227,19 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithm, epochs):
             print("%s: %s" % (algo, tf))
             input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
             results = get_qlen_stats(input_file, conf['sw'])
-            avg = float(results['avg_qlen'])
-            print(avg)
-            bb['%s_%s' % (algo, e)].append(avg)
+            avg_qlen = float(results['avg_qlen'])
+            print(avg_qlen)
+            bb['%s_%s' % (algo, e)].append(avg_qlen)
 
         p_bar = []
         p_legend = []
         for i in range(epochs):
-            p_bar.append(bb['%s_%d' % (algo, i)])
+            p_bar.append(bb['%s_%d' % (algo, i)][0])
             p_legend.append('Epoch %i' % i)
+        print("Total Average Qlen: %f" % avg(p_bar))
         plt.plot(p_bar)
-        x_val = list(range(epochs))
-        x_step = x_val[0::5]
+        x_val = list(range(epochs + 1))
+        x_step = x_val[0::(epochs / 10)]
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Average Queue Length')

@@ -137,13 +137,14 @@ if __name__ == '__main__':
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
-                reward += float(bandwidths[iface]) / float(MAX_CAPACITY) - (queues[iface] / MAX_QUEUE)
+                bw_reward += float(bandwidths[iface]) / float(MAX_CAPACITY)
+                reward -= (queues[iface] / MAX_QUEUE)
         except Exception as e:
             print("Time to go: %s" % e)
             break
         reward += bw_reward
-        print("Full Reward %f" % reward)
-        print("BW Reward %f" % bw_reward)
+        print("Total Reward %f BW Reward %f " % (bw_reward, reward))
+
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
         # if ACTIVEAGENT == 'v0':
@@ -162,7 +163,7 @@ if __name__ == '__main__':
         #         Agent.update(interface, data, reward)
         if args.agent == 'v2':
             # fully connected agent that  uses full matrix for each action but uses current host as input
-            data = data.view(-1)
+            data=data.view(-1)
             for interface in i_h_map:
                 Agent.update(interface, data, reward)
         elif args.agent == 'v3':
@@ -171,7 +172,7 @@ if __name__ == '__main__':
         elif args.agent == 'v4':
             # flatten the matrix & feed it in
             # v4 the fully connected input of v2 mixed with the single output of v3
-            data = data.view(-1)
+            data=data.view(-1)
             Agent.update(i_h_map, data, reward)
         total_reward += reward
         total_iters += 1

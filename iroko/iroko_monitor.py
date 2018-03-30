@@ -40,45 +40,45 @@ class StatsCollector(threading.Thread):
     def terminate(self):
         self.terminate = True
 
-    def _get_deltas(self, curr_loss, curr_overlimits, curr_util):
+    def _get_deltas(self, curr_loss, curr_overlimits):
         # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
 
         # losses
         loss_d = curr_loss - self.prev_loss  # loss in epoch
 
-        if loss_d > self.prev_loss_d:
-            loss_increase = 1  # loss increasing?
-        else:
-            loss_increase = 0
-
-        self.prev_loss_d = loss_d  # loss in previous epoch
+        # if loss_d > self.prev_loss_d:
+        #     loss_increase = 1  # loss increasing?
+        # else:
+        #     loss_increase = 0
+        # loss in previous epoch
+        self.prev_loss_d = loss_d
         self.prev_loss = curr_loss
 
         # overlimits
         overlimits_d = curr_overlimits - self.prev_overlimits  # overlimints in epoch
 
-        if overlimits_d > self.prev_overlimits_d:
-            overlimits_increase = 1
-        else:
-            overlimits_increase = 0
+        # if overlimits_d > self.prev_overlimits_d:
+        #     overlimits_increase = 1
+        # else:
+        #     overlimits_increase = 0
 
         self.prev_overlimits_d = overlimits_d
         self.prev_overlimits = curr_overlimits
 
         # utilization
-        util_d = curr_util - self.prev_util
+        # util_d = curr_util - self.prev_util
 
-        if util_d > 0:
-            util_increase = 1
-        else:
-            util_increase = 0
+        # if util_d > 0:
+        #     util_increase = 1
+        # else:
+        #     util_increase = 0
 
-        self.prev_util = curr_util
+        # self.prev_util = curr_util
 
         # print
         # print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
         # print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
-        return loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase
+        return loss_d, overlimits_d  # , util_d
 
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
@@ -137,16 +137,11 @@ class StatsCollector(threading.Thread):
         # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
         self.iface_list = iface_list_temp
 
-    def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
-        bw_sum = sum(bandwidths.itervalues())
-        bw_free_sum = sum(free_bandwidths.itervalues())
-        loss_sum = sum(drops.itervalues())
-        overlimit_sum = sum(overlimits.itervalues())
-        queued_sum = sum(queues.itervalues())
-        return bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum
 
 # The next big thing??????
-# sudo tcpdump -l -i 3003-eth3 -n -c 5 ip 2>/dev/null | grep -P -o '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' | grep -P -o '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | xargs -n 2 echo | awk '!a[$0]++'
+# sudo tcpdump -l -i 3003-eth3 -n -c 5 ip 2>/dev/null
+# | grep -P -o '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)'
+# | grep -P -o '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | xargs -n 2 echo | awk '!a[$0]++'
 
     def _get_qdisc_stats(self, iface_list):
         drops = {}
@@ -181,37 +176,49 @@ class StatsCollector(threading.Thread):
 
     def _collect_stats(self):
         # iface_list = self._get_interfaces()
-        self.bandwidths, bandwidth_d = self._get_bandwidths(self.iface_list)
-        self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
+        self.bandwidths, self.bandwidths_d = self._get_bandwidths(self.iface_list)
+        # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
         # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
 
     def get_interface_stats(self):
         self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
-        return self.bandwidths, self.free_bandwidths, self.drops, self.overlimits, self.queues
+        drops_d = {}
+        overlimits_d = {}
+        for iface in self.iface_list:
+            drops_d[iface], overlimits_d[iface] = self._get_deltas(self.drops[iface], self.overlimits[iface])
+        return self.bandwidths, self.bandwidths_d, drops_d, overlimits_d, self.queues
 
-    def show_stat(self):
-        '''
-                Show statistics information according to data type.
-                _type: 'port' / 'flow'
-        '''
-        #     print
-        bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
-        bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(
-            bandwidths, free_bandwidths, drops, overlimits, queues)
-        loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(
-            loss_sum, overlimit_sum, bw_sum)
-        print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
-        print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
-        print("Backlog: %d" % queued_sum)
+    # def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
+    #     bw_sum = sum(bandwidths.itervalues())
+    #     bw_free_sum = sum(free_bandwidths.itervalues())
+    #     loss_sum = sum(drops.itervalues())
+    #     overlimit_sum = sum(overlimits.itervalues())
+    #     queued_sum = sum(queues.itervalues())
+    #     return bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum
 
-        print("Free BW Sum: %d" % bw_free_sum)
-        print("Current Util Sum: %f" % bw_sum)
+    # def show_stat(self):
+    #     '''
+    #             Show statistics information according to data type.
+    #             _type: 'port' / 'flow'
+    #     '''
+    #     #     print
+    #     bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
+    #     bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(
+    #         bandwidths, free_bandwidths, drops, overlimits, queues)
+    #     loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(
+    #         loss_sum, overlimit_sum, bw_sum)
+    #     print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
+    #     print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
+    #     print("Backlog: %d" % queued_sum)
 
-        max_capacity_sum = MAX_CAPACITY * bandwidths.__len__()
-        print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, bandwidths.__len__()))
-        total_util_ratio = (bw_sum) / max_capacity_sum
-        total_util_avg = (bw_sum) / bandwidths.__len__()
-        print("Current Average Utilization: %f" % total_util_avg)
-        print("Current Ratio of Utilization: %f" % total_util_ratio)
+    #     print("Free BW Sum: %d" % bw_free_sum)
+    #     print("Current Util Sum: %f" % bw_sum)
+
+    #     max_capacity_sum = MAX_CAPACITY * bandwidths.__len__()
+    #     print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, bandwidths.__len__()))
+    #     total_util_ratio = (bw_sum) / max_capacity_sum
+    #     total_util_avg = (bw_sum) / bandwidths.__len__()
+    #     print("Current Average Utilization: %f" % total_util_avg)
+    #     print("Current Ratio of Utilization: %f" % total_util_ratio)
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13

@@ -1,13 +1,11 @@
 from __future__ import division
 
 import time
-import threading
 import socket
 ###########################################
 # Stuff for learning
 import signal
 import torch
-import random
 from argparse import ArgumentParser
 from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
@@ -21,7 +19,7 @@ EXPLOIT = False
 ACTIVEAGENT = 'v2'
 FRAMES = 1  # number of previous matrices to use
 FEATURES = 4  # number of statistics we are using
-FEATURE_MAPS = 32 # this is internal to v3 convolution filters...probably should be defined in the model
+FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
 MAX_QUEUE = 50
 
 ###########################################
@@ -114,13 +112,15 @@ if __name__ == '__main__':
         for h_iface in i_h_map:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
-        bandwidths, free_bandwidths, drops, overlimits, queues = stats.get_interface_stats()
+
+        bandwidths, bandwidths_d, drops_d, overlimits_d, queues = stats.get_interface_stats()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
         bw_reward = 0
         try:
             for i, iface in enumerate(interfaces):
-                data[i] = torch.Tensor([bandwidths[iface], drops[iface], overlimits[iface], queues[iface]])
+                print(bandwidths[iface], drops_d[iface], overlimits_d[iface], queues[iface])
+                data[i] = torch.Tensor([bandwidths[iface], drops_d[iface], overlimits_d[iface], queues[iface]])
                 if queues[iface] == 0:
                     reward += MAX_QUEUE
                     bw_reward += (MAX_QUEUE / 10) * float(bandwidths[iface]) / float(MAX_CAPACITY)

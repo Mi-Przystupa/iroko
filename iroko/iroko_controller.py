@@ -116,16 +116,16 @@ if __name__ == '__main__':
         bandwidths, bandwidths_d, drops_d, overlimits_d, queues = stats.get_interface_stats()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
-        bw_reward = 0
+        bw_reward = 0.0
         try:
             for i, iface in enumerate(interfaces):
                 # print(drops_d[iface], overlimits_d[iface])
                 data[i] = torch.Tensor([bandwidths[iface], queues[iface]])
                 if queues[iface] == 0:
-                    reward += MAX_QUEUE / 10
-                    bw_reward += (MAX_QUEUE / 100) * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                    reward += MAX_QUEUE / 100
+                    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 else:
-                    reward += (MAX_QUEUE - queues[iface]) / 10
+                    reward += (MAX_QUEUE - queues[iface]) / 100
         except Exception as e:
             print("Time to go: %s" % e)
             break

@@ -44,7 +44,7 @@ class DDPG:
         self.state = s
         self.action = a
         #self.OUarray = np.zeros((1000, self.action),dtype="f")
-        self.OUProcess = OUNoise(a,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
+        self.process = OUNoise(a, scale=1.0, mu=0, theta=.15, sigma=0.2)
         self.isExplore = True
         #self.step = 0
 
@@ -83,7 +83,7 @@ class DDPG:
         ret = self.targetActor(Variable(state)).data
         self.targetActor.train()
         if (self.isExplore):
-            ret = ret + torch.from_numpy(self.OUProcess.noise()).float()
+            ret = ret + torch.from_numpy(self.process.noise()).float()
         #self.step += 1
         return ret
 
@@ -115,10 +115,10 @@ class DDPG:
         
         #actor update
         self.actorOptimizer.zero_grad()
-        A = self.actor(Variable(states))
-        J = -self.critic(Variable(states), A ) 
-        J = J.mean() #-torch.sum(Q)#backward()
-        J.backward()
+        A = self.actor(Variable(states, requires_grad=True))
+        J = self.critic(Variable(states), A ) 
+        loss = -torch.mean(J)#J.mean() #-torch.sum(Q)#backward()
+        loss.backward()
         self.actorOptimizer.step()
         
 

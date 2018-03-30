@@ -132,7 +132,8 @@ class DDPGConv:
         self.state = s
         self.action = a
         #self.OUarray = np.zeros((1000, self.action),dtype="f")
-        self.OUProcess = OUNoise(a,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
+        #self.OUProcess = OUNoise(a,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
+        self.process = OUNoise(a,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
         self.isExplore = True
         self.frames = f
         #self.step = 0
@@ -150,7 +151,7 @@ class DDPGConv:
         ret = self.targetActor(Variable(state)).data
         self.targetActor.train()
         if (self.isExplore):
-            ret = ret + torch.from_numpy(self.OUProcess.noise()).float()
+            ret = ret + torch.from_numpy(self.process.noise()).float()
         #self.step += 1
         return ret
 
@@ -226,7 +227,8 @@ class DDPGConv:
             S[i,:]= sample['s']
             i += 1
         A = self.actor(Variable(S))
-        loss = -1 *self.critic(Variable(S),A).mean() #-1 * torch.sum(self.critic(torch.cat((Variable(S),A), dim=1)))
+        J = self.critic(Variable(states), A ) 
+        loss = -torch.mean(J)#J.mean() #-torch.sum(Q)#backward()
         loss.backward()
         self.actorOptimizer.step()
 

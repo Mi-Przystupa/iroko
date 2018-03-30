@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import torch
 import gym
 import time
-
+from OUNoise import OUNoise
 #(self, inputs, actions, numNeuron1, numNeuron2, alpha, gamma, epsilon = .9, decay=.001):
 numSimulation = 800
 
@@ -21,7 +21,7 @@ print('states: {} actions:{}'.format(S_DIM, A_DIM))
 print('max: {} min: {}'.format(A_MAX, A_MIN))
 #Agent = LearningController(4, 2,8 , 15, .000001, .9, epsilon = .7, decay = 1e-8 )
 
-Agent = DDPG(.99,1e5,S_DIM, A_DIM,tau=.001,criticpath='critic', actorpath='actor')#,h1=100, h2=50) 
+Agent = DDPG(.99,1e5,S_DIM, A_DIM,tau=.001,criticpath='critic', actorpath='actor',h1=100, h2=50) 
 sigma = .2#.3 #.3- makes it between -.5 - .5
 theta = .15#.2 #.2
 mu = 0.0
@@ -39,9 +39,12 @@ prevV = 0.0
 t = .001
 avgReward = 0
 steps = 0
-for i in range(1, numSimulation):
+process = OUNoise(1,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
 
+for i in range(1, numSimulation):
     Agent.setExploration(scale, sigma, theta, mu)
+    
+    Agent.exploit()
     #do the thing
     inputs = torch.from_numpy(observation).float()
     action = Agent.selectAction(inputs.unsqueeze(0))
@@ -65,7 +68,7 @@ for i in range(1, numSimulation):
         action = action.squeeze()
 
         observation, reward, done, info = env.step(action.numpy()) 
-        #env.render()    
+        env.render()    
         #create memory
         s = inputs.float()
         a = action.double()
@@ -88,12 +91,12 @@ for i in range(1, numSimulation):
     print('Simulation: {}, totalReward: {}, averageReward: {}'.format(i, totalreward, avgReward / i ))
     totalreward = 0
     
-    if (i % 100 == 0 and Agent.primedToLearn()):
-        displayResult = True
-        Agent.exploit()
-    else:
-        displayResult = False
-        Agent.explore()
+    #if (i % 100 == 0 and Agent.primedToLearn()):
+    #    displayResult = True
+    #    Agent.exploit()
+    #else:
+    #    displayResult = False
+    #    Agent.explore()
     Agent.saveActorCritic()
     observation = env.reset()
 

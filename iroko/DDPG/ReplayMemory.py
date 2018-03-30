@@ -10,6 +10,7 @@ class ReplayMemory:
             self.indx = 0
             self.memory = [] 
         self.size = int(size)
+        self.toSave = 0
         #if the requested buffer size is smaller than the requested buffer, sample self.size of buffer
         # and set index so that it is still in range
         if(len(self.memory) > self.size):
@@ -24,9 +25,14 @@ class ReplayMemory:
         else:
             self.memory[self.indx] = mem
         self.indx = (self.indx + 1) % self.size
-        np.save('buffer', self.memory)
-        np.save('index', self.indx)
-    def batch(self, batchSize):
+        if (self.toSave > 16):
+            self.toSave = 0
+            np.save('buffer', self.memory)
+            np.save('index', self.indx)
+            print('saving')
+        else:
+            self.toSave += 1
+                def batch(self, batchSize):
         return random.sample(self.memory, batchSize)
 
     def singleSample(self):
@@ -36,4 +42,4 @@ class ReplayMemory:
         return len(self.memory)
 
     def isFull(self):
-        return len(self.memory) == self.size
+        return len(self.memory) > 128 #len(self.memory) == self.size

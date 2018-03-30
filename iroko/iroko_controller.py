@@ -124,7 +124,7 @@ if __name__ == '__main__':
         # update Agents internal representations
 
         bandwidths, bandwidths_d, drops_d, overlimits_d, queues = stats.get_interface_stats()
-        src_flows, dst_flows = flows.get_interface_flows()
+        # src_flows, dst_flows = flows.get_interface_flows()
 
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0

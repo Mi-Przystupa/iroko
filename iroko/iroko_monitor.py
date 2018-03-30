@@ -22,7 +22,8 @@ class StatsCollector(threading.Thread):
         self.prev_util_d = 0
         self.iface_list = []
         self.prev_bandwidth = {}
-        self.bandwidths = {}
+        self.bws_rx = {}
+        self.bws_tx = {}
         self.free_bandwidths = {}
         self.drops = {}
         self.overlimits = {}
@@ -91,11 +92,33 @@ class StatsCollector(threading.Thread):
 
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
+        processes = []
+        bws_rx = {}
+        bws_tx = {}
+        # iface_string = ",".join(iface_list )
+        for iface in iface_list:
+            cmd = (" ifstat -i %s -b -q 0.1 1 | awk \'{if (NR==3) print $0}\' | \
+                   awk \'{$1=$1}1\' OFS=\", \"" % (iface))  # | sed \'s/\(\([^,]*,\)\{1\}[^,]*\),/\1;/g\'
+            # output = subprocess.check_output(cmd, shell=True)
+            p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+            processes.append((p, iface))
+
+        for p, iface in processes:
+            p.wait()
+            output, err = p.communicate()
+            bw = output.split(',')
+            bws_rx[iface] = float(bw[0]) * 1000
+            bws_tx[iface] = float(bw[1]) * 1000
+
+        return bws_rx, bws_tx
+
+    def _get_bandwidths_old(self, iface_list):
+        # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
         bytes_old = {}
         bytes_new = {}
         for iface in iface_list:
             cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
-             else { print $2 } }\' /proc/net/dev" % (iface)
+            else { print $2 } }\' /proc/net/dev" % (iface)
             try:
                 output = subprocess.check_output(cmd, shell=True)
                 bytes_old[iface] = float(output)
@@ -178,7 +201,7 @@ class StatsCollector(threading.Thread):
 
     def _collect_stats(self):
         # iface_list = self._get_interfaces()
-        self.bandwidths, self.bandwidths_d = self._get_bandwidths(self.iface_list)
+        self.bws_rx, self.bws_tx = self._get_bandwidths(self.iface_list)
         # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
         # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
 
@@ -189,7 +212,7 @@ class StatsCollector(threading.Thread):
         overlimits_d = {}
         for iface in self.iface_list:
             drops_d[iface], overlimits_d[iface] = self._get_deltas(self.drops[iface], self.overlimits[iface])
-        return self.bandwidths, self.bandwidths_d, drops_d, overlimits_d, self.queues
+        return self.bws_rx, self.bws_tx, drops_d, overlimits_d, self.queues
 
     # def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
     #     bw_sum = sum(bandwidths.itervalues())

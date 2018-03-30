@@ -123,7 +123,7 @@ if __name__ == '__main__':
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
 
-        bandwidths, bandwidths_d, drops_d, overlimits_d, queues = stats.get_interface_stats()
+        bws_rx, bws_tx, drops_d, overlimits_d, queues = stats.get_interface_stats()
         # src_flows, dst_flows = flows.get_interface_flows()
 
         data = torch.zeros(SIZE, FEATURES)
@@ -132,12 +132,12 @@ if __name__ == '__main__':
         try:
             for i, iface in enumerate(interfaces):
                 # print(drops_d[iface], overlimits_d[iface])
-                data[i] = torch.Tensor([bandwidths[iface], queues[iface]])
+                data[i] = torch.Tensor([bws_rx[iface], queues[iface]])
                 # if queues[iface] == 0:
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
-                bw_reward += float(bandwidths[iface]) / float(MAX_CAPACITY)
+                bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
                 reward -= (queues[iface] / MAX_QUEUE)
         except Exception as e:
             print("Time to go: %s" % e)

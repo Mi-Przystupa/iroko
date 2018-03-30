@@ -11,9 +11,9 @@ class StatsCollector(threading.Thread):
             NetworkMonitor is a Ryu app for collecting traffic information.
     """
 
-    def __init__(self, i_h_map):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.name = 'Collector'
+        self.name = 'StatsCollector'
         self.prev_overlimits = 0
         self.prev_loss = 0
         self.prev_util = 0
@@ -21,7 +21,6 @@ class StatsCollector(threading.Thread):
         self.prev_loss_d = 0
         self.prev_util_d = 0
         self.iface_list = []
-        self.i_h_map = i_h_map
         self.prev_bandwidth = {}
         self.bandwidths = {}
         self.free_bandwidths = {}
@@ -39,6 +38,16 @@ class StatsCollector(threading.Thread):
 
     def terminate(self):
         self.terminate = True
+
+    def set_interfaces(self):
+        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
+        output = subprocess.check_output(cmd, shell=True)
+        iface_list_temp = []
+        for row in output.split('\n'):
+            if row != '':
+                iface_list_temp.append(row)
+        # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
+        self.iface_list = iface_list_temp
 
     def _get_deltas(self, curr_loss, curr_overlimits):
         # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
@@ -127,22 +136,15 @@ class StatsCollector(threading.Thread):
             free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
         return free_bandwidths
 
-    def set_interfaces(self):
-        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
-        output = subprocess.check_output(cmd, shell=True)
-        iface_list_temp = []
-        for row in output.split('\n'):
-            if row != '':
-                iface_list_temp.append(row)
-        # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
-        self.iface_list = iface_list_temp
-
+    # def _get_flow_stats(self, iface_list):
+    #     for iface in iface_list:
+    #         cmd = "sudo tcpdump -l -i %s -n -c 5 ip 2>/dev/null | " +
+    #             "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' |"+
+    #             "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk '!a[$0]++\'" % (iface)
+    #         output = subprocess.check_output(cmd, shell=True)
+    #         print(output)
 
 # The next big thing??????
-# sudo tcpdump -l -i 3003-eth3 -n -c 5 ip 2>/dev/null
-# | grep -P -o '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)'
-# | grep -P -o '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | xargs -n 2 echo | awk '!a[$0]++'
-
     def _get_qdisc_stats(self, iface_list):
         drops = {}
         overlimits = {}
@@ -181,6 +183,7 @@ class StatsCollector(threading.Thread):
         # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
 
     def get_interface_stats(self):
+        # self._get_flow_stats(self.iface_list)
         self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
         drops_d = {}
         overlimits_d = {}
@@ -222,3 +225,77 @@ class StatsCollector(threading.Thread):
     #     print("Current Ratio of Utilization: %f" % total_util_ratio)
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
     # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
+
+
+class FlowCollector(threading.Thread):
+    """
+            NetworkMonitor is a Ryu app for collecting traffic information.
+    """
+
+    def __init__(self, host_ips):
+        threading.Thread.__init__(self)
+        self.name = 'FlowCollector'
+        self.iface_list = []
+        self.host_ips = host_ips
+        self.terminate = False
+        self.src_flows = {}
+        self.dst_flows = {}
+        self.set_interfaces()
+
+    def run(self):
+        # self._set_interfaces()
+        while True:
+            if self.terminate:
+                self.exit()
+            self._collect_flows()
+
+    def terminate(self):
+        self.terminate = True
+
+    def set_interfaces(self):
+        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
+        output = subprocess.check_output(cmd, shell=True)
+        iface_list_temp = []
+        for row in output.split('\n'):
+            if row != '':
+                iface_list_temp.append(row)
+                self.src_flows[row] = [0] * len(self.host_ips)
+                self.dst_flows[row] = [0] * len(self.host_ips)
+        # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
+        self.iface_list = iface_list_temp
+
+    def _get_flow_stats(self, iface_list):
+        processes = []
+        for iface in iface_list:
+            cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 5 ip 2>/dev/null | " +
+                   "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " +
+                   "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
+            # output = subprocess.check_output(cmd, shell=True)
+            p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+            processes.append((p, iface))
+
+        for p, iface in processes:
+            p.wait()
+            output, err = p.communicate()
+            self.src_flows[iface] = [0] * len(self.host_ips)
+            self.dst_flows[iface] = [0] * len(self.host_ips)
+            for row in output.split('\n'):
+                if row != '':
+                    src, dst = row.split(' ')
+                    for i, ip in enumerate(self.host_ips):
+                        if src == ip:
+                            self.src_flows[iface][i] = 1
+                        if dst == ip:
+                            self.dst_flows[iface][i] = 1
+            # print(self.src_flows)
+            # print(self.dst_flows)
+
+    def _collect_flows(self):
+        # iface_list = self._get_interfaces()
+        self._get_flow_stats(self.iface_list)
+        # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
+        # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
+
+    def get_interface_flows(self):
+        # self._get_flow_stats(self.iface_list)
+        return self.src_flows, self.dst_flows

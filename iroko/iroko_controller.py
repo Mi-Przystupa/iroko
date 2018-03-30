@@ -11,6 +11,9 @@ from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
 from LearningAgentv4 import LearningAgentv4
 from iroko_monitor import StatsCollector
+from iroko_monitor import FlowCollector
+
+import subprocess
 
 
 MAX_CAPACITY = 10e6   # Max capacity of link
@@ -28,6 +31,9 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
+hosts = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.1", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
+         "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
+
 
 parser = ArgumentParser()
 parser.add_argument('--agent', dest='agent', default=ACTIVEAGENT, help='options are v0, v2,v3, v4')
@@ -75,11 +81,15 @@ if __name__ == '__main__':
     args.agent = args.agent.lower()
     saver = GracefulSave()
     # Launch an asynchronous stats collector
-    stats = StatsCollector(i_h_map)
+    stats = StatsCollector()
     stats.set_interfaces()
     stats.daemon = True
     stats.start()
     interfaces = stats.iface_list
+    flows = FlowCollector(hosts)
+    flows.set_interfaces()
+    flows.daemon = True
+    flows.start()
     # let the monitor initialize first
     time.sleep(3)
     SIZE = len(interfaces)
@@ -114,6 +124,8 @@ if __name__ == '__main__':
         # update Agents internal representations
 
         bandwidths, bandwidths_d, drops_d, overlimits_d, queues = stats.get_interface_stats()
+        src_flows, dst_flows = flows.get_interface_flows()
+
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
         bw_reward = 0.0

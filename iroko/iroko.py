@@ -9,7 +9,7 @@ from mininet.cli import CLI
 from time import sleep
 from mininet.node import OVSKernelSwitch, CPULimitedHost
 from mininet.util import custom
-from mininet.log import setLogLevel, info, warn, error, debug
+from mininet.log import setLogLevel, info, output, warn, error, debug
 
 from subprocess import Popen, PIPE
 from argparse import ArgumentParser
@@ -112,7 +112,7 @@ def trafficGen(args, hosts, net):
         error('The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
         return
 
-    info('*** Starting load-generators\n %s\n' % args.input_file)
+    output('*** Starting load-generators\n %s\n' % args.input_file)
     for h in hosts:
         tg_cmd = '%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' % (traffic_gen,
                                                                     args.input_file, h.defaultIntf(), listen_port, sample_period_us,
@@ -121,7 +121,7 @@ def trafficGen(args, hosts, net):
 
     sleep(1)
 
-    info('*** Triggering load-generators\n')
+    output('*** Triggering load-generators\n')
     for h in hosts:
         h.cmd('nc -nzv %s %d' % (h.IP(), listen_port))
 
@@ -134,13 +134,13 @@ def trafficGen(args, hosts, net):
     monitor2.start()
 
     sleep(args.time)
-    info('*** Stopping monitor\n')
+    output('*** Stopping monitor\n')
     monitor1.terminate()
     monitor2.terminate()
 
     os.system("killall bwm-ng")
 
-    info('*** Stopping load-generators\n')
+    output('*** Stopping load-generators\n')
     for h in hosts:
         h.cmd('killall loadgen')
 
@@ -202,7 +202,7 @@ def FatTreeTest(args, controller=None):
             Popen("sudo python iroko_controller.py --agent %s" % args.agent, shell=True)
             #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
             #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
-        info('** Waiting for switches to connect to the controller\n')
+        output('** Waiting for switches to connect to the controller\n')
         sleep(1)
     hosts = net.hosts
     if args.dctcp:
@@ -223,7 +223,7 @@ def NonBlockingTest(args):
     net.start()
     topo_non_block.configureTopo(net, topo)
 
-    info('** Waiting for switches to connect to the controller\n')
+    output('** Waiting for switches to connect to the controller\n')
     sleep(2)
 
     hosts = net.hosts
@@ -234,7 +234,7 @@ def NonBlockingTest(args):
 def HederaNet(k=4, bw=10, cpu=-1, queue=100, controller='HController'):
     ''' Create a Fat-Tree network '''
 
-    info('*** Creating the topology')
+    output('*** Creating the topology')
     topo = FatTreeTopo(k)
 
     host = custom(CPULimitedHost, cpu=cpu)
@@ -254,7 +254,7 @@ def HederaTest(args):
     net.addController(c0)
     net.start()
     # wait for the switches to connect to the controller
-    info('** Waiting for switches to connect to the controller\n')
+    output('** Waiting for switches to connect to the controller\n')
     sleep(5)
 
     hosts = net.hosts
@@ -270,14 +270,14 @@ def HederaTest(args):
 if __name__ == '__main__':
     kill_controller()
     clean()
-    setLogLevel('info')
+    setLogLevel('output')
     if not os.path.exists(args.output_dir):
         print(args.output_dir)
         os.makedirs(args.output_dir)
     if args.dctcp:
         args.ECMP = True
     if os.getuid() != 0:
-        logging.debug("You are NOT root")
+        logging.error("You are NOT root")
         exit(1)
     if args.nonblocking:
         NonBlockingTest(args)
@@ -288,7 +288,7 @@ if __name__ == '__main__':
     elif args.iroko:
         FatTreeTest(args, controller='Iroko')
     else:
-        info('**error** please specify either hedera, iroko, ecmp, or nonblocking\n')
+        error('Please specify either hedera, iroko, ecmp, or nonblocking!\n')
     clean()
 
 

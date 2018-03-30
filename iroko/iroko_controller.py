@@ -86,10 +86,10 @@ if __name__ == '__main__':
     stats.daemon = True
     stats.start()
     interfaces = stats.iface_list
-    flows = FlowCollector(hosts)
-    flows.set_interfaces()
-    flows.daemon = True
-    flows.start()
+    # flows = FlowCollector(hosts)
+    # flows.set_interfaces()
+    # flows.daemon = True
+    # flows.start()
     # let the monitor initialize first
     time.sleep(3)
     SIZE = len(interfaces)
@@ -133,15 +133,16 @@ if __name__ == '__main__':
             for i, iface in enumerate(interfaces):
                 # print(drops_d[iface], overlimits_d[iface])
                 data[i] = torch.Tensor([bandwidths[iface], queues[iface]])
-                if queues[iface] == 0:
-                    reward += MAX_QUEUE / 100
-                    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
-                else:
-                    reward += (MAX_QUEUE - queues[iface]) / 100
+                # if queues[iface] == 0:
+                #    reward += MAX_QUEUE / 100
+                #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                # else:
+                reward += float(bandwidths[iface]) / float(MAX_CAPACITY) - (queues[iface] / MAX_QUEUE)
         except Exception as e:
             print("Time to go: %s" % e)
             break
         reward += bw_reward
+        print("Full Reward %f" % reward)
         print("BW Reward %f" % bw_reward)
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))

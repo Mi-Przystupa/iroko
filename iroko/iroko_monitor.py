@@ -112,7 +112,7 @@ class StatsCollector(threading.Thread):
             except Exception as e:
                 # print("Empty Request %s" % e)
                 output = 0
-        curr_bandwidth = {key: bytes_new[key] - bytes_old.get(key, 0) for key in bytes_new.keys()}
+        curr_bandwidth = {key: (bytes_new[key] - bytes_old.get(key, 0)) * 8 for key in bytes_new.keys()}
 
         # Get bandwidth deltas
 

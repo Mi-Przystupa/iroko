@@ -35,7 +35,7 @@ class LearningAgentv3:
             self.hosts[key] = self.createHost()
         self.actionVector = torch.Tensor(self.hostcount)
 
-    def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
+    def initializeTrafficMatrix(self, interfaceCount=16, features=4, frames=3):
         # inputs:
             # interfaceCount: number of rows in the traffic matrix
             # features: number of metrics per interface

@@ -18,7 +18,7 @@ MIN_RATE = 6.25e5
 EXPLOIT = False
 ACTIVEAGENT = 'v2'
 FRAMES = 1  # number of previous matrices to use
-FEATURES = 4  # number of statistics we are using
+FEATURES = 2  # number of statistics we are using
 FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
 MAX_QUEUE = 50
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                                 len(i_h_map), cpath='critic', apath='actor', toExploit=args.exploit)
     elif args.agent == 'v3':
         Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, s=(FEATURE_MAPS * SIZE * FEATURES) / 8,
-                                cpath='critic', apath='actor', toExploit=args.exploit, frames=args.frames)
+                                cpath='critic', apath='actor', toExploit=args.exploit, frames=args.frames, w=args.features)
         Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
     elif args.agent == 'v4':
         Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, s=SIZE * FEATURES, cpath='critic',
@@ -119,18 +119,18 @@ if __name__ == '__main__':
         bw_reward = 0
         try:
             for i, iface in enumerate(interfaces):
-                print(bandwidths[iface], drops_d[iface], overlimits_d[iface], queues[iface])
-                data[i] = torch.Tensor([bandwidths[iface], drops_d[iface], overlimits_d[iface], queues[iface]])
+                # print(drops_d[iface], overlimits_d[iface])
+                data[i] = torch.Tensor([bandwidths[iface], queues[iface]])
                 if queues[iface] == 0:
-                    reward += MAX_QUEUE
-                    bw_reward += (MAX_QUEUE / 10) * float(bandwidths[iface]) / float(MAX_CAPACITY)
+                    reward += MAX_QUEUE / 10
+                    bw_reward += (MAX_QUEUE / 100) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 else:
                     reward += MAX_QUEUE - queues[iface]
         except Exception as e:
             print("Time to go: %s" % e)
             break
         reward += bw_reward
-        print("BW Reward %d" % bw_reward)
+        print("BW Reward %f" % bw_reward)
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
         # if ACTIVEAGENT == 'v0':

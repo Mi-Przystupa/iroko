@@ -9,14 +9,14 @@ from DDPG.DDPGConv import DDPGConv
 
 # the convolution agent
 class LearningAgentv3:
-    def __init__(self, gamma=.99, lam=.1, s=2560, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False, frames=3):
+    def __init__(self, gamma=.99, lam=.1, s=2560, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False, frames=3, w=4):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPGConv(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True, w=4, f=frames)
+        self.controller = DDPGConv(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True, w=w, f=frames)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()
@@ -35,7 +35,7 @@ class LearningAgentv3:
             self.hosts[key] = self.createHost()
         self.actionVector = torch.Tensor(self.hostcount)
 
-    def initializeTrafficMatrix(self, interfaceCount=16, features=4, frames=3):
+    def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
         # inputs:
             # interfaceCount: number of rows in the traffic matrix
             # features: number of metrics per interface

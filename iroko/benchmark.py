@@ -77,6 +77,23 @@ def plot_reward(fname, pltname):
     plt.savefig(pltname)
     plt.gcf().clear()
 
+def plot_avgreward(fname,pltname):
+    avgreward = []
+    with open(fname) as f:
+        content = f.readlines()
+    # you may also want to remove whitespace characters like `\n` at the end of each line
+    content = [x.strip() for x in content]
+    #ploting average shows if the thing is improve expected reward i.e. optimizing towards goal
+    summation = 0
+    for i, r in enumerate(content):
+        summation += float(r)
+        avgreward.append(summation / float(i))
+    plt.plot(avgreward)
+    plt.ylabel('Average Reward')
+    plt.savefig(pltname)
+    plt.gcf().clear()
+
+
 
 def train(input_dir, output_dir, duration, offset, epochs, algorithm):
     os.system('sudo mn -c')
@@ -93,6 +110,7 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm):
             iroko_plt.prune_bw(out_dir, tf, conf['sw'])
     f.close()
     plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, epochs))
+    plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, epochs))
 
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):

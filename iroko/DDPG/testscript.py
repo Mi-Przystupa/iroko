@@ -44,7 +44,7 @@ process = OUNoise(1,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
 for i in range(1, numSimulation):
     Agent.setExploration(scale, sigma, theta, mu)
     
-    Agent.exploit()
+    #Agent.exploit()
     #do the thing
     inputs = torch.from_numpy(observation).float()
     action = Agent.selectAction(inputs.unsqueeze(0))
@@ -68,7 +68,7 @@ for i in range(1, numSimulation):
         action = action.squeeze()
 
         observation, reward, done, info = env.step(action.numpy()) 
-        env.render()    
+        #env.render()    
         #create memory
         s = inputs.float()
         a = action.double()

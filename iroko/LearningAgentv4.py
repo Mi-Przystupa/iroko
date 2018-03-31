@@ -10,14 +10,14 @@ from DDPG.DDPG import DDPG
 # This one is v2 + v3 so it does not use convolution layer but
 # instead predicts all action from traffic treated as a single row instead of a matrix
 class LearningAgentv4:
-    def __init__(self, gamma=.99, lam=.1, s=320, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
+    def __init__(self, gamma=.99, lam=.1, s=320, num_hosts=16, memory=1000, initMax=0, defaultmax=10e6, cpath=None, apath=None, toExploit=False):
         self.hosts = {}
         self.hostcount = 0
         self.gamma = gamma
         self.lam = lam
         self.defaultmax = defaultmax
         self.initmax = initMax
-        self.controller = DDPG(gamma, memory, s, 16, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
+        self.controller = DDPG(gamma, memory, s, num_hosts, tau=.001, criticpath=cpath, actorpath=apath, useSig=True)
         # criticpath='critic', actorpath='actor', useSig=True)
         if(toExploit):
             self.controller.exploit()

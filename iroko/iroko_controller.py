@@ -6,6 +6,7 @@ import socket
 # Stuff for learning
 import signal
 import torch
+import numpy as np
 from argparse import ArgumentParser
 from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
@@ -139,6 +140,8 @@ if __name__ == '__main__':
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
+                print("bws_tx", bws_tx)
+                print("bws_rx", bws_rx)
                 bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
                 reward -= (queues[iface] / MAX_QUEUE)
         except Exception as e:

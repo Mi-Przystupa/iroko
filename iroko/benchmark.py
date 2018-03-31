@@ -156,7 +156,9 @@ if __name__ == '__main__':
 
     if args.dumbbell is True:
         algorithms = {}
-        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'iroko', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        traffic_files = ['incast']
+        labels = ['incast']
         if args.epoch is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)

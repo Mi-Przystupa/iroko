@@ -105,11 +105,11 @@ def get_intf_list(net):
     return sw_intfs
 
 
-def trafficGen(args, hosts, net):
+def trafficGen(args, net):
     ''' Run the traffic generator and monitor all of the interfaces '''
     listen_port = 12345
     sample_period_us = 1000000
-
+    hosts = net.hosts
     traffic_gen = 'cluster_loadgen/loadgen'
     if not os.path.isfile(traffic_gen):
         error('The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
@@ -245,7 +245,6 @@ def FatTreeTest(args, controller=None):
             Popen("sudo python iroko_controller.py --agent %s" % args.agent, shell=True)
         output('** Waiting for switches to connect to the controller\n')
         sleep(1)
-    hosts = net.hosts
     if args.dctcp:
         enable_dctcp()
     if args.dctcp:
@@ -253,7 +252,7 @@ def FatTreeTest(args, controller=None):
             host_o = net.get(host)
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
-    trafficGen(args, hosts, net)
+    trafficGen(args, net)
     kill_controller()
     net.stop()
 
@@ -266,8 +265,7 @@ def NonBlockingTest(args):
     output('** Waiting for switches to connect to the controller\n')
     sleep(1)
 
-    hosts = net.hosts
-    trafficGen(args, hosts, net)
+    trafficGen(args, net)
     net.stop()
 
 
@@ -297,8 +295,7 @@ def HederaTest(args):
     output('** Waiting for switches to connect to the controller\n')
     sleep(1)
 
-    hosts = net.hosts
-    trafficGen(args, hosts, net)
+    trafficGen(args, net)
     kill_controller()
     net.stop()
 
@@ -320,8 +317,8 @@ def DumbbellTest(args):
     output('** Waiting for switches to connect to the controller\n')
     sleep(2)
 
-    iperfTest(args, net)
-    # trafficGen(args, hosts, net)
+    # iperfTest(args, net)
+    trafficGen(args, net)
 
     kill_controller()
     net.stop()

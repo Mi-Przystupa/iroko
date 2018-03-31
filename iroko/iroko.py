@@ -195,7 +195,7 @@ def iperfTest(args, net):
     servers = []
     output('*** Starting iperf servers\n')
     for i, host in enumerate(hosts):
-        if (i % 2 == 0):
+        if i >= len(hosts) / 2:
             cmd = "iperf -s &"
             host.cmd(cmd)
             servers.append(host)
@@ -204,7 +204,7 @@ def iperfTest(args, net):
     sleep(1)
     output('*** Triggering iperf\n')
     for i, client in enumerate(clients):
-        cmd = "iperf -c %s -b 10m -t %d &" % (servers[i].IP(), args.time)
+        cmd = "iperf -c %s -u -b 10m -t %d &" % (servers[i].IP(), args.time)
         client.cmdPrint(cmd)
     ifaces = get_intf_list(net)
 

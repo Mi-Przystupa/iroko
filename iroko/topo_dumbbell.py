@@ -57,7 +57,7 @@ class DumbbellTopo(Topo):
                 Add links between switch and hosts.
         """
         for i, host in enumerate(self.hostList):
-            if i % 2 == 0:
+            if i < len(self.hostList) / 2:
                 self.addLink(self.switch_w, host, bw=bw, max_queue_size=MAX_QUEUE)   # use_htb=False
             else:
                 self.addLink(self.switch_e, host, bw=bw, max_queue_size=MAX_QUEUE)   # use_htb=False

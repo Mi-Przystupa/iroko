@@ -6,6 +6,7 @@ import socket
 # Stuff for learning
 import signal
 import torch
+import numpy as np
 from argparse import ArgumentParser
 from LearningAgentv2 import LearningAgentv2
 from LearningAgentv3 import LearningAgentv3
@@ -144,8 +145,18 @@ if __name__ == '__main__':
         except Exception as e:
             print("Time to go: %s" % e)
             break
+
+        std_reward = 0
+        try:
+            pbws = [bws_tx[k] for k in bws_tx if bws_tx[k] > 0]
+            if len(pbws) > 0:
+                std_reward = (np.std(pbws) / float(MAX_CAPACITY))
+        except ValueError:
+            pass
+
         reward += bw_reward
-        print("Total Reward %f BW Reward %f " % (reward, bw_reward))
+        reward -= std_reward
+        print("Total Reward %f BW Reward %f STD Reward %f" % (reward, bw_reward, std_reward))
 
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))

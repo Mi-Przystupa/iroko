@@ -31,8 +31,10 @@ i_h_map = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
            '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
-hosts = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.1", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
+hosts = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
          "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
+i_h_map = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2", '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
+hosts = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1"]
 
 
 parser = ArgumentParser()
@@ -163,7 +165,7 @@ if __name__ == '__main__':
         #         Agent.update(interface, data, reward)
         if args.agent == 'v2':
             # fully connected agent that  uses full matrix for each action but uses current host as input
-            data=data.view(-1)
+            data = data.view(-1)
             for interface in i_h_map:
                 Agent.update(interface, data, reward)
         elif args.agent == 'v3':
@@ -172,7 +174,7 @@ if __name__ == '__main__':
         elif args.agent == 'v4':
             # flatten the matrix & feed it in
             # v4 the fully connected input of v2 mixed with the single output of v3
-            data=data.view(-1)
+            data = data.view(-1)
             Agent.update(i_h_map, data, reward)
         total_reward += reward
         total_iters += 1

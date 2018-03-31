@@ -178,7 +178,7 @@ if __name__ == '__main__':
         total_iters += 1
         if saver.kill_now:
             break
-        time.sleep(0.10)
+        # time.sleep(0.10)
         # update the allocated bandwidth
         # wait for update to happen
 

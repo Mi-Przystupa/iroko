@@ -13,6 +13,7 @@ parser.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
 parser.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
 parser.add_argument('--plot', '-pl', dest='plot', action='store_true', default='False', help='Only plot the results for training.')
+parser.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true', default='False', help='Train on a simple dumbbell topology')
 
 args = parser.parse_args()
 
@@ -52,6 +53,7 @@ DURATION = 60
 NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
+DUMBBELL_SW = '100[1-2]'
 
 
 def get_test_config():
@@ -151,6 +153,18 @@ if __name__ == '__main__':
             run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
             iroko_plt.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
             iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms, FATTREE_SW)
+
+    if args.dumbbell is True:
+        algorithms = {}
+        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'iroko', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        if args.epoch is 0:
+            print("Please specify the number of epochs you would like to train with (--epoch)!")
+            exit(1)
+        for algo, conf in algorithms.iteritems():
+            print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
+            train(INPUT_DIR, OUTPUT_DIR, 600, args.offset, args.epoch, (algo, conf))
+            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
 
     elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

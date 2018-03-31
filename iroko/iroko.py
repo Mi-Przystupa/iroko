@@ -22,6 +22,7 @@ from hedera.DCTopo import FatTreeTopo
 
 import topo_ecmp
 import topo_non_block
+import topo_dumbbell
 
 MAX_QUEUE = 50
 
@@ -57,6 +58,8 @@ parser.add_argument('--iroko', dest='iroko', default=False,
 
 parser.add_argument('--dctcp', dest='dctcp', default=False,
                     action='store_true', help='Run the experiment with DCTCP congestion control')
+parser.add_argument('--dumbbell', dest='dumbbell', default=False,
+                    action='store_true', help='Run the experiment with a dumbbell topology.')
 
 parser.add_argument('--agent', dest='agent', default='v2', help='options are v0, v2,v3, v4')
 
@@ -182,6 +185,46 @@ def pingTest(net):
     net.pingAll()
 
 
+def iperfTest(args, net):
+    """
+        Start iperf test.
+        Currently uses a kind off stupid solution. Needs improvement.
+    """
+    hosts = net.hosts
+    clients = []
+    servers = []
+    output('*** Starting iperf servers\n')
+    for i, host in enumerate(hosts):
+        if (i % 2 == 0):
+            cmd = "iperf -s &"
+            host.cmd(cmd)
+            servers.append(host)
+        else:
+            clients.append(host)
+    sleep(1)
+    output('*** Triggering iperf\n')
+    for i, client in enumerate(clients):
+        cmd = "iperf -c %s -b 10m -t %d &" % (servers[i].IP(), args.time)
+        client.cmdPrint(cmd)
+    ifaces = get_intf_list(net)
+
+    monitor1 = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % args.output_dir, 0.01))
+    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(ifaces, 1, '%s/qlen.txt' % args.output_dir))
+
+    monitor1.start()
+    monitor2.start()
+
+    sleep(args.time)
+    output('*** Stopping monitor\n')
+    monitor1.terminate()
+    monitor2.terminate()
+
+    os.system("killall bwm-ng")
+    output('*** Stopping iperf instances\n')
+    for h in hosts:
+        h.cmd('killall iperf')
+
+
 def FatTreeTest(args, controller=None):
     net, topo = topo_ecmp.createECMPTopo(pod=4, density=2, cpu=args.cpu, max_queue=MAX_QUEUE, dctcp=args.dctcp)
     ovs_v = 13  # default value
@@ -200,15 +243,13 @@ def FatTreeTest(args, controller=None):
         topo_ecmp.connect_controller(net, topo, c0)
         if controller == "Iroko":
             Popen("sudo python iroko_controller.py --agent %s" % args.agent, shell=True)
-            #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
-            #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
         output('** Waiting for switches to connect to the controller\n')
         sleep(1)
     hosts = net.hosts
     if args.dctcp:
         enable_dctcp()
     if args.dctcp:
-        for host in topo.HostList:
+        for host in topo.hostList:
             host_o = net.get(host)
             host_o.cmd("sysctl -w net.ipv4.tcp_ecn=1")
             host_o.cmd("sysctl -w net.ipv4.tcp_congestion_control=dctcp")
@@ -218,13 +259,12 @@ def FatTreeTest(args, controller=None):
 
 
 def NonBlockingTest(args):
-
     net, topo = topo_non_block.createNonBlockTopo(pod=4, cpu=args.cpu)
     net.start()
     topo_non_block.configureTopo(net, topo)
 
     output('** Waiting for switches to connect to the controller\n')
-    sleep(2)
+    sleep(1)
 
     hosts = net.hosts
     trafficGen(args, hosts, net)
@@ -255,14 +295,34 @@ def HederaTest(args):
     net.start()
     # wait for the switches to connect to the controller
     output('** Waiting for switches to connect to the controller\n')
-    sleep(5)
+    sleep(1)
 
     hosts = net.hosts
-
-    # if args.iperf:
-    #     iperfTrafficGen(args, hosts, net)
-    # else:
     trafficGen(args, hosts, net)
+    kill_controller()
+    net.stop()
+
+
+def DumbbellTest(args):
+    net, topo = topo_dumbbell.create_db_topo(hosts=4, cpu=args.cpu)
+    ovs_v = 13  # default value
+    is_ecmp = True  # default value
+
+    net.start()
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    net.addController(c0)
+
+    topo_dumbbell.configure_topo(net, topo, ovs_v, is_ecmp)
+    topo_ecmp.connect_controller(net, topo, c0)
+    Popen("sudo python iroko_controller.py --agent %s" % args.agent, shell=True)
+    #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+    #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
+    output('** Waiting for switches to connect to the controller\n')
+    sleep(2)
+
+    iperfTest(args, net)
+    # trafficGen(args, hosts, net)
+
     kill_controller()
     net.stop()
 
@@ -287,6 +347,8 @@ if __name__ == '__main__':
         HederaTest(args)
     elif args.iroko:
         FatTreeTest(args, controller='Iroko')
+    elif args.dumbbell:
+        DumbbellTest(args)
     else:
         error('Please specify either hedera, iroko, ecmp, or nonblocking!\n')
     clean()

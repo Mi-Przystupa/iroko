@@ -202,7 +202,8 @@ def plot_train_bw(input_dir, plt_name, traffic_files, algorithm, epochs):
         print("Total Average Bandwidth: %f" % avg(p_bar))
         plt.plot(p_bar)
         x_val = list(range(epochs + 1))
-        x_step = x_val[0::(epochs / 10)]
+        if epochs > 100:
+            x_step = x_val[0::(epochs / 10)]
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Normalized Average Bisection Bandwidth')
@@ -239,7 +240,8 @@ def plot_train_qlen(input_dir, plt_name, traffic_files, algorithm, epochs):
         print("Total Average Qlen: %f" % avg(p_bar))
         plt.plot(p_bar)
         x_val = list(range(epochs + 1))
-        x_step = x_val[0::(epochs / 10)]
+        if epochs > 100:
+            x_step = x_val[0::(epochs / 10)]
         plt.xticks(x_step)
         plt.xlabel('Epoch')
         plt.ylabel('Average Queue Length')

@@ -41,7 +41,7 @@ class Fattree(Topo):
     CoreSwitchList = []
     AggSwitchList = []
     EdgeSwitchList = []
-    HostList = []
+    hostList = []
 
     def __init__(self, k):
         self.pod = k
@@ -91,7 +91,7 @@ class Fattree(Topo):
                 PREFIX = "h0"
             else:
                 PREFIX = "h00"
-            self.HostList.append(self.addHost(PREFIX + str(i), cpu=1.0 / NUMBER))
+            self.hostList.append(self.addHost(PREFIX + str(i), cpu=1.0 / NUMBER))
 
     def createLinks(self, max_queue=100, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
         """
@@ -120,7 +120,7 @@ class Fattree(Topo):
             for i in range(0, self.density):
                 self.addLink(
                     self.EdgeSwitchList[x],
-                    self.HostList[self.density * x + i],
+                    self.hostList[self.density * x + i],
                     bw=bw_e2h, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
     def set_ovs_protocol(self, ovs_v):
@@ -138,12 +138,12 @@ class Fattree(Topo):
 
 
 def set_host_ip(net, topo):
-    hostlist = []
-    for k in range(len(topo.HostList)):
-        hostlist.append(net.get(topo.HostList[k]))
+    hostList = []
+    for k in range(len(topo.hostList)):
+        hostList.append(net.get(topo.hostList[k]))
     i = 1
     j = 1
-    for host in hostlist:
+    for host in hostList:
         host.setIP("10.%d.0.%d" % (i, j))
         j += 1
         if j == topo.density + 1:
@@ -290,7 +290,7 @@ def connect_controller(net, topo, controller):
     # for sw in topo.CoreSwitchList:
     #     net.addLink(sw, controller)
     i = 1
-    for host in topo.HostList:
+    for host in topo.hostList:
         # link.setIP("192.168.0.1")
         host_o = net.get(host)
         # Configure host

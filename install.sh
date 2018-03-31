@@ -16,6 +16,7 @@ sudo -H pip install matplotlib
 # traffic monitors
 sudo apt-get install -y bwm-ng
 sudo apt-get install -y ifstat
+sudo apt-get install -y iperf
 # traffic generator
 make -C iroko/cluster_loadgen
 # reset accidental root files to the original user

@@ -145,7 +145,7 @@ if __name__ == '__main__':
             print("Time to go: %s" % e)
             break
         reward += bw_reward
-        print("Total Reward %f BW Reward %f " % (bw_reward, reward))
+        print("Total Reward %f BW Reward %f " % (reward, bw_reward))
 
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))

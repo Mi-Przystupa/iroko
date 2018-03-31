@@ -185,3 +185,5 @@ iroko/index\.npy
 iroko/plots/
 
 iroko/reward\.txt
+
+iroko/\.directory

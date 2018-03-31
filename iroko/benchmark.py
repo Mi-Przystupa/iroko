@@ -1,5 +1,6 @@
 from monitor.helper import *
-import iroko_plt
+import sre_yield
+from iroko_plt import IrokoPlotter
 parser = argparse.ArgumentParser()
 # parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
 
@@ -66,38 +67,7 @@ def get_test_config():
     return algos
 
 
-def plot_reward(fname, pltname):
-    reward = []
-    with open(fname) as f:
-        content = f.readlines()
-    # you may also want to remove whitespace characters like `\n` at the end of each line
-    content = [x.strip() for x in content]
-    for i, r in enumerate(content):
-        reward.append(float(r))
-    plt.plot(reward)
-    plt.ylabel('Reward')
-    plt.savefig(pltname)
-    plt.gcf().clear()
-
-def plot_avgreward(fname,pltname):
-    avgreward = []
-    with open(fname) as f:
-        content = f.readlines()
-    # you may also want to remove whitespace characters like `\n` at the end of each line
-    content = [x.strip() for x in content]
-    #ploting average shows if the thing is improve expected reward i.e. optimizing towards goal
-    summation = 0
-    for i, r in enumerate(content):
-        summation += float(r)
-        avgreward.append(summation / float(i))
-    plt.plot(avgreward)
-    plt.ylabel('Average Reward')
-    plt.savefig(pltname)
-    plt.gcf().clear()
-
-
-
-def train(input_dir, output_dir, duration, offset, epochs, algorithm):
+def train(input_dir, output_dir, duration, offset, epochs, algorithm, plotter):
     os.system('sudo mn -c')
     f = open("reward.txt", "w+")
     algo = algorithm[0]
@@ -109,13 +79,13 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm):
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' % (input_file, out_dir, duration, algo, args.agent))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
-            iroko_plt.prune_bw(out_dir, tf, conf['sw'])
+            plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
-    plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, epochs))
-    plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, epochs))
+    plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, epochs))
+    plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, epochs))
 
 
-def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
+def run_tests(input_dir, output_dir, duration, traffic_files, algorithms, plotter):
     os.system('sudo mn -c')
     f = open("reward.txt", "w+")
     for algo, conf in algorithms.iteritems():
@@ -125,50 +95,53 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
             os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
-            iroko_plt.prune_bw(out_dir, tf, conf['sw'])
+            plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
+
+# This is a stupid hack, but it works
+
+
+def get_num_interfaces(pattern):
+    n = []
+
+    for each in sre_yield.AllStrings(r'%s' % pattern):
+        n.append(each)
+    return len(n)
 
 
 if __name__ == '__main__':
     algorithms = get_test_config()
-    if args.plot is True:
-        for algo, conf in algorithms.iteritems():
-            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch))
-        exit(0)
+    n = get_num_interfaces(DUMBBELL_SW)
+    plotter = IrokoPlotter(n)
+    # Train on the dumbbell topology
+    if args.dumbbell is True:
+        algorithms = {}
+        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        traffic_files = ['incast_2']
+        DURATION = 600
+        # traffic_files = ['incast_4']
+        # traffic_files = ['incast_8']
+        labels = ['incast']
+        args.train = True
+    # Train the agent
+    # Compare against other algorithms, if necessary
     if args.train is True:
         if args.epoch is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         for algo, conf in algorithms.iteritems():
             print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
-            train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
-            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            if args.plot is not True:
+                train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf), plotter)
+            plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+    # Compare the agents performance against other algorithms
     if args.test is True:
         for e in range(args.epoch):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))
-            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms)
-            iroko_plt.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
-            iroko_plt.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms, FATTREE_SW)
-
-    if args.dumbbell is True:
-        algorithms = {}
-        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
-        traffic_files = ['incast_2']
-        # traffic_files = ['incast_4']
-        # traffic_files = ['incast_8']
-        labels = ['incast']
-        if args.epoch is 0:
-            print("Please specify the number of epochs you would like to train with (--epoch)!")
-            exit(1)
-        for algo, conf in algorithms.iteritems():
-            print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
-            train(INPUT_DIR, OUTPUT_DIR, 600, args.offset, args.epoch, (algo, conf))
-            iroko_plt.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            iroko_plt.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-
+            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms, plotter)
+            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
+            plotter.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms, FATTREE_SW)
     elif not args.train:
         print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")

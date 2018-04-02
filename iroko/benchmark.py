@@ -54,7 +54,7 @@ DURATION = 60
 NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
-DUMBBELL_SW = '1002'
+DUMBBELL_SW = '100[1-2]'
 
 
 def get_test_config():
@@ -134,7 +134,9 @@ if __name__ == '__main__':
             if args.plot is not True:
                 train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf), plotter)
             plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
     # Compare the agents performance against other algorithms
     if args.test is True:
         for e in range(args.epoch):

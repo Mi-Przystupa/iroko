@@ -124,7 +124,7 @@ if __name__ == '__main__':
         for h_iface in i_h_map:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
-
+        time.sleep(3)
         bws_rx, bws_tx, drops_d, overlimits_d, queues = stats.get_interface_stats()
         # src_flows, dst_flows = flows.get_interface_flows()
 
@@ -180,7 +180,6 @@ if __name__ == '__main__':
         total_iters += 1
         if saver.kill_now:
             break
-        time.sleep(3)
         # update the allocated bandwidth
         # wait for update to happen
 

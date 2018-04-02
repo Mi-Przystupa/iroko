@@ -54,7 +54,7 @@ DURATION = 60
 NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
-DUMBBELL_SW = '100[1-2]'
+DUMBBELL_SW = '1002'
 
 
 def get_test_config():

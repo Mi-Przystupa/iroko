@@ -34,10 +34,14 @@ int cntrl_init()
     printf("Interface: %s\n", net_interface);
 
     char cmd[200];
-    sprintf(cmd, "tc qdisc add dev %s root tbf rate 100gbit burst 32kbit latency 400ms", net_interface);
+    sprintf(cmd, "tc qdisc del dev %s root", net_interface);
     printf("cmd: %s\n", cmd);
     system(cmd);
 
+    char cmd1[200];
+    sprintf(cmd1, "tc qdisc add dev %s root tbf rate 100gbit burst 32kbit latency 400ms", net_interface);
+    printf("cmd2: %s\n", cmd1);
+    system(cmd1);
 exit:
     return ret;
 

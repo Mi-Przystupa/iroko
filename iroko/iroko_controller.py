@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
                 bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
-                reward -= (queues[iface] / MAX_QUEUE)
+                reward -= 2*(queues[iface] / MAX_QUEUE)
         except Exception as e:
             print("Time to go: %s" % e)
             break

@@ -183,7 +183,7 @@ class IrokoPlotter():
             for e in range(epochs):
                 bb['%s_%s' % (algo, e)] = []
                 print("%s: %s" % (algo, tf))
-                input_file = input_dir + '/%s_%d/%s/rate_final.txt' % (conf['pre'], e, tf)
+                input_file = input_dir + '/%s_%d/%s/rate_final.json' % (conf['pre'], e, tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = float(results['avg_bw'])
                 print(avg_bw)

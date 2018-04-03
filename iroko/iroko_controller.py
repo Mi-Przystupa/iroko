@@ -21,7 +21,7 @@ MIN_RATE = 6.25e5
 EXPLOIT = False
 ACTIVEAGENT = 'v2'
 FRAMES = 1  # number of previous matrices to use
-FEATURES = 2  # number of statistics we are using
+FEATURES = 3  # number of statistics we are using
 FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
 MAX_QUEUE = 50
 
@@ -118,6 +118,12 @@ if __name__ == '__main__':
         raise ValueError('Invalid agent, options are v2,v3,v4')
 
     Agent.initializePorts(i_h_map)
+    bws_rx = {}
+    bws_tx = {}
+    drops = {}
+    overlimits = {}
+    queues = {}
+    delta_vector = stats.init_deltas()
     while(1):
         # perform action
         Agent.predictBandwidthOnHosts()
@@ -125,21 +131,26 @@ if __name__ == '__main__':
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
         time.sleep(3)
-        bws_rx, bws_tx, drops_d, overlimits_d, queues = stats.get_interface_stats()
+        if bws_rx:
+            delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
+        bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
         # src_flows, dst_flows = flows.get_interface_flows()
-
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
         bw_reward = 0.0
         try:
             for i, iface in enumerate(interfaces):
-                # print(drops_d[iface], overlimits_d[iface])
-                data[i] = torch.Tensor([bws_rx[iface], queues[iface]])
+                # if iface == "1001-eth3":
+                #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
+                #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
+                #     print(delta_vector[iface])
+                data[i] = torch.Tensor([bws_rx[iface], bws_tx[iface], queues[iface]])
                 # if queues[iface] == 0:
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
-                bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
+                if delta_vector[iface]["delta_q"] == 1:
+                    bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
                 reward -= 2 * (float(queues[iface]) / float(MAX_QUEUE))
         except Exception as e:
             print("Time to go: %s" % e)

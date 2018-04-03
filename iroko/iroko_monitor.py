@@ -171,7 +171,6 @@ class StatsCollector(threading.Thread):
     #         output = subprocess.check_output(cmd, shell=True)
     #         print(output)
 
-# The next big thing??????
     def _get_qdisc_stats(self, iface_list):
         drops = {}
         overlimits = {}
@@ -206,17 +205,64 @@ class StatsCollector(threading.Thread):
     def _collect_stats(self):
         # iface_list = self._get_interfaces()
         self.bws_rx, self.bws_tx = self._get_bandwidths(self.iface_list)
+        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
         # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
         # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
+
+    def _compute_delta(self, iface, bw_rx, bw_tx, drops, overlimits, queues):
+        deltas = {}
+        if bw_rx <= self.bws_rx[iface]:
+            deltas["delta_rx"] = 1
+        else:
+            deltas["delta_rx"] = 0
+
+        if bw_tx <= self.bws_tx[iface]:
+            deltas["delta_tx"] = 1
+        else:
+            deltas["delta_tx"] = 0
+
+        if drops < self.drops[iface]:
+            deltas["delta_d"] = 0
+        else:
+            deltas["delta_d"] = 1
+
+        if overlimits < self.overlimits[iface]:
+            deltas["delta_ov"] = 0
+        else:
+            deltas["delta_ov"] = 1
+
+        if queues < self.queues[iface]:
+            deltas["delta_q"] = 0
+        else:
+            deltas["delta_q"] = 1
+        return deltas
+
+    def init_deltas(self):
+        d_vector = {}
+        for iface in self.iface_list:
+            d_vector[iface] = {}
+            d_vector[iface]["delta_rx"] = 0
+            d_vector[iface]["delta_tx"] = 0
+            d_vector[iface]["delta_d"] = 0
+            d_vector[iface]["delta_ov"] = 0
+            d_vector[iface]["delta_q"] = 0
+        return d_vector
+
+    def get_interface_deltas(self, bws_rx, bws_tx, drops, overlimits, queues):
+        d_vector = {}
+        for iface in self.iface_list:
+            d_vector[iface] = {}
+            d_vector[iface] = self._compute_delta(iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface])
+        return d_vector
 
     def get_interface_stats(self):
         # self._get_flow_stats(self.iface_list)
         self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
-        drops_d = {}
-        overlimits_d = {}
-        for iface in self.iface_list:
-            drops_d[iface], overlimits_d[iface] = self._get_deltas(self.drops[iface], self.overlimits[iface])
-        return self.bws_rx, self.bws_tx, drops_d, overlimits_d, self.queues
+        # drops_d = {}
+        # overlimits_d = {}
+        # for iface in self.iface_list:
+        #     drops_d[iface], overlimits_d[iface] = self._get_deltas(self.drops[iface], self.overlimits[iface])
+        return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
     # def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
     #     bw_sum = sum(bandwidths.itervalues())

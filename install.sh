@@ -14,7 +14,7 @@ sudo -H pip install --upgrade numpy
 sudo -H pip install http://download.pytorch.org/whl/cpu/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl
 sudo -H pip install torchvision
 # for generating plots
-sudo -H pip install matplotlib
+sudo apt-get install python-matplotlib
 # some regex magic
 sudo -H pip install sre_yield
 # traffic monitors

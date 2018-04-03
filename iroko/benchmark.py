@@ -67,9 +67,9 @@ def get_test_config():
     return algos
 
 
-def train(input_dir, output_dir, duration, offset, epochs, algorithm, plotter):
+def train(input_dir, output_dir, duration, offset, epochs, algorithm):
     os.system('sudo mn -c')
-    f = open("reward.txt", "w+")
+    f = open("reward.txt", "a+")
     algo = algorithm[0]
     conf = algorithm[1]
     for e in range(offset, epochs + offset):
@@ -81,13 +81,11 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm, plotter):
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
-    plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, epochs))
-    plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, epochs))
 
 
-def run_tests(input_dir, output_dir, duration, traffic_files, algorithms, plotter):
+def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
     os.system('sudo mn -c')
-    f = open("reward.txt", "w+")
+    f = open("reward.txt", "a+")
     for algo, conf in algorithms.iteritems():
         pre_folder = conf['pre']
         for tf in traffic_files:
@@ -132,7 +130,9 @@ if __name__ == '__main__':
         for algo, conf in algorithms.iteritems():
             print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
             if args.plot is not True:
-                train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf), plotter)
+                train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
+            plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch + args.offset))
+            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, args.epoch + args.offset))
             plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)

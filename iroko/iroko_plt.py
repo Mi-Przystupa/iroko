@@ -336,20 +336,46 @@ class IrokoPlotter():
         plt.savefig(pltname)
         plt.gcf().clear()
 
-    def plot_avgreward(self, fname, pltname):
+    def running_mean(self, input, n=100):
+        return np.convolve(input, np.ones((n,)) / n)[(n - 1):]
+
+    def moving_average(self, input, n=100):
+        ret = np.cumsum(input, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
+
+    def evolving_average(self, input, n=100):
         avgreward = []
-        with open(fname) as f:
-            content = f.readlines()
-        # you may also want to remove whitespace characters like `\n` at the end of each line
-        content = [x.strip() for x in content]
-        # ploting average shows if the thing is improve expected reward i.e. optimizing towards goal
         summation = 0
         i = 1
-        for r in content:
+        for r in input:
             summation += float(r)
             avgreward.append(summation / float(i))
             i += 1
-        plt.plot(avgreward)
-        plt.ylabel('Average Reward')
+        return avgreward
+
+    def plot_avgreward(self, fname, pltname):
+        with open(fname) as f:
+            content = f.readlines()
+        # you may also want to remove whitespace characters like `\n` at the end of each line
+        content = [float(x.strip()) for x in content]
+        window = 100
+        reward_avg = self.moving_average(content, window)
+        reward_mean = self.running_mean(content, window)
+        reward_evolve = self.evolving_average(content, window)
+
+        plt.subplot(2, 1, 1)
+        plt.plot(reward_avg, label="Average %d" % window)
+        plt.subplot(2, 1, 1)
+        plt.plot(reward_mean, label="Mean %d" % window)
+        plt.legend(loc='lower left')
+        plt.ylabel('Reward')
+        plt.xlabel('Iterations')
+        plt.subplot(2, 1, 2)
+        plt.plot(reward_evolve, label="Evolution")
+        plt.ylabel('Reward')
+        plt.xlabel('Iterations')
+        plt.legend(loc='upper right')
+
         plt.savefig(pltname)
         plt.gcf().clear()

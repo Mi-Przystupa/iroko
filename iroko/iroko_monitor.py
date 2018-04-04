@@ -258,10 +258,6 @@ class StatsCollector(threading.Thread):
     def get_interface_stats(self):
         # self._get_flow_stats(self.iface_list)
         self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
-        # drops_d = {}
-        # overlimits_d = {}
-        # for iface in self.iface_list:
-        #     drops_d[iface], overlimits_d[iface] = self._get_deltas(self.drops[iface], self.overlimits[iface])
         return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
     # def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):

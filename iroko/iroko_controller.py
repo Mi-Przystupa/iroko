@@ -88,29 +88,29 @@ if __name__ == '__main__':
     stats.daemon = True
     stats.start()
     interfaces = stats.iface_list
-    # flows = FlowCollector(hosts)
-    # flows.set_interfaces()
-    # flows.daemon = True
-    # flows.start()
+    flows = FlowCollector(hosts)
+    flows.set_interfaces()
+    flows.daemon = True
+    flows.start()
     # let the monitor initialize first
     time.sleep(3)
     SIZE = len(interfaces)
     total_reward = 0
     total_iters = 0
     f = open('reward.txt', 'a+')
-
+    FEATURES += len(hosts) * 2
     # initialize the Agent
     if args.agent == 'v2' or args.agent == 'v0':
         Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, s=SIZE * FEATURES +
                                 len(i_h_map), cpath='critic', apath='actor', toExploit=args.exploit)
     elif args.agent == 'v3':
         Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, actions=len(i_h_map), s=(FEATURE_MAPS * SIZE * FEATURES) / 8,
-                                cpath='critic', apath='actor', toExploit=args.exploit, frames=args.frames, w=args.features)
-        Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
+                                cpath='critic', apath='actor', toExploit=args.exploit, frames=args.frames, w=FEATURES)
+        Agent.initializeTrafficMatrix(len(interfaces), features=FEATURES, frames=args.frames)
     elif args.agent == 'v4':
         Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, actions=len(i_h_map), s=SIZE * FEATURES, cpath='critic',
                                 apath='actor', toExploit=args.exploit)
-        Agent.initializeTrafficMatrix(len(interfaces), features=args.features, frames=args.frames)
+        Agent.initializeTrafficMatrix(len(interfaces), features=FEATURES, frames=args.frames)
 
     else:
         # you had 3 options of 2 characters length and still messed up.
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         if bws_rx:
             delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
         bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
-        # src_flows, dst_flows = flows.get_interface_flows()
+        src_flows, dst_flows = flows.get_interface_flows()
         data = torch.zeros(SIZE, FEATURES)
         reward = 0.0
         bw_reward = 0.0
@@ -144,7 +144,8 @@ if __name__ == '__main__':
                 #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
                 #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
                 #     print(delta_vector[iface])
-                data[i] = torch.Tensor([bws_rx[iface], bws_tx[iface], queues[iface]])
+                features = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
+                data[i] = torch.Tensor(features)
                 # if queues[iface] == 0:
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)

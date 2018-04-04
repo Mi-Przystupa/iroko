@@ -131,7 +131,7 @@ if __name__ == '__main__':
             print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
             if args.plot is not True:
                 train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
-            plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch + args.offset))
+            # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch + args.offset))
             plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, args.epoch + args.offset))
             plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
             plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)

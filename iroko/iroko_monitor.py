@@ -28,17 +28,17 @@ class StatsCollector(threading.Thread):
         self.drops = {}
         self.overlimits = {}
         self.queues = {}
-        self.terminate = False
+        self.kill = False
 
     def run(self):
         # self._set_interfaces()
         while True:
-            if self.terminate:
+            if self.kill:
                 self.exit()
             self._collect_stats()
 
     def terminate(self):
-        self.terminate = True
+        self.kill = True
 
     def set_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
@@ -100,12 +100,12 @@ class StatsCollector(threading.Thread):
             cmd = (" ifstat -i %s -b -q 0.1 1 | awk \'{if (NR==3) print $0}\' | \
                    awk \'{$1=$1}1\' OFS=\", \"" % (iface))  # | sed \'s/\(\([^,]*,\)\{1\}[^,]*\),/\1;/g\'
             # output = subprocess.check_output(cmd, shell=True)
-            p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
-            processes.append((p, iface))
+            proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+            processes.append((proc, iface))
 
-        for p, iface in processes:
-            p.wait()
-            output, err = p.communicate()
+        for proc, iface in processes:
+            proc.wait()
+            output, _ = proc.communicate()
             bw = output.split(',')
             try:
                 bws_rx[iface] = float(bw[0]) * 1000
@@ -116,42 +116,42 @@ class StatsCollector(threading.Thread):
                 bws_tx[iface] = 0
         return bws_rx, bws_tx
 
-    def _get_bandwidths_old(self, iface_list):
-        # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
-        bytes_old = {}
-        bytes_new = {}
-        for iface in iface_list:
-            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
-            else { print $2 } }\' /proc/net/dev" % (iface)
-            try:
-                output = subprocess.check_output(cmd, shell=True)
-                bytes_old[iface] = float(output)
-            except Exception as e:
-                # print("Empty Request %s" % e)
-                output = 0
-        time.sleep(1)
-        for iface in iface_list:
-            cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
-             else { print $2 } }\' /proc/net/dev" % (iface)
-            try:
-                output = subprocess.check_output(cmd, shell=True)
-                bytes_new[iface] = float(output)
-            except Exception as e:
-                # print("Empty Request %s" % e)
-                output = 0
-        curr_bandwidth = {key: (bytes_new[key] - bytes_old.get(key, 0)) * 8 for key in bytes_new.keys()}
+    # def _get_bandwidths_old(self, iface_list):
+    #     # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
+    #     bytes_old = {}
+    #     bytes_new = {}
+    #     for iface in iface_list:
+    #         cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
+    #         else { print $2 } }\' /proc/net/dev" % (iface)
+    #         try:
+    #             output = subprocess.check_output(cmd, shell=True)
+    #             bytes_old[iface] = float(output)
+    #         except Exception as e:
+    #             # print("Empty Request %s" % e)
+    #             output = 0
+    #     time.sleep(1)
+    #     for iface in iface_list:
+    #         cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
+    #          else { print $2 } }\' /proc/net/dev" % (iface)
+    #         try:
+    #             output = subprocess.check_output(cmd, shell=True)
+    #             bytes_new[iface] = float(output)
+    #         except Exception as e:
+    #             # print("Empty Request %s" % e)
+    #             output = 0
+    #     curr_bandwidth = {key: (bytes_new[key] - bytes_old.get(key, 0)) * 8 for key in bytes_new.keys()}
 
-        # Get bandwidth deltas
+    #     # Get bandwidth deltas
 
-        bandwidth_d = {}
-        if self.prev_bandwidth == {}:
-            bandwidth_d = curr_bandwidth  # base case
-        else:
-            for iface in curr_bandwidth:
-                bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface]  # calculate delta
-        self.prev_bandwidth = curr_bandwidth
+    #     bandwidth_d = {}
+    #     if self.prev_bandwidth == {}:
+    #         bandwidth_d = curr_bandwidth  # base case
+    #     else:
+    #         for iface in curr_bandwidth:
+    #             bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface]  # calculate delta
+    #     self.prev_bandwidth = curr_bandwidth
 
-        return curr_bandwidth, bandwidth_d
+    #     return curr_bandwidth, bandwidth_d
 
     def _get_free_bw(self, capacity, speed):
         # freebw: Kbit/s
@@ -184,22 +184,22 @@ class StatsCollector(threading.Thread):
             # cmd1 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=dropped )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=overlimits )[ 0-9]*'" % (iface)
             # cmd2 = "tc -s qdisc show dev %s | grep -ohP -m1 '(?<=backlog )[ 0-9]*'" % (iface)
-            dr = {}
-            ov = {}
-            qu = {}
+            drop_return = {}
+            over_return = {}
+            queue_return = {}
             try:
                 output = subprocess.check_output(cmd, shell=True)
-                dr = re_dropped.findall(output)
-                ov = re_overlimit.findall(output)
-                qu = re_queued.findall(output)
+                drop_return = re_dropped.findall(output)
+                over_return = re_overlimit.findall(output)
+                queue_return = re_queued.findall(output)
             except Exception as e:
                 # print("Empty Request %s" % e)
-                dr[0] = 0
-                ov[0] = 0
-                qu[0] = 0
-            drops[iface] = int(dr[0])
-            overlimits[iface] = int(ov[0])
-            queues[iface] = int(qu[0])
+                drop_return[0] = 0
+                over_return[0] = 0
+                queue_return[0] = 0
+            drops[iface] = int(drop_return[0])
+            overlimits[iface] = int(over_return[0])
+            queues[iface] = int(queue_return[0])
         return drops, overlimits, queues
 
     def _collect_stats(self):
@@ -252,7 +252,8 @@ class StatsCollector(threading.Thread):
         d_vector = {}
         for iface in self.iface_list:
             d_vector[iface] = {}
-            d_vector[iface] = self._compute_delta(iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface])
+            d_vector[iface] = self._compute_delta(iface, bws_rx[iface], bws_tx[iface],
+                                                  drops[iface], overlimits[iface], queues[iface])
         return d_vector
 
     def get_interface_stats(self):
@@ -306,7 +307,7 @@ class FlowCollector(threading.Thread):
         self.name = 'FlowCollector'
         self.iface_list = []
         self.host_ips = host_ips
-        self.terminate = False
+        self.kill = False
         self.src_flows = {}
         self.dst_flows = {}
         self.set_interfaces()
@@ -314,12 +315,12 @@ class FlowCollector(threading.Thread):
     def run(self):
         # self._set_interfaces()
         while True:
-            if self.terminate:
+            if self.kill:
                 self.exit()
             self._collect_flows()
 
     def terminate(self):
-        self.terminate = True
+        self.kill = True
 
     def set_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
@@ -340,12 +341,12 @@ class FlowCollector(threading.Thread):
                    "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " +
                    "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
             # output = subprocess.check_output(cmd, shell=True)
-            p = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
-            processes.append((p, iface))
+            proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+            processes.append((proc, iface))
 
-        for p, iface in processes:
-            p.wait()
-            output, err = p.communicate()
+        for proc, iface in processes:
+            proc.wait()
+            output, _ = proc.communicate()
             self.src_flows[iface] = [0] * len(self.host_ips)
             self.dst_flows[iface] = [0] * len(self.host_ips)
             for row in output.split('\n'):

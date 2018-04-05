@@ -1,48 +1,53 @@
-from monitor.helper import *
+import argparse
+import os  # noqa
 import sre_yield
+
 from iroko_plt import IrokoPlotter
-parser = argparse.ArgumentParser()
+
+PARSER = argparse.ArgumentParser()
 # parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
 
-parser.add_argument('--train', '-tr', dest='train', default=False,
+PARSER.add_argument('--train', '-tr', dest='train', default=False,
                     action='store_true', help='Train Iroko in epoch mode and measure the improvement.')
-parser.add_argument('--epoch', '-e', dest='epoch', type=int, default=0,
+PARSER.add_argument('--epoch', '-e', dest='epoch', type=int, default=0,
                     help='Specify the number of epochs Iroko should be trained.')
-parser.add_argument('--offset', '-o', dest='offset', type=int, default=0,
+PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
-parser.add_argument('--test', '-t', dest='test', default=False,
+PARSER.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
-parser.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
-parser.add_argument('--plot', '-pl', dest='plot', action='store_true', default='False', help='Only plot the results for training.')
-parser.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true', default='False', help='Train on a simple dumbbell topology')
+PARSER.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
+PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
+                    default='False', help='Only plot the results for training.')
+PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
+                    default='False', help='Train on a simple dumbbell topology')
 
-args = parser.parse_args()
+ARGS = PARSER.parse_args()
 
 
 ''' Output of bwm-ng has the following format:
     unix_timestamp;iface_name;bytes_out;bytes_in;bytes_total;packets_out;packets_in;packets_total;errors_out;errors_in
     '''
 
-traffic_files = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_3_data',
+TRAFFIC_FILES = ['stag_prob_0_2_3_data', 'stag_prob_1_2_3_data', 'stag_prob_2_2_3_data',
                  'stag_prob_0_5_3_data', 'stag_prob_1_5_3_data', 'stag_prob_2_5_3_data', 'stride1_data',
                  'stride2_data', 'stride4_data', 'stride8_data', 'random0_data', 'random1_data', 'random2_data',
                  'random0_bij_data', 'random1_bij_data', 'random2_bij_data', 'random_2_flows_data',
                  'random_3_flows_data', 'random_4_flows_data', 'hotspot_one_to_one_data']
-traffic_files = ['stag_prob_0_2_3_data']
+TRAFFIC_FILES = ['stag_prob_0_2_3_data']
 
-labels = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
+LABELS = ['stag0(0.2,0.3)', 'stag1(0.2,0.3)', 'stag2(0.2,0.3)', 'stag0(0.5,0.3)',
           'stag1(0.5,0.3)', 'stag2(0.5,0.3)', 'stride1', 'stride2',
           'stride4', 'stride8', 'rand0', 'rand1', 'rand2', 'randbij0',
           'randbij1', 'randbij2', 'randx2', 'randx3', 'randx4', 'hotspot']
-labels = ['stag0(0.2,0.3)']
+LABELS = ['stag0(0.2,0.3)']
 
-qlen_traffics = ['stag_prob_2_2_3_data',
+QLEN_TRAFFICS = ['stag_prob_2_2_3_data',
                  'stag_prob_2_5_3_data', 'stride1_data',
                  'stride2_data', 'random0_data',
                  'random_2_flows_data',
                  'random_3_flows_data', 'random_4_flows_data']
 
-qlen_labels = ['stag2(0.2,0.3)',
+QLEN_LABELS = ['stag2(0.2,0.3)',
                'stag2(0.5,0.3)', 'stride1', 'stride2',
                'rand0',
                'randx2', 'randx3', 'randx4']
@@ -67,7 +72,7 @@ def get_test_config():
     return algos
 
 
-def train(input_dir, output_dir, duration, offset, epochs, algorithm):
+def train(input_dir, output_dir, duration, traffic_files, offset, epochs, algorithm):
     os.system('sudo mn -c')
     f = open("reward.txt", "a+")
     algo = algorithm[0]
@@ -77,7 +82,8 @@ def train(input_dir, output_dir, duration, offset, epochs, algorithm):
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             pre_folder = "%s_%d" % (conf['pre'], e)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
-            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' % (input_file, out_dir, duration, algo, args.agent))
+            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
+                      (input_file, out_dir, duration, algo, ARGS.agent))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
@@ -112,38 +118,43 @@ if __name__ == '__main__':
     n = get_num_interfaces(DUMBBELL_SW)
     plotter = IrokoPlotter(n)
     # Train on the dumbbell topology
-    if args.dumbbell is True:
+    if ARGS.dumbbell is True:
         algorithms = {}
         algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
-        traffic_files = ['incast_2']
+        TRAFFIC_FILES = ['incast_2']
         DURATION = 600
         # traffic_files = ['incast_4']
         # traffic_files = ['incast_8']
-        labels = ['incast']
-        args.train = True
+        LABELS = ['incast']
+        ARGS.train = True
     # Train the agent
     # Compare against other algorithms, if necessary
-    if args.train is True:
-        if args.epoch is 0:
+    if ARGS.train is True:
+        if ARGS.epoch is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         for algo, conf in algorithms.iteritems():
-            print("Training the %s agent for %d epoch(s)." % (algo, args.epoch))
-            if args.plot is not True:
-                train(INPUT_DIR, OUTPUT_DIR, DURATION, args.offset, args.epoch, (algo, conf))
-            # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, args.epoch + args.offset))
-            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, args.epoch + args.offset))
-            plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
-            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' % algo, traffic_files, (algo, conf), args.epoch + args.offset)
+            print("Training the %s agent for %d epoch(s)." % (algo, ARGS.epoch))
+            if ARGS.plot is not True:
+                train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epoch, (algo, conf))
+            # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
+            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
+            plotter.plot_train_bw('results', 'plots/%s_train_bw' %
+                                  algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
+            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' %
+                                      algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
+            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' %
+                                    algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
+            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' %
+                                        algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
     # Compare the agents performance against other algorithms
-    if args.test is True:
-        for e in range(args.epoch):
+    if ARGS.test is True:
+        for e in range(ARGS.epoch):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))
-            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_files, algorithms, plotter)
-            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, traffic_files, labels, algorithms)
-            plotter.plot_test_qlen('results', 'plots/test_qlen_sum_%d' % e, qlen_traffics, qlen_labels, algorithms, FATTREE_SW)
-    elif not args.train:
-        print("Doing nothing...\nRun the command with --train to train the Iroko agent and/or --test to run benchmarks.")
+            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, algorithms)
+            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, TRAFFIC_FILES, LABELS, algorithms)
+            plotter.plot_test_qlen('results', 'plots/test_qlen_sum_%d' %
+                                   e, QLEN_TRAFFICS, QLEN_LABELS, algorithms, FATTREE_SW)
+    elif not ARGS.train:
+        print("Doing nothing...\nRun the command with --train to train/ the Iroko agent and/or --test to run benchmarks.")

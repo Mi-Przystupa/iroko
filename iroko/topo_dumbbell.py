@@ -17,7 +17,6 @@ import os
 
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
-MAX_QUEUE = 50
 
 
 class DumbbellTopo(Topo):
@@ -52,16 +51,16 @@ class DumbbellTopo(Topo):
         for i in range(1, NUMBER + 1):
             self.hostList.append(self.addHost("h" + str(i), cpu=1.0 / NUMBER))
 
-    def create_links(self, bw=10, queue=MAX_QUEUE):
+    def create_links(self, bw=10, queue=100):
         """
                 Add links between switch and hosts.
         """
         for i, host in enumerate(self.hostList):
             if i < len(self.hostList) / 2:
-                self.addLink(self.switch_w, host, bw=bw, max_queue_size=MAX_QUEUE)   # use_htb=False
+                self.addLink(self.switch_w, host, bw=bw, max_queue_size=queue)   # use_htb=False
             else:
-                self.addLink(self.switch_e, host, bw=bw, max_queue_size=MAX_QUEUE)   # use_htb=False
-        self.addLink(self.switch_w, self.switch_e, bw=bw, max_queue_size=MAX_QUEUE)   # use_htb=False
+                self.addLink(self.switch_e, host, bw=bw, max_queue_size=queue)   # use_htb=False
+        self.addLink(self.switch_w, self.switch_e, bw=bw, max_queue_size=queue)   # use_htb=False
 
     def set_ovs_protocol(self, ovs_v):
         """
@@ -138,14 +137,14 @@ def connect_controller(net, topo, controller):
 #                 i += 1
 
 
-def configure_topo(net, topo, ovs_v, is_ecmp):
+def config_topo(net, topo, ovs_v, is_ecmp):
     # Set OVS's protocol as OF13.
     topo.set_ovs_protocol(ovs_v)
     # Set hosts IP addresses.
     set_host_ip(net, topo)
 
 
-def create_db_topo(hosts, cpu=-1, bw=10):
+def create_db_topo(hosts, cpu=-1, bw=10, max_queue=100):
     """
             Firstly, start up Mininet;
             secondly, generate traffics and test the performance of the network.
@@ -157,7 +156,7 @@ def create_db_topo(hosts, cpu=-1, bw=10):
 
     # Start Mininet
     host = custom(CPULimitedHost, cpu=cpu)
-    link = custom(TCLink, max_queue=MAX_QUEUE)
+    link = custom(TCLink, max_queue=max_queue)
     net = Mininet(topo=topo, host=host, link=link, controller=None, autoSetMacs=True)
 
     return net, topo

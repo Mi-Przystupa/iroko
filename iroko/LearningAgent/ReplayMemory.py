@@ -27,8 +27,8 @@ class ReplayMemory:
         self.indx = (self.indx + 1) % self.size
         if (self.toSave > 8):
             self.toSave = 0
-#            np.save('buffer', self.memory)
-#            np.save('index', self.indx)
+            np.save('buffer', self.memory)
+            np.save('index', self.indx)
         else:
             self.toSave += 1
     def batch(self, batchSize):

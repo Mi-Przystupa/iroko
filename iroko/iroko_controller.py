@@ -145,7 +145,7 @@ if __name__ == '__main__':
                 #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
                 #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
                 #     print(delta_vector[iface])
-                # features = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
+                # state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
                 state = [queues[iface]] + src_flows[iface] + dst_flows[iface]
                 data[i] = torch.Tensor(state)
                 # if queues[iface] == 0:

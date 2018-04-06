@@ -9,7 +9,7 @@ PARSER = argparse.ArgumentParser()
 
 PARSER.add_argument('--train', '-tr', dest='train', default=False,
                     action='store_true', help='Train Iroko in epoch mode and measure the improvement.')
-PARSER.add_argument('--epoch', '-e', dest='epoch', type=int, default=0,
+PARSER.add_argument('--epoch', '-e', dest='epochs', type=int, default=0,
                     help='Specify the number of epochs Iroko should be trained.')
 PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
@@ -107,7 +107,6 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
 
 def get_num_interfaces(pattern):
     n = []
-
     for each in sre_yield.AllStrings(r'%s' % pattern):
         n.append(each)
     return len(n)
@@ -115,8 +114,9 @@ def get_num_interfaces(pattern):
 
 if __name__ == '__main__':
     algorithms = get_test_config()
+    # Stupid hack, do not like.
     n = get_num_interfaces(DUMBBELL_SW)
-    plotter = IrokoPlotter(n)
+    plotter = IrokoPlotter(n, ARGS.epochs + ARGS.offset)
     # Train on the dumbbell topology
     if ARGS.dumbbell is True:
         algorithms = {}
@@ -130,26 +130,22 @@ if __name__ == '__main__':
     # Train the agent
     # Compare against other algorithms, if necessary
     if ARGS.train is True:
-        if ARGS.epoch is 0:
+        if ARGS.epochs is 0:
             print("Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
-        for algo, conf in algorithms.iteritems():
-            print("Training the %s agent for %d epoch(s)." % (algo, ARGS.epoch))
+        for algo, conf in algorithms.items():
+            print("Training the %s agent for %d epoch(s)." % (algo, ARGS.epochs))
             if ARGS.plot is not True:
-                train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epoch, (algo, conf))
+                train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epochs, (algo, conf))
             # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
-            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
-            plotter.plot_train_bw('results', 'plots/%s_train_bw' %
-                                  algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
-            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' %
-                                      algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
-            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' %
-                                    algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
-            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' %
-                                        algo, TRAFFIC_FILES, (algo, conf), ARGS.epoch + ARGS.offset)
+            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
+            plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
     # Compare the agents performance against other algorithms
     if ARGS.test is True:
-        for e in range(ARGS.epoch):
+        for e in range(ARGS.epochs):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))
             run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, algorithms)

@@ -21,7 +21,7 @@ print('states: {} actions:{}'.format(S_DIM, A_DIM))
 print('max: {} min: {}'.format(A_MAX, A_MIN))
 #Agent = LearningController(4, 2,8 , 15, .000001, .9, epsilon = .7, decay = 1e-8 )
 
-Agent = DDPG(S_DIM, A_DIM, criticpath='critic', actorpath='actor')
+Agent = DDPG(S_DIM, A_DIM,h1=80, h2=50, criticpath='critic', actorpath='actor')
 sigma = .2#.3 #.3- makes it between -.5 - .5
 theta = .15#.2 #.2
 mu = 0.0

@@ -30,7 +30,6 @@ class Actor(nn.Module):
 
     def forward(self,  state):
         x = state
-        print(x)
         if self.convNet:
             x = self.convNet(x)
             x = x.view(x.size()[0], -1)
@@ -39,7 +38,7 @@ class Actor(nn.Module):
         x = F.relu(self.hidden1(x))
         x = self.normalize2(x)
         x = F.relu(self.hidden2(x))
-        return F.sigmoid( self.outputs(x))
+        return F.tanh( self.outputs(x))
 
 class Critic(nn.Module):
     def __init__(self, state = 54, actions = 18, hidden1=400, hidden2 = 300, convNet=None):
@@ -62,7 +61,6 @@ class Critic(nn.Module):
 
     def forward(self, state, action):
         x = state
-        print(x)
         if self.convNet:
             x = self.convNet(x)
             x = x.view(x.size()[0], -1)
@@ -88,6 +86,7 @@ class DDPG:
         self.actor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,convNet=convNet)
         self.critic = Critic(state = s, actions = a, hidden1=h1, hidden2=h2, convNet=convNet)
         if(not(criticpath== None)):
+            self.criticpath = criticpath
             try:
                 self.critic.load_state_dict(torch.load(criticpath))
             except RuntimeError, e:
@@ -96,8 +95,11 @@ class DDPG:
                 print('Failed to load requested Critic: {}'.format(str(e)))
             except (IOError, EOFError) as e:
                 print('Failed to load requested Critic: {}'.format(str(e)))
+        else:
+            self.criticpath = 'critic'
                 
         if(not(actorpath==None)):
+            self.actorpath = actorpath
             try:
                 self.actor.load_state_dict(torch.load(actorpath))
             except RuntimeError, e:
@@ -106,6 +108,9 @@ class DDPG:
                 print('Failed to load requested Actor: {}'.format(str(e)))
             except (IOError, EOFError) as e:
                 print('Failed to load requested Actor: {}'.format(str(e)))
+        else:
+            self.actorpath = 'actor'
+
         self.targetActor = Actor(state= s, actions = a,hidden1=h1, hidden2=h2,convNet=convNet)
         self.targetActor.load_state_dict(self.actor.state_dict())
         self.targetCritic = Critic(state= s, actions = a,hidden1=h1, hidden2=h2, convNet=convNet)
@@ -119,11 +124,26 @@ class DDPG:
         self.action = a
         if(dims):
             assert(type(dims) is dict)
-            assert(len(dims) == 3)
         self.dims = dims
         self.process = OUNoise(a, scale=1.0, mu=0, theta=.15, sigma=0.2)
         self.isExplore = True
-        #self.step = 0
+        self.useCuda = False
+
+    def enableCuda(self):
+        self.useCuda = True
+        self.actor = self.actor.cuda()
+        if(self.actor.convNet):
+            self.actor.convNet = self.actor.convNet.cuda()
+        self.critic = self.critic.cuda()
+        if (self.actor.convNet):
+            self.critic.convNet = self.critic.convNet.cuda()
+        self.targetActor = self.targetActor.cuda()
+        if (self.targetActor.convNet):
+            self.targetActor.convNet = self.targetActor.convNet.cuda()
+        self.targetCritic = self.targetCritic.cuda()
+        if (self.targetCritic.convNet):
+            self.targetCritic.convNet = self.targetCritic.convNet.cuda()
+
 
     def _createConvolutionNet(self, frames):
         return torch.nn.Sequential(
@@ -153,8 +173,10 @@ class DDPG:
         ret = self.targetActor(Variable(state)).data
         self.targetActor.train()
         if (self.isExplore):
-            ret = ret + torch.from_numpy(self.process.noise()).float()
-        #self.step += 1
+            noise = torch.from_numpy(self.process.noise()).float()
+            if (self.useCuda):
+                noise = noise.cuda()
+            ret = ret + noise        
         return ret
 
     def addToMemory(self, state, action, reward, stateprime):
@@ -178,6 +200,11 @@ class DDPG:
             states[i] = sample['s']
             rewards[i] = sample['r']
             statesP[i] = sample['sprime']
+        if self.useCuda:
+            actions = actions.cuda()
+            states = states.cuda()
+            rewards = rewards.cuda()
+            statesP = statesP.cuda()
 
         #critic update
         self.criticOptimizer.zero_grad()
@@ -210,5 +237,5 @@ class DDPG:
 
         self.targetActor.load_state_dict(tActorDict)
     def saveActorCritic(self):
-        torch.save(self.critic.state_dict(), 'critic')
-        torch.save(self.actor.state_dict(), 'actor')
+        torch.save(self.critic.state_dict(), self.criticpath)
+        torch.save(self.actor.state_dict(), self.actorpath)

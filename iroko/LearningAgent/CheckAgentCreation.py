@@ -17,7 +17,7 @@ i_h_map = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2", '1002-eth1'
 hosts = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1"]
 
 
-versions = ['v2', 'v3', 'v4']
+versions = ['v4'] #['v2', 'v3', 'v4']
 num_stats = 9
 num_interfaces = 80
 bw_allow= 10e6
@@ -25,8 +25,9 @@ ports = i_h_map
 
 for v in versions:
     type = v
-    Agent = GetLearningAgentConfiguration(type, ports, num_stats, num_interfaces, bw_allow)
     print('Version: {}'.format(v))
+
+    Agent = GetLearningAgentConfiguration(type, ports, num_stats, num_interfaces, bw_allow, 1)
     for i in range(0, 256):
         data = torch.ones(num_interfaces, num_stats) 
         isEven = i % 2 == 0

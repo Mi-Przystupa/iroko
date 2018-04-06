@@ -19,7 +19,8 @@ resize = T.Compose([T.ToPILImage(),
                     T.Resize(40, interpolation=Image.CUBIC),
                     T.ToTensor()])
 screen_width = 600 # might have to check this
-   
+USE_CUDA = True
+  
 def get_screen(env):
     screen = env.render(mode='rgb_array').transpose((2,0,1))
 
@@ -27,8 +28,10 @@ def get_screen(env):
     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
     
     screen = torch.from_numpy(screen)
-
-    return resize(screen).unsqueeze(0).float()
+    screen = resize(screen).unsqueeze(0).float()
+    if USE_CUDA:
+        screen = screen.cuda()
+    return screen  
 
 numSimulation = 800
 
@@ -44,7 +47,6 @@ env = gym.make('MountainCarContinuous-v0') #env = gym.make('Pendulum-v0')
 #plt.title('Example extracted screen')
 #plt.show()
 
-
 S_DIM = env.observation_space.shape[0]
 A_DIM = env.action_space.shape[0]
 A_MAX = float(env.action_space.high[0])
@@ -56,15 +58,18 @@ sigma = .2#.3 #.3- makes it between -.5 - .5
 theta = .15#.2 #.2
 mu = 0.0
 scale = 1.0
-use_conv = {'c':3, 'h': 3, 'w': 3}
+use_conv = {'c':3, 'h': 40, 'w': 60}
 
 s = 9600 
 a = 1
 
-Agent = DDPG(s, a, dims=use_conv, criticpath='critic', actorpath='actor')
+Agent = DDPG(s, a, dims=use_conv, h1=80, h2=50, criticpath='critic', actorpath='actor')
 
 Agent.setExploration(scale, sigma, theta, mu)
+Agent.enableCuda()
 observation = env.reset()
+
+init_inputs =  [get_screen(env).squeeze() for i in range(0,3)]
 
 totalreward = 0
 displayResult = False
@@ -74,17 +79,18 @@ t = .001
 avgReward = 0
 steps = 0
 process = OUNoise(1,scale=1.0, sigma=0.2, theta=.15, mu=0.0)
-
 for i in range(1, numSimulation):
     Agent.setExploration(scale, sigma, theta, mu)
     
     #Agent.exploit()
-    #do the thing
-    inputs = torch.from_numpy(observation).float()
     inputs = get_screen(env)
+
     action = Agent.selectAction(inputs)
     action = action.squeeze()
-    observation, reward, done, info = env.step(action.numpy()) 
+    if (USE_CUDA):
+        _ , reward, done, info = env.step(action.cpu().numpy()) 
+    else:
+        _ , reward, done, info = env.step(action.numpy())
     observation = get_screen(env)
     steps += 1
 
@@ -103,7 +109,11 @@ for i in range(1, numSimulation):
         action = Agent.selectAction(inputs)
         action = action.squeeze()
 
-        observation, reward, done, info = env.step(action.numpy()) 
+        if (USE_CUDA):
+            _ , reward, done, info = env.step(action.cpu().numpy()) 
+        else:
+            _ , reward, done, info = env.step(action.numpy())
+ 
         observation = get_screen(env)
         #env.render()    
         #create memory
@@ -112,7 +122,7 @@ for i in range(1, numSimulation):
         sp = observation.float()
         r = reward 
         totalreward += r
-        #print(Agent.critic(Variable(poke),Variable(pokeAction)))
+
         #add to agents memory and do update as needed 
         Agent.addToMemory(s, a,  r, sp) 
         if (Agent.primedToLearn()):

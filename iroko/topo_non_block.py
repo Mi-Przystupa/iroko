@@ -15,7 +15,8 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
+import sys
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController
 from mininet.cli import CLI
@@ -24,15 +25,8 @@ from mininet.link import Link, Intf, TCLink
 from mininet.topo import Topo
 from mininet.node import OVSKernelSwitch, CPULimitedHost
 from mininet.util import custom
-
-import os
-import time
-
-import sys
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
-#import iperf_peers
-MAX_QUEUE = 50
 
 
 class NonBlocking(Topo):
@@ -46,15 +40,14 @@ class NonBlocking(Topo):
         self.pod = k
         self.iCoreLayerSwitch = 1
         self.iHost = k**3 / 4
-
         # Topo initiation
         Topo.__init__(self)
 
-    def createNodes(self):
-        self.createCoreLayerSwitch(self.iCoreLayerSwitch)
-        self.createHost(self.iHost)
+    def create_nodes(self):
+        self.create_core_switch(self.iCoreLayerSwitch)
+        self.create_host(self.iHost)
 
-    def _addSwitch(self, number, level, switch_list):
+    def _add_switch(self, number, level, switch_list):
         """
                 Create switches.
         """
@@ -64,10 +57,10 @@ class NonBlocking(Topo):
                 PREFIX = str(level) + "0"
             switch_list.append(self.addSwitch(PREFIX + str(i)))
 
-    def createCoreLayerSwitch(self, NUMBER):
-        self._addSwitch(NUMBER, 1, self.CoreSwitchList)
+    def create_core_switch(self, NUMBER):
+        self._add_switch(NUMBER, 1, self.CoreSwitchList)
 
-    def createHost(self, NUMBER):
+    def create_host(self, NUMBER):
         """
                 Create hosts.
         """
@@ -80,13 +73,13 @@ class NonBlocking(Topo):
                 PREFIX = "h00"
             self.hostList.append(self.addHost(PREFIX + str(i), cpu=1.0 / float(NUMBER)))
 
-    def createLinks(self, bw_h2c=10):
+    def create_links(self, bw=10, max_queue=100):
         """
                 Add links between switch and hosts.
         """
         for sw in self.CoreSwitchList:
             for host in self.hostList:
-                self.addLink(sw, host, bw=bw_h2c, max_queue_size=MAX_QUEUE)   # use_htb=False
+                self.addLink(sw, host, bw=bw, max_queue_size=max_queue)   # use_htb=False
 
     def set_ovs_protocol_13(self):
         """
@@ -142,7 +135,7 @@ def set_host_ip(net, topo):
 #                 i += 1
 
 
-def configureTopo(net, topo):
+def config_topo(net, topo):
     # Set OVS's protocol as OF13.
     topo.set_ovs_protocol_13()
     # Set hosts IP addresses.
@@ -151,19 +144,19 @@ def configureTopo(net, topo):
     # install_proactive(net, topo)
 
 
-def createNonBlockTopo(pod, cpu=-1, bw_h2c=10):
+def create_non_block_topo(pod, cpu=-1, bw=10, max_queue=100):
     """
             Firstly, start up Mininet;
             secondly, generate traffics and test the performance of the network.
     """
     # Create Topo.
     topo = NonBlocking(pod)
-    topo.createNodes()
-    topo.createLinks(bw_h2c=bw_h2c)
+    topo.create_nodes()
+    topo.create_links(bw=bw, max_queue=max_queue)
 
     # Start Mininet
     host = custom(CPULimitedHost, cpu=cpu)
-    link = custom(TCLink, max_queue=MAX_QUEUE)
+    link = custom(TCLink, max_queue=max_queue)
     net = Mininet(topo=topo, host=host, link=link, controller=RemoteController, autoSetMacs=True)
     # net.start()
 

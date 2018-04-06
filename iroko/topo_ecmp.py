@@ -15,23 +15,16 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 from mininet.net import Mininet
 from mininet.node import Controller, RemoteController
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info, warn, error, debug
 from mininet.link import Link, Intf, TCLink
 from mininet.topo import Topo
-from mininet.util import dumpNodeConnections
 
-from time import sleep
 from mininet.node import OVSKernelSwitch, CPULimitedHost
 from mininet.util import custom
-
-
-import os
-
-DENSITY = 2
 
 
 class Fattree(Topo):
@@ -43,97 +36,98 @@ class Fattree(Topo):
     EdgeSwitchList = []
     hostList = []
 
-    def __init__(self, k):
+    def __init__(self, k, density):
         self.pod = k
-        self.density = DENSITY
+        self.density = density
         self.iCoreLayerSwitch = (k / 2)**2
         self.iAggLayerSwitch = k * k / 2
         self.iEdgeLayerSwitch = k * k / 2
-        self.iHost = self.iEdgeLayerSwitch * DENSITY
+        self.iHost = self.iEdgeLayerSwitch * density
 
         # Init Topo
         Topo.__init__(self)
 
-    def createNodes(self):
-        self.createCoreLayerSwitch(self.iCoreLayerSwitch)
-        self.createAggLayerSwitch(self.iAggLayerSwitch)
-        self.createEdgeLayerSwitch(self.iEdgeLayerSwitch)
-        self.createHost(self.iHost)
+    def create_nodes(self):
+        self.create_core_switch(self.iCoreLayerSwitch)
+        self.create_agg_switch(self.iAggLayerSwitch)
+        self.create_edge_switch(self.iEdgeLayerSwitch)
+        self.create_host(self.iHost)
 
     # Create Switch and Host
-    def _addSwitch(self, number, level, switch_list):
+    def _add_switch(self, number, level, switch_list):
         """
             Create switches.
         """
         for i in range(1, number + 1):
-            PREFIX = str(level) + "00"
+            prefix = str(level) + "00"
             if i >= 10:
-                PREFIX = str(level) + "0"
-            switch_list.append(self.addSwitch(PREFIX + str(i)))
+                prefix = str(level) + "0"
+            switch_list.append(self.addSwitch(prefix + str(i)))
 
-    def createCoreLayerSwitch(self, NUMBER):
-        self._addSwitch(NUMBER, 1, self.CoreSwitchList)
+    def create_core_switch(self, num):
+        self._add_switch(num, 1, self.CoreSwitchList)
 
-    def createAggLayerSwitch(self, NUMBER):
-        self._addSwitch(NUMBER, 2, self.AggSwitchList)
+    def create_agg_switch(self, num):
+        self._add_switch(num, 2, self.AggSwitchList)
 
-    def createEdgeLayerSwitch(self, NUMBER):
-        self._addSwitch(NUMBER, 3, self.EdgeSwitchList)
+    def create_edge_switch(self, num):
+        self._add_switch(num, 3, self.EdgeSwitchList)
 
-    def createHost(self, NUMBER):
+    def create_host(self, num):
         """
             Create hosts.
         """
-        for i in range(1, NUMBER + 1):
+        for i in range(1, num + 1):
             if i >= 100:
-                PREFIX = "h"
+                prefix = "h"
             elif i >= 10:
-                PREFIX = "h0"
+                prefix = "h0"
             else:
-                PREFIX = "h00"
-            self.hostList.append(self.addHost(PREFIX + str(i), cpu=1.0 / NUMBER))
+                prefix = "h00"
+            self.hostList.append(self.addHost(prefix + str(i), cpu=1.0 / num))
 
-    def createLinks(self, max_queue=100, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
+    def create_links(self, max_queue=100, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
         """
             Add network links.
         """
         # Core to Agg
         end = self.pod / 2
-        for x in range(0, self.iAggLayerSwitch, end):
+        for switch in range(0, self.iAggLayerSwitch, end):
             for i in range(0, end):
                 for j in range(0, end):
                     self.addLink(
                         self.CoreSwitchList[i * end + j],
-                        self.AggSwitchList[x + i],
+                        self.AggSwitchList[switch + i],
                         bw=bw_c2a, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
         # Agg to Edge
-        for x in range(0, self.iAggLayerSwitch, end):
+        for switch in range(0, self.iAggLayerSwitch, end):
             for i in range(0, end):
                 for j in range(0, end):
                     self.addLink(
-                        self.AggSwitchList[x + i], self.EdgeSwitchList[x + j],
+                        self.AggSwitchList[switch + i], self.EdgeSwitchList[switch + j],
                         bw=bw_a2e, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
         # Edge to Host
-        for x in range(0, self.iEdgeLayerSwitch):
+        for switch in range(0, self.iEdgeLayerSwitch):
             for i in range(0, self.density):
                 self.addLink(
-                    self.EdgeSwitchList[x],
-                    self.hostList[self.density * x + i],
+                    self.EdgeSwitchList[switch],
+                    self.hostList[self.density * switch + i],
                     bw=bw_e2h, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
     def set_ovs_protocol(self, ovs_v):
         """
             Set the OpenFlow version for switches.
         """
-        self._set_ovs_protocol(self.CoreSwitchList, ovs_v)
-        self._set_ovs_protocol(self.AggSwitchList, ovs_v)
-        self._set_ovs_protocol(self.EdgeSwitchList, ovs_v)
-
-    def _set_ovs_protocol(self, sw_list, ovs_v):
-        for sw in sw_list:
-            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (sw, ovs_v)
+        for switch in self.CoreSwitchList:
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
+            os.system(cmd)
+        for switch in self.AggSwitchList:
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
+            os.system(cmd)
+        for switch in self.EdgeSwitchList:
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
             os.system(cmd)
 
 
@@ -272,7 +266,7 @@ def install_proactive(net, topo, ovs_v):
                 k = 1
 
 
-def configureTopo(net, topo, ovs_v, is_ecmp):
+def config_topo(net, topo, ovs_v, is_ecmp):
     # Set OVS's protocol as OF13.
     topo.set_ovs_protocol(ovs_v)
     # Set hosts IP addresses.
@@ -308,15 +302,14 @@ def connect_controller(net, topo, controller):
         # host.setIP("10.%d.0.%d" % (i, j))
 
 
-def createECMPTopo(pod, density, ip="127.0.0.1", port=6653, max_queue=100, cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
+def create_ecmp_topo(pod, density, ip="127.0.0.1", port=6653, max_queue=100, cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
     """
         Create network topology and run the Mininet.
     """
-    DENSITY = density
     # Create Topo.
-    topo = Fattree(pod)
-    topo.createNodes()
-    topo.createLinks(max_queue=max_queue, bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
+    topo = Fattree(pod, density)
+    topo.create_nodes()
+    topo.create_links(max_queue=max_queue, bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
     # Start Mininet
     # CONTROLLER_IP = ip
     # CONTROLLER_PORT = port

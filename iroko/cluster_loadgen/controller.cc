@@ -33,11 +33,15 @@ int cntrl_init()
 
     printf("Interface: %s\n", net_interface);
 
-    char cmd[200];
-    sprintf(cmd, "sudo tc qdisc add dev %s root tbf rate 100gbit burst 32kbit latency 400ms", net_interface);
-    printf("cmd: %s\n", cmd);
-    system(cmd);
+    // char cmd[200];
+    // sprintf(cmd, "tc qdisc del dev %s root", net_interface);
+    // printf("cmd: %s\n", cmd);
+    // system(cmd);
 
+    // char cmd1[200];
+    // sprintf(cmd1, "tc class add dev %s parent 5:0 classid 5:1 htb rate 10.0Gbit burst 15k", net_interface);
+    // printf("cmd2: %s\n", cmd1);
+    // system(cmd1);
 exit:
     return ret;
 
@@ -52,15 +56,14 @@ void *cntrl_thread_main(void *arg)
         bzero((void*)&pckt, sizeof(pckt));
         rcvd_bytes = recv(cntrl_sock, &pckt, sizeof(cntrl_pckt), 0);
         if (rcvd_bytes != sizeof(cntrl_pckt)) {
-            perror("Received control packet");
+            fprintf(stderr, "%s Error on receive: %s\n", net_interface, strerror(errno));
         }
         tx_rate = atol(pckt.buf_size);
         printf("tx_rate: %lu\n", tx_rate);
         char cmd[200];
-        sprintf(cmd, "sudo tc qdisc change dev %s root tbf rate %d burst 32kbit latency 400ms", net_interface, tx_rate);
+        sprintf(cmd, "tc class change dev %s parent 5:0 classid 5:1 htb rate %lu burst 15k", net_interface, tx_rate);
         printf("cmd: %s\n", cmd);
         system(cmd);
-
     }
 
     return NULL;

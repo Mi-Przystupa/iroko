@@ -1,0 +1,18 @@
+1. Write a config file that is shared among all the modules (benchmark, iroko_plt, iroko_controller) This file should contain settings such as:
+    HostInterface MAP: Mapping of Interfaces to IPs
+    HostIPs: List of IPs
+    Agent: String
+    Topology: String
+    Algorithm: String
+    Epochs: Integer
+    EXPLOIT : TRUE/FALSE
+    max_queue: Maximum queue length per Interface
+    max_bw: Maximum bandwidth per interface
+    duration: time of one experiment
+    dir: the output directory of results
+    tf: a list of traffic files to parse
+2. The reward function of the controller should be put into its own file. We want to be able to use multiple reward functions and easily switch between them. This requires a cleaner reward and state model.
+3. We need a parking lot topology. We should also allow dumbbell topologies of different sizes.
+4. The plotting of the reward, bandwidth, and queue function is not quite there yet. We should also maybe think about more metrics we want to collect. For example fairness, utilization, etc. There are still some of the metrics from our initial proposal which we never implemented. For example, latency experienced by hosts, which we can easily measure.
+5. Reward function requires many more tweaks.
+6. The agents need to be decluttered and cleaned up. We have to figure out if they are actually working correctly.

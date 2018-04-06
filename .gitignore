@@ -185,7 +185,10 @@ iroko/index\.npy
 iroko/plots/
 
 iroko/reward\.txt
-
 iroko/LearningAgent/actor
 iroko/LearningAgent/critic
 iroko/LearningAgent/*.npy
+
+iroko/\.directory
+
+iroko/pull\.sh

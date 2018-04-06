@@ -140,9 +140,10 @@ if __name__ == '__main__':
             # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
             plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
             plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_bw_alt('results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_bw_iface('results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_bw_avg('results', 'plots/%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_qlen_alt('results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen_iface('results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
     # Compare the agents performance against other algorithms
     if ARGS.test is True:
         for e in range(ARGS.epochs):

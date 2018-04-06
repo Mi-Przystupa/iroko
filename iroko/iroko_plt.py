@@ -6,8 +6,8 @@ import os
 import itertools  # noqa
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt  # noqa
 import numpy as np
+import matplotlib.pyplot as plt  # noqa
 from monitor.helper import stdev
 from monitor.helper import avg
 from monitor.helper import read_list
@@ -22,6 +22,26 @@ class IrokoPlotter():
         self.max_queue = 50                # Max queue per link
         self.num_ifaces = num_ifaces       # Num of monitored interfaces
         self.epochs = epochs
+
+    def moving_average(self, input_list, n=100):
+        cumsum, moving_aves = [0], []
+        for i, x in enumerate(input_list, 1):
+            cumsum.append(cumsum[i - 1] + x)
+            if i >= n:
+                moving_ave = (cumsum[i] - cumsum[i - n]) / n
+                # can do stuff with moving_ave here
+                moving_aves.append(moving_ave)
+        return moving_aves
+
+    def evolving_average(self, input_list, n=100):
+        avgreward = []
+        summation = avg(input_list[:n - 1])
+        i = n
+        for r in input_list[n:]:
+            summation += float(r)
+            avgreward.append(summation / float(i))
+            i += 1
+        return avgreward
 
     def get_bw_stats(self, input_file, pat_iface):
         pat_iface = re.compile(pat_iface)
@@ -45,10 +65,12 @@ class IrokoPlotter():
         avg_bw = []
         match = 0
         avg_bw_iface = {}
+        filtered_bw = {}
         for iface, bws in rate.items():
             rate[iface] = bws[10:-10]
             avg_bw.append(avg(bws[10:-10]))
             avg_bw_iface[iface] = avg(bws[10:-10])
+            filtered_bw[iface] = self.moving_average(bws[10:-10], 20000)
             match += 1
         # Update the num of interfaces to reflect true matches
         # TODO: This is a hack. Remove.
@@ -60,20 +82,19 @@ class IrokoPlotter():
         vals["max_bw"] = max(total_bw)
         vals["stdev_bw"] = stdev(total_bw)
 
-        return vals, rate
+        return vals, filtered_bw
 
     def prune_bw(self, out_dir, t_file, switch):
         print("Pruning: %s:" % out_dir)
         input_file = out_dir + '/rate.txt'
         summary_file = out_dir + '/rate_summary.json'
         pruned_file = out_dir + '/rate_filtered.json'
-        vals, full_bw = self.get_bw_stats(input_file, switch)
-
+        summaries, filtered_bw = self.get_bw_stats(input_file, switch)
         with open(pruned_file, 'w') as fp:
-            json.dump(full_bw, fp)
+            json.dump(filtered_bw, fp)
             fp.close()
         with open(summary_file, 'w') as fp:
-            json.dump(vals, fp)
+            json.dump(summaries, fp)
             fp.close()
         os.remove(input_file)
 
@@ -218,7 +239,35 @@ class IrokoPlotter():
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
-    def plot_train_bw_alt(self, input_dir, plt_name, traffic_files, algorithm):
+    def plot_train_bw_avg(self, input_dir, plt_name, traffic_files, algorithm):
+        plt_dir = os.path.dirname(plt_name)
+        if not os.path.exists(plt_dir):
+            if not plt_dir == '':
+                os.makedirs(plt_dir)
+        algo = algorithm[0]
+        conf = algorithm[1]
+        # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
+        for tf in traffic_files:
+            print("%s: %s" % (algo, tf))
+            bb = {}
+            for e in range(self.epochs):
+                input_file = input_dir + '/%s_%d/%s/rate_filtered.json' % (conf['pre'], e, tf)
+                results = self.get_bw_dict(input_file)
+                for iface, bw_list in results.items():
+                    if iface not in bb:
+                        bb[iface] = []
+                    else:
+                        bb[iface].extend(bw_list)
+
+            for iface, bws in bb.items():
+                plt.plot(bws, label=iface)
+            plt.xlabel('Iterations')
+            plt.ylabel('Average Interface Bisection Bandwidth')
+            plt.legend(loc='lower left')
+            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.gcf().clear()
+
+    def plot_train_bw_iface(self, input_dir, plt_name, traffic_files, algorithm):
         plt_dir = os.path.dirname(plt_name)
         if not os.path.exists(plt_dir):
             if not plt_dir == '':
@@ -294,7 +343,7 @@ class IrokoPlotter():
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
-    def plot_train_qlen_alt(self, input_dir, plt_name, traffic_files, algorithm):
+    def plot_train_qlen_iface(self, input_dir, plt_name, traffic_files, algorithm):
         plt_dir = os.path.dirname(plt_name)
         if not os.path.exists(plt_dir):
             if not plt_dir == '':
@@ -345,21 +394,6 @@ class IrokoPlotter():
         plt.ylabel('Reward')
         plt.savefig(pltname)
         plt.gcf().clear()
-
-    def moving_average(self, input_reward, n=100):
-        ret = np.cumsum(input_reward, dtype=float)
-        ret[n:] = ret[n:] - ret[:-n]
-        return ret[n - 1:] / n
-
-    def evolving_average(self, input_reward, n=100):
-        avgreward = []
-        summation = avg(input_reward[:n - 1])
-        i = n
-        for r in input_reward[n:]:
-            summation += float(r)
-            avgreward.append(summation / float(i))
-            i += 1
-        return avgreward
 
     def plot_avgreward(self, fname, pltname):
         with open(fname) as f:

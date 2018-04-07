@@ -63,8 +63,8 @@ class GracefulSave:
         signal.signal(signal.SIGTERM, self.exit)
 
     def exit(self, signum, frame):
-        print("Time to die...")
-        self.kill_now = True
+	print("Time to die...")
+	self.kill_now = True
 
 
 def init_agent(version, exploit, interfaces, features):
@@ -88,7 +88,7 @@ def init_agent(version, exploit, interfaces, features):
         # Be humbled, take a deep breath and center yourself
     #    raise ValueError('Invalid agent, options are v2,v3,v4')
     #Agent.initializePorts(I_H_MAP)
-    Agent = DDPGLearningAgent.GetLearningAgentConfiguration(version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY )
+    Agent = DDPGLearningAgent.GetLearningAgentConfiguration(version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES )
     return Agent
 
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     total_reward = 0
     total_iters = 0
     f = open('reward.txt', 'a+')
-    features = FEATURES #+ len(HOSTS) * 2
+    features = FEATURES + len(HOSTS) * 2
     bws_rx = {}
     bws_tx = {}
     drops = {}
@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
-        Agent.update(interface, data, reward)
+        Agent.update(data, reward)
 
         # if ACTIVEAGENT == 'v0':
         #     # the historic version
@@ -183,7 +183,7 @@ if __name__ == '__main__':
             # fully connected agent that  uses full matrix for each action but uses current host as input
       #      data = data.view(-1)
       #      for interface in I_H_MAP:
-        Agent.update(interface, data, reward)
+        	#Agent.update(interface, data, reward)
         #elif ARGS.version == 'v3':
         #    # just dump in traffic matrix and let a rip
         #    Agent.update(I_H_MAP, data, reward)

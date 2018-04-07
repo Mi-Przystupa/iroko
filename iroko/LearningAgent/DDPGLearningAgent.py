@@ -68,15 +68,24 @@ class LearningAgent:
             self.state = torch.zeros(self.num_interfaces * self.num_stats)
             self.prevState = torch.zeros(self.num_interfaces * self.num_stats)
         #if neither of these, do not set
+    def _calculateFullyConnectedSize(self):
+        h = self.use_conv['h']
+        w = self.use_conv['w']
+        # this depends on how many convolutions we are using...magic numbering this for now
+        num_conv = 3
+        for _ in range(0, num_conv):
+            h = np.floor((h - 1.0) / 2.0 + 1)
+            w = np.floor((w - 1.0) / 1.0 + 1)
+        return h * w * self.use_conv['num_feature_maps']
 
     def initializeController(self, tau=.001, gamma=.99, memory=1e3, learningRate = 1e-3,\
             criticpath=None, actorpath=None, h1=400, h2=300, dims=None):
         if (self.use_conv):
-            mod = 1. / 8. * self.use_conv['c'] * self.use_conv['num_feature_maps']
+            mod = self._calculateFullyConnectedSize()
         else:
-            mod = 1.
+            mod = self.num_interfaces * self.num_stats 
 
-        s = np.floor(self.num_interfaces * self.num_stats * mod)
+        s = mod 
         print(s)
         s = int(s)
   

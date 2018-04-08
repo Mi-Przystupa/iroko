@@ -225,7 +225,7 @@ class LearningAgent:
             self.display_action = 0
         for host in self.hosts.keys():
             a = np.clip(np.abs(actions[host]), self.min_alloc, self.max_alloc)
-            print(a)
+            # print(a)
             self.hosts[host]['predictedAllocation'] = self.full_bw * a
             self.hosts[host]['action'] = a
 

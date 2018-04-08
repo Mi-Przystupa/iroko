@@ -178,7 +178,7 @@ class DDPG:
         self.targetActor.train()
         if (self.isExplore):
             noise = torch.from_numpy(self.process.noise()).float()
-            print(noise)
+            # print(noise)
             if (self.useCuda):
                 noise = noise.cuda()
             ret = ret + noise        

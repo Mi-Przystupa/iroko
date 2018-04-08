@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
                 # if delta_vector[iface]["delta_q"] == 1:
-                print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
+                # print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
                 bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
                 queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
 

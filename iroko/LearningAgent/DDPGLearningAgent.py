@@ -10,17 +10,17 @@ from DDPG import DDPG
 def GetLearningAgentConfiguration(type, ports, num_stats, num_interfaces, bw_allow, frames):
     if type == 'v2':
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=True, use_conv=None, min_alloc=.1, max_alloc=1.0, name='v2')
+                             one_hot=True, use_conv=None, min_alloc=0.0, max_alloc=1.0, name='v2')
     if type == 'v3':
         use_conv = {'c': frames, 'h': num_interfaces, 'w': num_stats, 'num_feature_maps': 32}
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=False, use_conv=use_conv, min_alloc=.1, max_alloc=1.0, name='v3')
+                             one_hot=False, use_conv=use_conv, min_alloc=0.0, max_alloc=1.0, name='v3')
     if type == 'v4':
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=False, use_conv=None, min_alloc=.1, max_alloc=1.0, name='v4')
+                             one_hot=False, use_conv=None, min_alloc=0.0, max_alloc=1.0, name='v4')
     if type == 'v5':
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=False, use_conv=None, min_alloc=.1, max_alloc=1.0,
+                             one_hot=False, use_conv=None, min_alloc=0.0, max_alloc=1.0,
                              online=True, name='v5')
 
 
@@ -224,7 +224,7 @@ class LearningAgent:
             print('curr action: {}'.format(actions))
             self.display_action = 0
         for host in self.hosts.keys():
-            a = np.clip(actions[host], self.min_alloc, self.max_alloc)
+            a = np.clip(np.abs(actions[host]), self.min_alloc, self.max_alloc)
             self.hosts[host]['predictedAllocation'] = self.full_bw * a
             self.hosts[host]['action'] = a
 

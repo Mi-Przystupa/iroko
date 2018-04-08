@@ -120,14 +120,18 @@ class DDPG:
         self.actorOptimizer = optim.Adam(self.actor.parameters(),learningRate * 1e-1)
         self.criticOptimizer = optim.Adam(self.critic.parameters(),learningRate, weight_decay=1e-2)
         #more a dimensionality thing
-        self.state = s
-        self.action = a
+        self.num_state = s
+        self.num_action = a
         if(dims):
             assert(type(dims) is dict)
         self.dims = dims
         self.process = OUNoise(a, scale=1.0, mu=0, theta=.15, sigma=0.2)
         self.isExplore = True
         self.useCuda = False
+
+        #online configuration
+        self.state = torch.zeros(1,self.num_state)
+        self.action = torch.zeros(1,self.num_action)
 
     def enableCuda(self):
         self.useCuda = True
@@ -161,7 +165,7 @@ class DDPG:
 
 
     def setExploration(self, scale, sigma, theta, mu):
-        self.OUProcess = OUNoise(self.action, scale, sigma, theta,mu)
+        self.OUProcess = OUNoise(self.num_action, scale, sigma, theta,mu)
     def explore(self):
         self.isExplore = True
     def exploit(self):
@@ -177,6 +181,7 @@ class DDPG:
             if (self.useCuda):
                 noise = noise.cuda()
             ret = ret + noise        
+        self.action = ret
         return ret
 
     def addToMemory(self, state, action, reward, stateprime):
@@ -189,10 +194,10 @@ class DDPG:
             states = torch.zeros(batchsize, self.dims['c'], self.dims['h'], self.dims['w'])
             statesP = torch.zeros(batchsize,self.dims['c'], self.dims['h'], self.dims['w'])
         else:
-            states = torch.zeros(batchsize, self.state)
-            statesP = torch.zeros(batchsize, self.state)
+            states = torch.zeros(batchsize, self.num_state)
+            statesP = torch.zeros(batchsize, self.num_state)
 
-        actions = torch.zeros(batchsize, self.action)
+        actions = torch.zeros(batchsize, self.num_action)
         rewards = torch.zeros(batchsize, 1)
          
         for i, sample in enumerate(self.memory.batch(batchsize)):
@@ -223,6 +228,43 @@ class DDPG:
         loss = -torch.mean(J)#J.mean() #-torch.sum(Q)#backward()
         loss.backward()
         self.actorOptimizer.step()
+
+
+    def UpdateOnline(self, data, reward ):
+        #for get all this buffering business, DO IT LIVE!!
+        s = self.state
+        s_p = data
+        a = self.action
+        self.critic.eval()
+        self.actor.eval()
+        self.targetActor.eval()
+        self.targetCritic.eval()
+        #critic update
+        self.criticOptimizer.zero_grad()
+        targets = self.targetCritic(Variable(s_p), self.targetActor(Variable(s_p)).detach()).detach()
+        y = Variable(reward + self.gamma * targets.data).detach()
+        Q = self.critic(Variable(s), Variable(a))
+        criterion = torch.nn.MSELoss()
+        loss = criterion(Q, y)
+        loss.backward()
+        self.criticOptimizer.step()
+        
+        #actor update
+        self.actorOptimizer.zero_grad()
+        A = self.actor(Variable(s, requires_grad=True))
+        J = self.critic(Variable(s), A ) 
+        loss = -torch.mean(J)#J.mean() #-torch.sum(Q)#backward()
+        loss.backward()
+        self.actorOptimizer.step()
+        #update our current state
+        self.state = s_p
+        self.critic.train()
+        self.actor.train()
+        self.targetActor.train()
+        self.targetCritic.train()
+
+
+
         
     def UpdateTargetNetworks(self):
         criticDict = self.critic.state_dict()

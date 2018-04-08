@@ -17,14 +17,20 @@ def GetLearningAgentConfiguration(type, ports, num_stats, num_interfaces, bw_all
         if type == 'v4':
             return LearningAgent(ports, num_stats, num_interfaces,  bw_allow, 
             one_hot=False, use_conv=None, min_alloc=.1, max_alloc = 1.0, name='v4')
+        if type == 'v5':
+            return LearningAgent(ports, num_stats, num_interfaces,  bw_allow, 
+            one_hot=False, use_conv=None, min_alloc=.1, max_alloc = 1.0,\
+                    online=True, name='v5')
+
 
 
 class LearningAgent:
     def __init__(self, ports, num_stats, num_interfaces,  bw_allow, 
-            one_hot, use_conv, min_alloc=.5, max_alloc = 1.0, name='agent'):
+            one_hot, use_conv, min_alloc=.5, max_alloc = 1.0,online=False, name='agent'):
         #inputs:
             # ports we want to predict on
             # allo 
+        assert online != one_hot or (not one_hot and not online) ,'either online or one_hot not both'
         self.hosts = {}
         self.hostcount = 0
         self.min_alloc = min_alloc
@@ -32,6 +38,7 @@ class LearningAgent:
         self.full_bw = bw_allow 
         self.onehot = one_hot
         self.use_conv = use_conv
+        self.online = online
         
         self.num_stats = num_stats
         self.num_interfaces = num_interfaces
@@ -132,6 +139,11 @@ class LearningAgent:
             newstates[interface] = sp
         return memories, newstates 
 
+    def exploit():
+        self.controller.exploit()
+    def explore():
+        self.controller.explore()
+
     def _dataConv(self, data, reward):
         self.prevState = self.state
         # push back previous frames
@@ -183,16 +195,23 @@ class LearningAgent:
 
         for m in memories:
             self.controller.addToMemory(m['s'], m['a'], m['r'], m['sp'])
-
-        self._updateController()
+        if not self.use_conv:
+            data = data.view(-1)
+        self._updateController(data, reward)
         self._updateHostsState( newstates)
 
     def _updateHostsState(self,  newstates):
         for interface in self.hosts.keys():
             self.hosts[interface]['state'] = newstates[interface]
 
-    def _updateController(self):
-        if (self.controller.primedToLearn()):
+    def _updateController(self, data, reward):
+        if self.online:
+            #use sample to learng right away
+            self.controller.UpdateOnline(data.unsqueeze(0), reward)
+            self.controller.UpdateTargetNetworks()
+            self.controller.saveActorCritic()
+        elif (self.controller.primedToLearn()):
+            #use replay buffer to do update
             self.controller.PerformUpdate(64)
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()

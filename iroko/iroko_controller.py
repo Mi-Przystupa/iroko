@@ -71,24 +71,11 @@ def init_agent(version, exploit, interfaces, features):
     #FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
     FRAMES = 1  # number of previous matrices to use
     size = len(interfaces)
-    #if version == 'v2' or version == 'v0':
-    #    Agent = LearningAgentv2(initMax=MAX_CAPACITY, memory=1000, s=size * features +
-    #                            len(I_H_MAP), cpath='critic', apath='actor', toExploit=exploit)
-    #elif version == 'v3':
-    #    Agent = LearningAgentv3(initMax=MAX_CAPACITY, memory=1000, actions=len(I_H_MAP),
-    #                            s=(FEATURE_MAPS * size * features) / 8, cpath='critic',
-    #                            apath='actor', toExploit=exploit, frames=FRAMES, w=features)
-    #    Agent.initializeTrafficMatrix(len(interfaces), features=features, frames=FRAMES)
-    #elif version == 'v4':
-    #    Agent = LearningAgentv4(initMax=MAX_CAPACITY, memory=1000, actions=len(I_H_MAP),
-    #                            s=size * features, cpath='critic', apath='actor', toExploit=exploit)
-    #    Agent.initializeTrafficMatrix(size, features=features, frames=FRAMES)
-    #else:
-        # you had 3 options of 2 characters length and still messed up.
-        # Be humbled, take a deep breath and center yourself
-    #    raise ValueError('Invalid agent, options are v2,v3,v4')
-    #Agent.initializePorts(I_H_MAP)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES )
+    if (exploit):
+        Agent.exploit()
+    else:
+        Agent.explore()
     return Agent
 
 
@@ -165,33 +152,6 @@ if __name__ == '__main__':
         f.write('%f\n' % (reward))
         Agent.update(data, reward)
 
-        # if ACTIVEAGENT == 'v0':
-        #     # the historic version
-        #     for interface in I_H_MAP:
-        #         data = torch.Tensor([bandwidths[interface], free_bandwidths[interface],
-        #                              drops[interface], overlimits[interface], queues[interface]])
-        #         # A supposedly more eloquent way of doing it
-        #         # A supposedly more eloquent way of doing it
-        #         reward = 0
-        #         # if(drops[interface]  > 0.0):
-        #         if(queues[interface]):
-        #             reward = -1.0
-        #         else:
-        #             reward = 1.0
-        #         Agent.update(interface, data, reward)
-        #if ARGS.version == 'v2':
-            # fully connected agent that  uses full matrix for each action but uses current host as input
-      #      data = data.view(-1)
-      #      for interface in I_H_MAP:
-        	#Agent.update(interface, data, reward)
-        #elif ARGS.version == 'v3':
-        #    # just dump in traffic matrix and let a rip
-        #    Agent.update(I_H_MAP, data, reward)
-        #elif ARGS.version == 'v4':
-            # flatten the matrix & feed it in
-            # v4 the fully connected input of v2 mixed with the single output of v3
-        #    data = data.view(-1)
-        #    Agent.update(I_H_MAP, data, reward)
         total_reward += reward
         total_iters += 1
         if saver.kill_now:

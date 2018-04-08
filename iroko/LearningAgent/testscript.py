@@ -73,8 +73,6 @@ for i in range(1, numSimulation):
         s = inputs.float()
         a = action.double()
         sp = torch.from_numpy(observation).float()
-        accel = s[1] - prevV
-        accel = accel / t
         r = reward 
         totalreward += r
         #print(Agent.critic(Variable(poke),Variable(pokeAction)))
@@ -83,6 +81,8 @@ for i in range(1, numSimulation):
         if (Agent.primedToLearn()):
             Agent.PerformUpdate(64)
             Agent.UpdateTargetNetworks()
+        Agent.UpdateOnline(sp.unsqueeze(0),r)
+        Agent.UpdateTargetNetworks()
 
     if (steps > 2.5e6):
         print('that is enough training')

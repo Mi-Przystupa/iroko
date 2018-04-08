@@ -47,6 +47,7 @@ class LearningAgent:
         self.frames = 0
         self.name = name
 
+	self.display_action = 0
         # initialize ports last
         self.initializePorts(ports)
         # initialize DDPG with default configs, can call explicitly to alter self.controller = {}
@@ -219,6 +220,9 @@ class LearningAgent:
     def predictBandwidthOnHosts(self):
         # actions should be a dictionary of specified actions
         actions = self._getActions()
+        if self.display_action % 10 == 0:
+            print('curr action: {}'.format(actions))
+            self.display_action = 0
         for host in self.hosts.keys():
             a = np.clip(actions[host], self.min_alloc, self.max_alloc)
             self.hosts[host]['predictedAllocation'] = self.full_bw * a

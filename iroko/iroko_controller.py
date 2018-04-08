@@ -70,7 +70,7 @@ class GracefulSave:
 
 def init_agent(version, exploit, interfaces, features):
     # FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
-    FRAMES = 1  # number of previous matrices to use
+    FRAMES = 3  # number of previous matrices to use
     size = len(interfaces)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(
         version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES)

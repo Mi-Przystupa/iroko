@@ -48,7 +48,7 @@ class IrokoPlotter():
         data = read_list(input_file)
 
         rate = {}
-        column = 2
+        column = 3
         for row in data:
             try:
                 ifname = row[1]

@@ -2,6 +2,7 @@ from __future__ import division
 
 import time
 import socket
+import math
 ###########################################
 # Stuff for learning
 import subprocess
@@ -18,7 +19,7 @@ MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
 EXPLOIT = False
 ACTIVEAGENT = 'v2'
-FEATURES = 1  # number of statistics we are using
+FEATURES = 3  # number of statistics we are using
 MAX_QUEUE = 50
 
 ###########################################
@@ -63,12 +64,12 @@ class GracefulSave:
         signal.signal(signal.SIGTERM, self.exit)
 
     def exit(self, signum, frame):
-	print("Time to die...")
-	self.kill_now = True
+        print("Time to die...")
+        self.kill_now = True
 
 
 def init_agent(version, exploit, interfaces, features):
-    #FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
+    # FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
     FRAMES = 1  # number of previous matrices to use
     size = len(interfaces)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES )
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     total_reward = 0
     total_iters = 0
     f = open('reward.txt', 'a+')
-    features = FEATURES + len(HOSTS) * 2
+    features = FEATURES  # + len(HOSTS) * 2
     bws_rx = {}
     bws_tx = {}
     drops = {}
@@ -126,28 +127,31 @@ if __name__ == '__main__':
         data = torch.zeros(num_interfaces, features)
         reward = 0.0
         bw_reward = 0.0
+        queue_reward = 0.0
         try:
             for i, iface in enumerate(interfaces):
                 # if iface == "1001-eth3":
                 #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
                 #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
                 #     print(delta_vector[iface])
-                # state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
-                state = [queues[iface]] + src_flows[iface] + dst_flows[iface]
+                state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
+                # state = [queues[iface]]  # + src_flows[iface] + dst_flows[iface]
                 data[i] = torch.Tensor(state)
                 # if queues[iface] == 0:
                 #    reward += MAX_QUEUE / 100
                 #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
                 # else:
                 # if delta_vector[iface]["delta_q"] == 1:
+                print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
                 bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
-                reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))
+                queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
+
         except Exception as e:
             print("Time to go: %s" % e)
             break
-        reward += bw_reward
-        print("Total Reward %f BW Reward %f " % (reward, bw_reward))
-
+        reward = bw_reward + queue_reward
+        print("Total Reward: %f BW Reward: %f Queue Reward: %f" % (reward, bw_reward, queue_reward))
+        print("################")
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
         Agent.update(data, reward)

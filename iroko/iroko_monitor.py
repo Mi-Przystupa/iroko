@@ -97,7 +97,7 @@ class StatsCollector(threading.Thread):
         bws_tx = {}
         # iface_string = ",".join(iface_list )
         for iface in iface_list:
-            cmd = (" ifstat -i %s -b -q 0.1 1 | awk \'{if (NR==3) print $0}\' | \
+            cmd = (" ifstat -i %s -b -q 0.5 1 | awk \'{if (NR==3) print $0}\' | \
                    awk \'{$1=$1}1\' OFS=\", \"" % (iface))  # | sed \'s/\(\([^,]*,\)\{1\}[^,]*\),/\1;/g\'
             # output = subprocess.check_output(cmd, shell=True)
             proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)

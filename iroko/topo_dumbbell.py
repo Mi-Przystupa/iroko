@@ -152,7 +152,7 @@ def create_db_topo(hosts, cpu=-1, bw=10, max_queue=100):
     # Create Topo.
     topo = DumbbellTopo(hosts)
     topo.create_nodes()
-    topo.create_links(bw=bw)
+    topo.create_links(bw=bw, queue=max_queue)
 
     # Start Mininet
     host = custom(CPULimitedHost, cpu=cpu)

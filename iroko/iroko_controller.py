@@ -103,13 +103,14 @@ if __name__ == '__main__':
     total_reward = 0
     total_iters = 0
     f = open('reward.txt', 'a+')
-    features = FEATURES + len(HOSTS) * 2
     bws_rx = {}
     bws_tx = {}
     drops = {}
     overlimits = {}
     queues = {}
     delta_vector = stats.init_deltas()
+    num_delta = len(delta_vector[delta_vector.keys()[0]])
+    features = FEATURES + len(HOSTS) * 2 + num_delta
 
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
@@ -135,7 +136,9 @@ if __name__ == '__main__':
                 #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
                 #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
                 #     print(delta_vector[iface])
-                state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface]
+                deltas = delta_vector[iface]
+                deltas = [deltas[key] for key in deltas.keys()]
+                state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface] + deltas
                 # state = [queues[iface]]  # + src_flows[iface] + dst_flows[iface]
                 data[i] = torch.Tensor(state)
                 # if queues[iface] == 0:

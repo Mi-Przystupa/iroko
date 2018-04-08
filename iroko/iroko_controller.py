@@ -72,7 +72,8 @@ def init_agent(version, exploit, interfaces, features):
     # FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
     FRAMES = 1  # number of previous matrices to use
     size = len(interfaces)
-    Agent = DDPGLearningAgent.GetLearningAgentConfiguration(version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES )
+    Agent = DDPGLearningAgent.GetLearningAgentConfiguration(
+        version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES)
     if (exploit):
         Agent.exploit()
     else:
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     total_reward = 0
     total_iters = 0
     f = open('reward.txt', 'a+')
-    features = FEATURES  # + len(HOSTS) * 2
+    features = FEATURES + len(HOSTS) * 2
     bws_rx = {}
     bws_tx = {}
     drops = {}

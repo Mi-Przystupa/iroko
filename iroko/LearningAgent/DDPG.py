@@ -38,7 +38,7 @@ class Actor(nn.Module):
         x = F.relu(self.hidden1(x))
         x = self.normalize2(x)
         x = F.relu(self.hidden2(x))
-        return F.tanh( self.outputs(x))
+        return F.sigmoid(self.outputs(x)) #F.tanh( self.outputs(x))
 
 class Critic(nn.Module):
     def __init__(self, state = 54, actions = 18, hidden1=400, hidden2 = 300, convNet=None):
@@ -125,7 +125,7 @@ class DDPG:
         if(dims):
             assert(type(dims) is dict)
         self.dims = dims
-        self.process = OUNoise(a, scale=1.0, mu=0, theta=.15, sigma=0.2)
+        self.process = OUNoise(a, scale=.25, mu=0, theta=.15, sigma=0.2)
         self.isExplore = True
         self.useCuda = False
 
@@ -178,6 +178,7 @@ class DDPG:
         self.targetActor.train()
         if (self.isExplore):
             noise = torch.from_numpy(self.process.noise()).float()
+            print(noise)
             if (self.useCuda):
                 noise = noise.cuda()
             ret = ret + noise        

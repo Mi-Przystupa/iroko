@@ -13,7 +13,7 @@ from LearningAgent import DDPGLearningAgent
 
 from iroko_monitor import StatsCollector
 from iroko_monitor import FlowCollector
-
+from RewardFunctions import RewardFunction
 
 MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
@@ -111,10 +111,12 @@ if __name__ == '__main__':
     delta_vector = stats.init_deltas()
     num_delta = len(delta_vector[delta_vector.keys()[0]])
     features = FEATURES + len(HOSTS) * 2 + num_delta
-
+    #REWARDFUNCTION = 'QueuePrecision'
+    REWARDFUNCTION = 'QueueBandwidthBalance'
+    rewardfunction = RewardFunction(HOSTS,interfaces, REWARDFUNCTION, MAX_QUEUE)
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
-
+    HasCongestion = set() 
     while(1):
         # perform action
         Agent.predictBandwidthOnHosts()
@@ -128,9 +130,12 @@ if __name__ == '__main__':
         src_flows, dst_flows = flows.get_interface_flows()
         data = torch.zeros(num_interfaces, features)
         reward = 0.0
-        bw_reward = 0.0
-        queue_reward = 0.0
+        #bw_reward = 0.0
+        #queue_reward = 0.0
         try:
+            print(bws_rx)
+            bw_reward, queue_reward = rewardfunction.GetReward(bws_rx,queues)
+
             for i, iface in enumerate(interfaces):
                 # if iface == "1001-eth3":
                 #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
@@ -147,8 +152,21 @@ if __name__ == '__main__':
                 # else:
                 # if delta_vector[iface]["delta_q"] == 1:
                 # print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
-                bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
-                queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
+                #bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
+                #queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
+                #bw_reward = 0.0
+                #if not (iface in I_H_MAP.keys()):
+                #    q = float(queues[iface])
+                #    if ( q > 0.0 and iface not in HasCongestion):
+                #        HasCongestion.add(iface)
+                #        queue_reward = 0.0 #don't worry about it first time around
+                #    elif (iface in HasCongestion):
+                #        if MAX_QUEUE / 5. < q and  q <= MAX_QUEUE / 2.:
+                #            queue_reward += 0.0
+                #        elif q <= MAX_QUEUE/ 5.:
+                #            queue_reward += 0.5
+                #        else:
+                #            queue_reward -= 1.0 
 
         except Exception as e:
             print("Time to go: %s" % e)

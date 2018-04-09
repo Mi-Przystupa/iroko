@@ -195,3 +195,5 @@ iroko/LearningAgent/*.swp
 iroko/\.directory
 
 iroko/pull\.sh
+
+*.json

@@ -1,7 +1,6 @@
 import argparse
 import os  # noqa
 import sre_yield
-
 from iroko_plt import IrokoPlotter
 
 PARSER = argparse.ArgumentParser()
@@ -112,7 +111,21 @@ def get_num_interfaces(pattern):
     return len(n)
 
 
+def yn_choice(message, default='y'):
+    shall = 'N'
+    shall = raw_input("%s (y/N) " % message).lower() == 'y'
+    return shall
+
+
 if __name__ == '__main__':
+
+    if yn_choice("Do you want to remove the reward file?"):
+        print("Okay! Deleting...")
+        try:
+            os.remove("reward.txt")
+        except OSError:
+            pass
+
     algorithms = get_test_config()
     # Stupid hack, do not like.
     n = get_num_interfaces(DUMBBELL_SW)

@@ -9,11 +9,11 @@ import subprocess
 import signal
 import torch
 from argparse import ArgumentParser
-from LearningAgent import DDPGLearningAgent
+from learning_agent import DDPGLearningAgent
 
 from iroko_monitor import StatsCollector
 from iroko_monitor import FlowCollector
-from RewardFunctions import RewardFunction
+from reward_function import RewardFunction
 
 MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
@@ -30,8 +30,9 @@ I_H_MAP = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3'
            '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
 HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
          "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
-I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2"}
-HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1"]
+I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
+           '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
+HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
 
 PARSER = ArgumentParser()
@@ -112,11 +113,11 @@ if __name__ == '__main__':
     num_delta = len(delta_vector[delta_vector.keys()[0]])
     features = FEATURES + len(HOSTS) * 2 + num_delta
     #REWARDFUNCTION = 'QueuePrecision'
-    REWARDFUNCTION = 'QueueBandwidthBalance'
-    rewardfunction = RewardFunction(HOSTS,interfaces, REWARDFUNCTION, MAX_QUEUE)
+    REWARDFUNCTION = 'QueueBandwidth'
+    rewardfunction = RewardFunction(HOSTS, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
-    HasCongestion = set() 
+    HasCongestion = set()
     while(1):
         # perform action
         Agent.predictBandwidthOnHosts()
@@ -134,7 +135,7 @@ if __name__ == '__main__':
         #queue_reward = 0.0
         try:
             print(bws_rx)
-            bw_reward, queue_reward = rewardfunction.GetReward(bws_rx,queues)
+            bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
 
             for i, iface in enumerate(interfaces):
                 # if iface == "1001-eth3":
@@ -155,7 +156,7 @@ if __name__ == '__main__':
                 #bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
                 #queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
                 #bw_reward = 0.0
-                #if not (iface in I_H_MAP.keys()):
+                # if not (iface in I_H_MAP.keys()):
                 #    q = float(queues[iface])
                 #    if ( q > 0.0 and iface not in HasCongestion):
                 #        HasCongestion.add(iface)
@@ -166,7 +167,7 @@ if __name__ == '__main__':
                 #        elif q <= MAX_QUEUE/ 5.:
                 #            queue_reward += 0.5
                 #        else:
-                #            queue_reward -= 1.0 
+                #            queue_reward -= 1.0
 
         except Exception as e:
             print("Time to go: %s" % e)

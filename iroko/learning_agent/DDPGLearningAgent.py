@@ -47,7 +47,7 @@ class LearningAgent:
         self.frames = 0
         self.name = name
 
-	self.display_action = 0
+        self.display_action = 0
         # initialize ports last
         self.initializePorts(ports)
         # initialize DDPG with default configs, can call explicitly to alter self.controller = {}

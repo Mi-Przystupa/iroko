@@ -8,7 +8,6 @@ from DDPG import DDPG
 from DDPGConv import DDPGConv
 
 
-
 class LearningAgent:
     def __init__(self, maximumBandwidth=10e6, controller, toExploit=False):
         self.hosts = {}
@@ -22,26 +21,26 @@ class LearningAgent:
         else:
             self.controller.explore()
 
-    def factory(type,states, actions, maxbandwidth, cpath,apath,exploit,mem=1e3,dims=None, frames=3 ):
+    def factory(type, states, actions, maxbandwidth, cpath, apath, exploit, mem=1e3, dims=None, frames=3):
         if type == 'v2':
-            controller = DDPG( states, 1, memory=mem, criticpath='critic', actorpath='actor')
+            controller = DDPG(states, 1, memory=mem, criticpath='critic', actorpath='actor')
             return LearningAgentv2(controller toExploit=exploit)
-            #LearningAgentv2(states, gamma=.99, memory=1000, maxbandwidth=10e6, \
-            #cpath=None, apath=None, toExploit=False)
- 
+            # LearningAgentv2(states, gamma=.99, memory=1000, maxbandwidth=10e6, \
+            # cpath=None, apath=None, toExploit=False)
+
         if type == 'v3':
-            controller = DDPG(states, actions, memory=mem,criticpath='critic', actorpath='actor',  dims=dims)
-            return LearningAgentv3( maxbandwidth=maxbandwidth,toExploit=exploit, frames=frames)
-            #LearningAgentv3(gamma=.99, s=2560, actions=16, memory=1000, 
-            #maxbandwidth=10e6, cpath=None, apath=None,
-            #toExploit=False, frames=3, dims=None)
+            controller = DDPG(states, actions, memory=mem, criticpath='critic', actorpath='actor', dims=dims)
+            return LearningAgentv3(maxbandwidth=maxbandwidth, toExploit=exploit, frames=frames)
+            # LearningAgentv3(gamma=.99, s=2560, actions=16, memory=1000,
+            # maxbandwidth=10e6, cpath=None, apath=None,
+            # toExploit=False, frames=3, dims=None)
 
         if type == 'v4':
-            controller = DDPG(states, actions,criticpath='critic', actorpath='actor')
-            return LearningAgentv4(controller,maxbandwidth=maxbanwidth, toExploit=toExploit)
-            #LearningAgentv4(gamma=.99,  s=2560, actions=16, memory=1000, 
-            #maxbandwidth=10e6, cpath=None, apath=None,
-            #toExploit=False)
+            controller = DDPG(states, actions, criticpath='critic', actorpath='actor')
+            return LearningAgentv4(controller, maxbandwidth=maxbanwidth, toExploit=toExploit)
+            # LearningAgentv4(gamma=.99,  s=2560, actions=16, memory=1000,
+            # maxbandwidth=10e6, cpath=None, apath=None,
+            # toExploit=False)
 
     factory = staticmethod(factory)
 
@@ -59,10 +58,10 @@ class LearningAgent:
     def _createHost(self):
         self.hostcount += 1
         host = dict(alloctBandwidth=self.initmax, e=0, predictedAllocation=self.initmax)
-        #should just allocate full bandwidth at start
+        # should just allocate full bandwidth at start
         host['action'] = 0.5
-        #state depends on each agents representation        
-        host['state'] = None 
+        # state depends on each agents representation
+        host['state'] = None
         # host['modifier'] = 0
         host['id'] = self.hostcount - 1
         return host
@@ -71,19 +70,20 @@ class LearningAgent:
         # must be implemented in subclasses
         # subclasses make assumptions on shape of state which should be done in here
         raise NotImplementedError('_handleError must be implemented in base class')
-    
+
     def update(self, interfaces, data, reward):
         # assumes data is a pytorch.tensor
-        #memories should be a list of dictionaries with keys s,a,r, sp
-        #newstates is dictionary corresponding to new states hosts are in
-        #we always need to know condition of the states, but the memories
-        #a controller learns on can vary
+        # memories should be a list of dictionaries with keys s,a,r, sp
+        # newstates is dictionary corresponding to new states hosts are in
+        # we always need to know condition of the states, but the memories
+        # a controller learns on can vary
         memories, newstates = self._handleData(data, interfaces, reward)
 
         for m in memories:
             self.controller.addToMemory(m['s'], m['a'], m['r'], m['sp'])
         self._updateController()
         self._updateHostsState(interfaces, stateprimes)
+
     def _updateHostsState(self, interfaces, newstates):
         for interface in interfaces:
             self.hosts[interface]['state'] = newstates[interface]
@@ -94,12 +94,11 @@ class LearningAgent:
             self.controller.UpdateTargetNetworks()
             self.controller.saveActorCritic()
 
-
     def predictBandwidthOnHosts(self):
-        #actions should be a dictionary of specified actions 
+        # actions should be a dictionary of specified actions
         actions = self._getActions()
         for host in self.hosts.keys():
-            a = np.clip(actions[host],self.min_val, self.max_val)
+            a = np.clip(actions[host], self.min_val, self.max_val)
             self.hosts[interface]['predictedAllocation'] = self.defaultmax * a
             self.hosts[interface]['action'] = a
 
@@ -129,15 +128,15 @@ class LearningAgent:
 
 
 class LearningAgentv2(LearningAgent):
-    def __init__(self,controller, maxbandwidth, toExploit=False) 
+    def __init__(self, controller, maxbandwidth, toExploit=False)
 
-        super(LearningController,self).__init__(maximumBandwidth=maxbandwidth, \
-                controller=controller, toExploit=toExploit)
+        super(LearningController, self).__init__(maximumBandwidth=maxbandwidth,
+                                                 controller=controller, toExploit=toExploit)
 
     def _handleData(self, interfaces, data, reward):
         # must be implemented in subclasses
         # subclasses make assumptions on shape of state which should be done in here
-        #v2 has a single action and predicts actions 1 at a time
+        # v2 has a single action and predicts actions 1 at a time
         memories = []
         newstates = {}
         data = data.view(-1)
@@ -152,14 +151,14 @@ class LearningAgentv2(LearningAgent):
             action = self.hosts[interface]['action']
             action = torch.Tensor([action])
             reward = torch.Tensor([reward])
-            memories.append({'s': state, 'a':action, 'r':reward, 'sp': stateprime})
+            memories.append({'s': state, 'a': action, 'r': reward, 'sp': stateprime})
             newstates[interface] = stateprime
-        return memories, newstates 
+        return memories, newstates
 
     def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
-        i = 0 
+        i = 0
         # do nothing
-        return  
+        return
 
     def _getActions(self, interfaces):
         actions = {}
@@ -168,7 +167,8 @@ class LearningAgentv2(LearningAgent):
             a = self.controller.selectAction(state.unsqueeze(0))
             actions[interface] = action.squeeze()[0]
         return actions
-     
+
+
 class LearningAgentv3(LearningAgent):
     def __init__(self, controller, maxbandwidth, toExploit=False, frames=3):
 
@@ -176,16 +176,15 @@ class LearningAgentv3(LearningAgent):
         self.prevState = []
         self.actionVector = []
         self.actionVector = torch.zeros(actions)
-        self.frames = frames 
+        self.frames = frames
 
-        super(LearningAgent, self).__init__(controller, \
-                maximumBandwidth=maxbandwidth, toExploit=toExploit )
+        super(LearningAgent, self).__init__(controller,
+                                            maximumBandwidth=maxbandwidth, toExploit=toExploit)
 
     def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
         self.state = torch.zeros(frames, interfaceCount, features)
         self.prevState = torch.zeros(frames, interfaceCount, features)
         self.frames = frames
-
 
     def _handleData(self, interfaces, data):
         self.prevState = self.state
@@ -201,8 +200,8 @@ class LearningAgentv3(LearningAgent):
         # set action
         for i in interface:
             self.actionVector[self.hosts[i]['id']] = self.hosts[i]['action']
-        memories = [{'s':self.prevState, 'a': self.actionVector, 'r':reward, \
-                'sp': self.state}]
+        memories = [{'s': self.prevState, 'a': self.actionVector, 'r': reward,
+                     'sp': self.state}]
         newstates = []
         return memories, newstates
 
@@ -215,21 +214,21 @@ class LearningAgentv3(LearningAgent):
             actions[i] = a[self.hosts[interface]['id']]
         return actions
 
+
 class LearningAgentv4(LearningAgent):
-    def __init__(self, controller,maxbandwidth=10e6,toExploit=False):
+    def __init__(self, controller, maxbandwidth=10e6, toExploit=False):
 
         self.state = []
         self.prevState = []
         self.actionVector = []
         self.actionVector = torch.zeros(actions)
-        
-        super(LearningAgent, self).__init__(controller, \
-                maximumBandwidth=maxbandwidth, toExploit=toExploit )
 
+        super(LearningAgent, self).__init__(controller,
+                                            maximumBandwidth=maxbandwidth, toExploit=toExploit)
 
     def initializeTrafficMatrix(self, interfaceCount=16, features=5, frames=3):
-        self.state = torch.zeros( interfaceCount * features)
-        self.prevState = torch.zeros(interfaceCount *  features)
+        self.state = torch.zeros(interfaceCount * features)
+        self.prevState = torch.zeros(interfaceCount * features)
 
     def _handleData(self, interfaces, data):
         self.prevState = self.state
@@ -238,8 +237,8 @@ class LearningAgentv4(LearningAgent):
         # set action
         for i in interface:
             self.actionVector[self.hosts[i]['id']] = self.hosts[i]['action']
-        memories = [{'s':self.prevState, 'a': self.actionVector, 'r':reward, \
-                'sp': self.state}]
+        memories = [{'s': self.prevState, 'a': self.actionVector, 'r': reward,
+                     'sp': self.state}]
         newstates = []
         return memories, newstates
 
@@ -251,4 +250,3 @@ class LearningAgentv4(LearningAgent):
         for i in interfaces:
             actions[i] = a[self.hosts[interface]['id']]
         return actions
-

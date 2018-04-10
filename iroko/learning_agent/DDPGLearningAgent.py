@@ -51,7 +51,7 @@ class LearningAgent:
         # initialize ports last
         self.initializePorts(ports)
         # initialize DDPG with default configs, can call explicitly to alter self.controller = {}
-        self.initializeController()
+        self.initializeController(memory=1e5)
 
         # initialize internal representation for when not using one_hot
         self._initializeTrafficMatrix()

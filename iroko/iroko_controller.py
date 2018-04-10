@@ -19,8 +19,8 @@ MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
 EXPLOIT = False
 ACTIVEAGENT = 'v2'
-FEATURES = 3  # number of statistics we are using
-MAX_QUEUE = 50
+FEATURES = 2  # number of statistics we are using
+MAX_QUEUE = 500
 
 ###########################################
 
@@ -124,7 +124,7 @@ if __name__ == '__main__':
         for h_iface in I_H_MAP:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
-        time.sleep(2)
+        time.sleep(3)
         if bws_rx:
             delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
         bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
                 deltas = [deltas[key] for key in deltas.keys()]
-                state = [bws_rx[iface], bws_tx[iface], queues[iface]]
+                state = [bws_rx[iface], bws_tx[iface]]
                 data[i] = torch.Tensor(state)
             bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
             reward = bw_reward + queue_reward

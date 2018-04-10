@@ -1,5 +1,3 @@
-import torch
-import numpy
 
 
 class RewardFunction:
@@ -13,7 +11,7 @@ class RewardFunction:
         self.has_congestion = set()
 
     def get_reward(self, bw, queues):
-        if self.func_name == 'QueueBandwidtFilter':
+        if self.func_name == 'QueueBandwidth':
             return self._queue_bandwidth(bw, queues)
         elif self.func_name == 'QueuePrecision':
             return self._queue_precision(queues)

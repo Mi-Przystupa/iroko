@@ -75,7 +75,7 @@ def init_agent(version, exploit, interfaces, features):
     size = len(interfaces)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(
         version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES)
-    if (exploit):
+    if exploit:
         Agent.exploit()
     else:
         Agent.explore()
@@ -111,70 +111,39 @@ if __name__ == '__main__':
     queues = {}
     delta_vector = stats.init_deltas()
     num_delta = len(delta_vector[delta_vector.keys()[0]])
-    features = FEATURES + len(HOSTS) * 2 + num_delta
-    #REWARDFUNCTION = 'QueuePrecision'
-    REWARDFUNCTION = 'QueueBandwidth'
-    rewardfunction = RewardFunction(HOSTS, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
+    features = FEATURES  # + len(HOSTS) * 2 + num_delta
+    # REWARDFUNCTION = 'QueuePrecision'
+    # REWARDFUNCTION = 'QueueBandwidth'
+    REWARDFUNCTION = 'default'
+    rewardfunction = RewardFunction(I_H_MAP, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
-    HasCongestion = set()
-    while(1):
+    while 1:
         # perform action
         Agent.predictBandwidthOnHosts()
         for h_iface in I_H_MAP:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
         # update Agents internal representations
-        time.sleep(3)
+        time.sleep(2)
         if bws_rx:
             delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
         bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
         src_flows, dst_flows = flows.get_interface_flows()
         data = torch.zeros(num_interfaces, features)
         reward = 0.0
-        #bw_reward = 0.0
-        #queue_reward = 0.0
         try:
-            print(bws_rx)
-            bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
-
             for i, iface in enumerate(interfaces):
-                # if iface == "1001-eth3":
-                #     print("iface: %s rx: %f tx: %f drops: %d over %d queues %d" %
-                #           (iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface]))
-                #     print(delta_vector[iface])
                 deltas = delta_vector[iface]
                 deltas = [deltas[key] for key in deltas.keys()]
-                state = [bws_rx[iface], bws_tx[iface], queues[iface]] + src_flows[iface] + dst_flows[iface] + deltas
-                # state = [queues[iface]]  # + src_flows[iface] + dst_flows[iface]
+                state = [bws_rx[iface], bws_tx[iface], queues[iface]]
                 data[i] = torch.Tensor(state)
-                # if queues[iface] == 0:
-                #    reward += MAX_QUEUE / 100
-                #    bw_reward += (MAX_QUEUE / 1000) * float(bandwidths[iface]) / float(MAX_CAPACITY)
-                # else:
-                # if delta_vector[iface]["delta_q"] == 1:
-                # print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
-                #bw_reward += float(bws_rx[iface]) / float(MAX_CAPACITY)
-                #queue_reward -= num_interfaces * (float(queues[iface]) / float(MAX_QUEUE))**2
-                #bw_reward = 0.0
-                # if not (iface in I_H_MAP.keys()):
-                #    q = float(queues[iface])
-                #    if ( q > 0.0 and iface not in HasCongestion):
-                #        HasCongestion.add(iface)
-                #        queue_reward = 0.0 #don't worry about it first time around
-                #    elif (iface in HasCongestion):
-                #        if MAX_QUEUE / 5. < q and  q <= MAX_QUEUE / 2.:
-                #            queue_reward += 0.0
-                #        elif q <= MAX_QUEUE/ 5.:
-                #            queue_reward += 0.5
-                #        else:
-                #            queue_reward -= 1.0
-
+            bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
+            reward = bw_reward + queue_reward
+            print("Total Reward: %f BW Reward: %f Queue Reward: %f" % (reward, bw_reward, queue_reward))
+            print("################")
         except Exception as e:
             print("Time to go: %s" % e)
             break
-        reward = bw_reward + queue_reward
-        print("Total Reward: %f BW Reward: %f Queue Reward: %f" % (reward, bw_reward, queue_reward))
-        print("################")
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
         Agent.update(data, reward)

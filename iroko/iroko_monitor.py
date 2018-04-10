@@ -14,14 +14,7 @@ class StatsCollector(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.name = 'StatsCollector'
-        self.prev_overlimits = 0
-        self.prev_loss = 0
-        self.prev_util = 0
-        self.prev_overlimits_d = 0
-        self.prev_loss_d = 0
-        self.prev_util_d = 0
         self.iface_list = []
-        self.prev_bandwidth = {}
         self.bws_rx = {}
         self.bws_tx = {}
         self.free_bandwidths = {}
@@ -50,45 +43,6 @@ class StatsCollector(threading.Thread):
         # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
         self.iface_list = iface_list_temp
 
-    def _get_deltas(self, curr_loss, curr_overlimits):
-        # loss_d = max((curr_loss - self.prev_loss) - self.prev_loss_d, 0)
-
-        # losses
-        loss_d = curr_loss - self.prev_loss  # loss in epoch
-
-        # if loss_d > self.prev_loss_d:
-        #     loss_increase = 1  # loss increasing?
-        # else:
-        #     loss_increase = 0
-        # loss in previous epoch
-        self.prev_loss_d = loss_d
-        self.prev_loss = curr_loss
-
-        # overlimits
-        overlimits_d = curr_overlimits - self.prev_overlimits  # overlimints in epoch
-
-        # if overlimits_d > self.prev_overlimits_d:
-        #     overlimits_increase = 1
-        # else:
-        #     overlimits_increase = 0
-
-        self.prev_overlimits_d = overlimits_d
-        self.prev_overlimits = curr_overlimits
-
-        # utilization
-        # util_d = curr_util - self.prev_util
-
-        # if util_d > 0:
-        #     util_increase = 1
-        # else:
-        #     util_increase = 0
-
-        # self.prev_util = curr_util
-
-        # print
-        # print("Deltas: Loss %d Overlimits %d Utilization: %d " % (loss_d, overlimits_d, util_d))
-        # print("Increases: Loss %d Overlimits %d Utilization: %d " % (loss_increase, overlimits_increase, util_increase))
-        return loss_d, overlimits_d  # , util_d
 
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
@@ -116,43 +70,6 @@ class StatsCollector(threading.Thread):
                 bws_tx[iface] = 0
         return bws_rx, bws_tx
 
-    # def _get_bandwidths_old(self, iface_list):
-    #     # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
-    #     bytes_old = {}
-    #     bytes_new = {}
-    #     for iface in iface_list:
-    #         cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
-    #         else { print $2 } }\' /proc/net/dev" % (iface)
-    #         try:
-    #             output = subprocess.check_output(cmd, shell=True)
-    #             bytes_old[iface] = float(output)
-    #         except Exception as e:
-    #             # print("Empty Request %s" % e)
-    #             output = 0
-    #     time.sleep(1)
-    #     for iface in iface_list:
-    #         cmd = "awk \"/^ *%s: / \"\' { if ($1 ~ /.*:[0-9][0-9]*/) { sub(/^.*:/, \"\") ; print $1 }\
-    #          else { print $2 } }\' /proc/net/dev" % (iface)
-    #         try:
-    #             output = subprocess.check_output(cmd, shell=True)
-    #             bytes_new[iface] = float(output)
-    #         except Exception as e:
-    #             # print("Empty Request %s" % e)
-    #             output = 0
-    #     curr_bandwidth = {key: (bytes_new[key] - bytes_old.get(key, 0)) * 8 for key in bytes_new.keys()}
-
-    #     # Get bandwidth deltas
-
-    #     bandwidth_d = {}
-    #     if self.prev_bandwidth == {}:
-    #         bandwidth_d = curr_bandwidth  # base case
-    #     else:
-    #         for iface in curr_bandwidth:
-    #             bandwidth_d[iface] = curr_bandwidth[iface] - self.prev_bandwidth[iface]  # calculate delta
-    #     self.prev_bandwidth = curr_bandwidth
-
-    #     return curr_bandwidth, bandwidth_d
-
     def _get_free_bw(self, capacity, speed):
         # freebw: Kbit/s
         return max(capacity - speed * 8 / 1000.0, 0)
@@ -162,14 +79,6 @@ class StatsCollector(threading.Thread):
         for iface, bandwidth in bandwidths.iteritems():
             free_bandwidths[iface] = self._get_free_bw(MAX_CAPACITY, bandwidth)
         return free_bandwidths
-
-    # def _get_flow_stats(self, iface_list):
-    #     for iface in iface_list:
-    #         cmd = "sudo tcpdump -l -i %s -n -c 5 ip 2>/dev/null | " +
-    #             "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' |"+
-    #             "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk '!a[$0]++\'" % (iface)
-    #         output = subprocess.check_output(cmd, shell=True)
-    #         print(output)
 
     def _get_qdisc_stats(self, iface_list):
         drops = {}
@@ -337,7 +246,7 @@ class FlowCollector(threading.Thread):
     def _get_flow_stats(self, iface_list):
         processes = []
         for iface in iface_list:
-            cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 5 ip 2>/dev/null | " +
+            cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 10 ip 2>/dev/null | " +
                    "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " +
                    "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
             # output = subprocess.check_output(cmd, shell=True)

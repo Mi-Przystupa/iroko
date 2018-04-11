@@ -43,7 +43,6 @@ class StatsCollector(threading.Thread):
         # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
         self.iface_list = iface_list_temp
 
-
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
         processes = []
@@ -141,9 +140,14 @@ class StatsCollector(threading.Thread):
             deltas["delta_ov"] = 1
 
         if queues < self.queues[iface]:
-            deltas["delta_q"] = 0
-        else:
+            deltas["delta_q"] = -1
+        elif queues > self.queues[iface]:
             deltas["delta_q"] = 1
+        else:
+            deltas["delta_q"] = 0
+        deltas["delta_q_abs"] = self.queues[iface] - queues
+        deltas["delta_rx_abs"] = self.bws_rx[iface] - bw_rx
+        deltas["delta_tx_abs"] = self.bws_tx[iface] - bw_tx
         return deltas
 
     def init_deltas(self):
@@ -155,6 +159,9 @@ class StatsCollector(threading.Thread):
             d_vector[iface]["delta_d"] = 0
             d_vector[iface]["delta_ov"] = 0
             d_vector[iface]["delta_q"] = 0
+            d_vector[iface]["delta_q_abs"] = 0
+            d_vector[iface]["delta_rx_abs"] = 0
+            d_vector[iface]["delta_tx_abs"] = 0
         return d_vector
 
     def get_interface_deltas(self, bws_rx, bws_tx, drops, overlimits, queues):

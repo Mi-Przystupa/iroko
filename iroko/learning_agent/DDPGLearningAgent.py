@@ -8,20 +8,21 @@ from DDPG import DDPG
 
 
 def GetLearningAgentConfiguration(type, ports, num_stats, num_interfaces, bw_allow, frames):
-    if type == 'v2':
+    type = type.lower()
+    if type == 'a':
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=True, use_conv=None, min_alloc=0.0, max_alloc=1.0, name='v2')
-    if type == 'v3':
+                             one_hot=False, use_conv=None, min_alloc=0.0, max_alloc=1.0, name=type)
+    if type == 'b':
+        return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
+                             one_hot=True, use_conv=None, min_alloc=0.0, max_alloc=1.0, name=type)
+    if type == 'c':
         use_conv = {'c': frames, 'h': num_interfaces, 'w': num_stats, 'num_feature_maps': 32}
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=False, use_conv=use_conv, min_alloc=0.0, max_alloc=1.0, name='v3')
-    if type == 'v4':
-        return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
-                             one_hot=False, use_conv=None, min_alloc=0.0, max_alloc=1.0, name='v4')
-    if type == 'v5':
+                             one_hot=False, use_conv=use_conv, min_alloc=0.0, max_alloc=1.0, name=type)
+    if type == 'd':
         return LearningAgent(ports, num_stats, num_interfaces, bw_allow,
                              one_hot=False, use_conv=None, min_alloc=0.0, max_alloc=1.0,
-                             online=True, name='v5')
+                             online=True, name=type)
 
 
 class LearningAgent:
@@ -104,7 +105,7 @@ class LearningAgent:
         if dims:
             self.use_conv = dims
 
-        self.controller = DDPG(s, a, dims=self.use_conv, criticpath='critic' + self.name, actorpath='actor' + self.name)
+        self.controller = DDPG(s, a, dims=self.use_conv, criticpath='critic_' + self.name, actorpath='actor_' + self.name)
 
     def _createHost(self):
         host = dict(predictedAllocation=self.full_bw)

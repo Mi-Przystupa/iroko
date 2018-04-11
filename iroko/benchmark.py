@@ -14,7 +14,7 @@ PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
 PARSER.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
-PARSER.add_argument('--agent', '-a', dest='agent', default='v2', help='v0,v2,v3,v4')
+PARSER.add_argument('--agent', '-a', dest='agent', default='A', help='A, B, C, D')
 PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',

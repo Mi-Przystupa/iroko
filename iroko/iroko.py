@@ -60,7 +60,7 @@ PARSER.add_argument('--dctcp', dest='dctcp', default=False,
 PARSER.add_argument('--dumbbell', dest='dumbbell', default=False,
                     action='store_true', help='Run the experiment with a dumbbell topology.')
 
-PARSER.add_argument('--agent', dest='agent', default='v2', help='options are v0, v2,v3, v4')
+PARSER.add_argument('--agent', dest='agent', default='A', help='options are A, B, C, D')
 
 ARGS = PARSER.parse_args()
 

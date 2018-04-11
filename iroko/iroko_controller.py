@@ -18,8 +18,8 @@ from reward_function import RewardFunction
 MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
 EXPLOIT = False
-ACTIVEAGENT = 'v2'
-FEATURES = 2  # number of statistics we are using
+ACTIVEAGENT = 'A'
+FEATURES = 3  # number of statistics we are using
 MAX_QUEUE = 500
 
 ###########################################
@@ -36,7 +36,7 @@ HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
 
 PARSER = ArgumentParser()
-PARSER.add_argument('--agent', dest='version', default=ACTIVEAGENT, help='options are v0, v2,v3, v4')
+PARSER.add_argument('--agent', dest='version', default=ACTIVEAGENT, help='options are A, B, C, D')
 PARSER.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT,
                     type=bool, help='flag to use explore or expoit environment')
 
@@ -70,7 +70,7 @@ class GracefulSave:
 
 
 def init_agent(version, exploit, interfaces, features):
-    # FEATURE_MAPS = 32  # this is internal to v3 convolution filters...probably should be defined in the model
+    # FEATURE_MAPS = 32  # this is internal to C convolution filters...probably should be defined in the model
     FRAMES = 3  # number of previous matrices to use
     size = len(interfaces)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     flows.daemon = True
     flows.start()
     # let the monitor initialize first
-    time.sleep(3)
+    time.sleep(2)
     num_interfaces = len(interfaces)
     total_reward = 0
     total_iters = 0
@@ -118,13 +118,16 @@ if __name__ == '__main__':
     rewardfunction = RewardFunction(I_H_MAP, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
+    start_time = time.time()
+    WAIT = 2
     while 1:
         # perform action
         Agent.predictBandwidthOnHosts()
         for h_iface in I_H_MAP:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
+        time.sleep(WAIT - (time.time() - start_time))
+        start_time = time.time()
         # update Agents internal representations
-        time.sleep(3)
         if bws_rx:
             delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
         bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
@@ -134,8 +137,8 @@ if __name__ == '__main__':
         try:
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
-                deltas = [deltas[key] for key in deltas.keys()]
-                state = [bws_rx[iface], bws_tx[iface]]
+                state = [deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
+                # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
             bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
             reward = bw_reward + queue_reward

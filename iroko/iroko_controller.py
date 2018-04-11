@@ -125,7 +125,7 @@ if __name__ == '__main__':
         Agent.predictBandwidthOnHosts()
         for h_iface in I_H_MAP:
             ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
-        time.sleep(WAIT - (time.time() - start_time))
+        time.sleep(abs(round(WAIT - (time.time() - start_time), 3)))
         start_time = time.time()
         # update Agents internal representations
         if bws_rx:

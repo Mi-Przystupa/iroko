@@ -137,7 +137,7 @@ if __name__ == '__main__':
         try:
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
-                state = [bws_rx, bws_tx, deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
+                state = [bws_rx[iface], bws_tx[iface], deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
             bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)

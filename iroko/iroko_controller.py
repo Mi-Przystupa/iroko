@@ -19,7 +19,7 @@ MAX_CAPACITY = 10e6   # Max capacity of link
 MIN_RATE = 6.25e5
 EXPLOIT = False
 ACTIVEAGENT = 'A'
-FEATURES = 3  # number of statistics we are using
+FEATURES = 5  # number of statistics we are using
 MAX_QUEUE = 500
 
 ###########################################
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         try:
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
-                state = [deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
+                state = [bws_rx, bws_tx, deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
             bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)

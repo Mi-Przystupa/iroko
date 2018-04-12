@@ -69,7 +69,7 @@ class Critic(nn.Module):
         x = self.normalize(x)
         x = F.relu(self.hidden1(x))
         x = torch.cat((x, action), dim=-1)
-        #x = self.normalize2(torch.cat(x, action))
+        # x = self.normalize2(torch.cat(x, action))
         x = F.relu(self.hidden2(x))
         return self.outputs(x)
 

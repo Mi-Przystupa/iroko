@@ -113,8 +113,8 @@ if __name__ == '__main__':
     num_delta = len(delta_vector[delta_vector.keys()[0]])
     features = FEATURES  # + len(HOSTS) * 2 + num_delta
     # REWARDFUNCTION = 'QueuePrecision'
-    # REWARDFUNCTION = 'QueueBandwidth'
-    REWARDFUNCTION = 'default'
+    REWARDFUNCTION = 'QueueBandwidth'
+    # REWARDFUNCTION = 'default'
     rewardfunction = RewardFunction(I_H_MAP, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
     # initialize the Agent
     Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)

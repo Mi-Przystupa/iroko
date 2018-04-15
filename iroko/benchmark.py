@@ -58,7 +58,7 @@ DURATION = 60
 NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
-DUMBBELL_SW = '100[1-2]'
+DUMBBELL_SW = '100[1]|1002-eth3'
 
 
 def get_test_config():
@@ -157,6 +157,8 @@ if __name__ == '__main__':
             plotter.plot_train_bw_avg('results', 'plots/%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen_iface('results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen_avg('results', 'plots/%s_train_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
+
     # Compare the agents performance against other algorithms
     if ARGS.test is True:
         for e in range(ARGS.epochs):

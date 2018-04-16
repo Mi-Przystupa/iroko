@@ -236,7 +236,7 @@ class IrokoPlotter():
             plt.xlabel('Epoch')
             plt.ylabel('Normalized Average Bisection Bandwidth')
             axes = plt.gca()
-            axes.set_ylim([0, 1])
+            axes.set_ylim([-0.1, 1.1])
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
@@ -264,7 +264,7 @@ class IrokoPlotter():
                 plt.plot(self.evolving_average(bws, 1000), label=iface)
             plt.xlabel('Iterations')
             plt.ylabel('Average Interface Bisection Bandwidth')
-            plt.legend(loc='lower left')
+            plt.legend(loc='center right')
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
@@ -303,8 +303,8 @@ class IrokoPlotter():
             plt.xlabel('Epoch')
             plt.ylabel('Normalized Average Bisection Bandwidth')
             axes = plt.gca()
-            axes.set_ylim([0, 1])
-            plt.legend(loc='upper right')
+            axes.set_ylim([-0.1, 1.1])
+            plt.legend(loc='center right')
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
@@ -368,7 +368,7 @@ class IrokoPlotter():
                 plt.plot(self.evolving_average(qlens, 100), label=iface)
             plt.xlabel('Iterations')
             plt.ylabel('Average Interface Queue Length')
-            plt.legend(loc='lower left')
+            plt.legend(loc='center left')
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
@@ -408,7 +408,7 @@ class IrokoPlotter():
             plt.ylabel('Average Queue Length')
             axes = plt.gca()
             # axes.set_ylim([0, self.max_queue])
-            plt.legend(loc='upper right')
+            plt.legend(loc='center right')
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
@@ -429,18 +429,18 @@ class IrokoPlotter():
             content = f.readlines()
         # you may also want to remove whitespace characters like `\n` at the end of each line
         content = [float(x.strip()) for x in content]
-        window = 100
+        window = 1000
         reward_mean = self.moving_average(content, window)
         reward_evolve = self.evolving_average(content, window)
 
         plt.subplot(2, 1, 1)
         plt.plot(reward_mean, label="Mean %d" % window)
-        plt.legend(loc='lower left')
+        plt.legend(loc='upper center')
         plt.ylabel('Reward')
         plt.subplot(2, 1, 2)
         plt.plot(reward_evolve, label="Evolution")
         plt.ylabel('Reward')
         plt.xlabel('Iterations')
-        plt.legend(loc='lower right')
+        plt.legend(loc='center right')
         plt.savefig(pltname)
         plt.gcf().clear()

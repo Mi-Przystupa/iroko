@@ -23,7 +23,7 @@ class RewardFunction:
         queue_reward = 0.0
         for i, iface in enumerate(self.interfaces):
             bw_reward += float(bws_rx[iface]) / float(self.max_bw)
-            print('{} bw reward so far: {}'.format(i, bw_reward))
+            # print('{} bw reward so far: {}'.format(i, bw_reward))
             queue_reward -= self.num_interfaces * (float(queues[iface]) / float(self.max_queue))**2
 
         return bw_reward, queue_reward

@@ -8,6 +8,7 @@ import math
 import subprocess
 import signal
 import torch
+import numpy as np
 from argparse import ArgumentParser
 from learning_agent import DDPGLearningAgent
 
@@ -141,12 +142,22 @@ if __name__ == '__main__':
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
             bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
-            reward = bw_reward + queue_reward
-            print("Total Reward: %f BW Reward: %f Queue Reward: %f" % (reward, bw_reward, queue_reward))
+
+            std_reward = 0
+            try:
+                pbws = [bws_tx[i] for i in I_H_MAP if bws_tx[i] > 0]
+                if len(pbws) > 0:
+                    std_reward = (np.std(pbws) / float(MAX_CAPACITY))
+            except ValueError:
+                pass
+
+            reward = bw_reward + queue_reward - std_reward
+            print("Total Reward: %f BW Reward: %f Queue Reward: %f STD Reward %f" % (reward, bw_reward, queue_reward, std_reward))
             print("################")
         except Exception as e:
             print("Time to go: %s" % e)
             break
+
         # print("Current Reward %d" % reward)
         f.write('%f\n' % (reward))
         Agent.update(data, reward)

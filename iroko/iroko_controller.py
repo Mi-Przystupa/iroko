@@ -15,12 +15,15 @@ from iroko_monitor import StatsCollector
 from iroko_monitor import FlowCollector
 from reward_function import RewardFunction
 
-MAX_CAPACITY = 10e6   # Max capacity of link
-MIN_RATE = 6.25e5
-EXPLOIT = False
-ACTIVEAGENT = 'A'
-FEATURES = 5  # number of statistics we are using
-MAX_QUEUE = 500
+MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
+MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
+IS_EXPLOIT = False         # do we want to enable an exploit policy?
+ACTIVEAGENT = 'A'       # type of the agent in use
+R_FUN = 'q_bandwidth'   # type of the reward function the agent uses
+FEATURES = 5            # number of statistics we are using
+MAX_QUEUE = 500         # depth of the switch queues
+WAIT = 2                # seconds the agent waits per iteration
+FRAMES = 3              # number of previous matrices to use
 
 ###########################################
 
@@ -36,8 +39,9 @@ HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
 
 PARSER = ArgumentParser()
-PARSER.add_argument('--agent', dest='version', default=ACTIVEAGENT, help='options are A, B, C, D')
-PARSER.add_argument('--exploit', '-e', dest='exploit', default=EXPLOIT,
+PARSER.add_argument('--agent', dest='version',
+                    default=ACTIVEAGENT, help='options are A, B, C, D')
+PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
                     type=bool, help='flag to use explore or expoit environment')
 
 ARGS = PARSER.parse_args()
@@ -69,13 +73,12 @@ class GracefulSave:
         self.kill_now = True
 
 
-def init_agent(version, exploit, interfaces, features):
-    # FEATURE_MAPS = 32  # this is internal to C convolution filters...probably should be defined in the model
-    FRAMES = 3  # number of previous matrices to use
+def init_agent(version, is_exploit, interfaces, num_features):
     size = len(interfaces)
     Agent = DDPGLearningAgent.GetLearningAgentConfiguration(
-        version, I_H_MAP, features, size, bw_allow=MAX_CAPACITY, frames=FRAMES)
-    if exploit:
+        version, I_H_MAP, num_features, size,
+        bw_allow=MAX_CAPACITY, frames=FRAMES)
+    if is_exploit:
         Agent.exploit()
     else:
         Agent.explore()
@@ -87,81 +90,102 @@ if __name__ == '__main__':
     # just incase
     ic = IrokoController("Iroko")
     ARGS.version = ARGS.version.lower()
+    total_reward = total_iters = 0
     saver = GracefulSave()
+
+    # open the reward file
+    file = open('reward.txt', 'a+')
+
     # Launch an asynchronous stats collector
     stats = StatsCollector()
-    stats.set_interfaces()
     stats.daemon = True
     stats.start()
-    interfaces = stats.iface_list
+
+    # Launch an asynchronous flow collector
     flows = FlowCollector(HOSTS)
-    flows.set_interfaces()
     flows.daemon = True
     flows.start()
-    # let the monitor initialize first
+
+    # Let the monitor threads initialize first
     time.sleep(2)
+    interfaces = stats.iface_list
+    print ("Running with the following interfaces:")
+    print interfaces
+
+    # count the number of interfaces after we have explored the environment
     num_interfaces = len(interfaces)
-    total_reward = 0
-    total_iters = 0
-    f = open('reward.txt', 'a+')
-    bws_rx = {}
-    bws_tx = {}
-    drops = {}
-    overlimits = {}
-    queues = {}
-    delta_vector = stats.init_deltas()
-    num_delta = len(delta_vector[delta_vector.keys()[0]])
-    features = FEATURES  # + len(HOSTS) * 2 + num_delta
-    # REWARDFUNCTION = 'QueuePrecision'
-    REWARDFUNCTION = 'QueueBandwidth'
-    # REWARDFUNCTION = 'default'
-    rewardfunction = RewardFunction(I_H_MAP, interfaces, REWARDFUNCTION, MAX_QUEUE, MAX_CAPACITY)
+
+    # initialize the stats matrix
+    bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
+
+    # initialize the reward function
+    dopamin = RewardFunction(
+        I_H_MAP, interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
+
+    # kind of a wild card, num_features depends on the input we have
+    num_features = FEATURES  # + len(HOSTS) * 2 + num_delta
+
     # initialize the Agent
-    Agent = init_agent(ARGS.version, EXPLOIT, interfaces, features)
+    Agent = init_agent(ARGS.version, IS_EXPLOIT, interfaces, num_features)
+
+    # start timer
     start_time = time.time()
-    WAIT = 2
     while 1:
-        # perform action
+        reward = 0.0
+        data = torch.zeros(num_interfaces, num_features)
+
+        # let the agent predict bandwidth based on all previous information
         Agent.predictBandwidthOnHosts()
+        # perform actions
         for h_iface in I_H_MAP:
-            ic.send_cntrl_pckt(h_iface, Agent.getHostsPredictedBandwidth(h_iface))
+            ic.send_cntrl_pckt(
+                h_iface, Agent.getHostsPredictedBandwidth(h_iface))
+        # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - start_time), 3)))
         start_time = time.time()
-        # update Agents internal representations
-        if bws_rx:
-            delta_vector = stats.get_interface_deltas(bws_rx, bws_tx, drops, overlimits, queues)
-        bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
-        src_flows, dst_flows = flows.get_interface_flows()
-        data = torch.zeros(num_interfaces, features)
-        reward = 0.0
+
         try:
+            # retrieve the current deltas before updating total values
+            delta_vector = stats.get_interface_deltas(
+                bws_rx, bws_tx, drops, overlimits, queues)
+            # get the absolute values as well as active interface flow
+            bws_rx, bws_tx, drops, overlimits, queues = stats.get_interface_stats()
+            src_flows, dst_flows = flows.get_interface_flows()
+
+            # Create the data matrix for the agent based on the collected stats
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
-                state = [bws_rx[iface], bws_tx[iface], deltas["delta_q_abs"], deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
+                state = [bws_rx[iface], bws_tx[iface], deltas["delta_q_abs"],
+                         deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
-            bw_reward, queue_reward = rewardfunction.get_reward(bws_rx, queues)
-            reward = bw_reward + queue_reward
-            print("Total Reward: %f BW Reward: %f Queue Reward: %f" % (reward, bw_reward, queue_reward))
-            print("################")
         except Exception as e:
-            print("Time to go: %s" % e)
+            # exit gracefully in case of an error
+            template = "{0} occurred. Reason:{1!r}. Time to go..."
+            message = template.format(type(e).__name__, e.args)
+            print message
             break
-        # print("Current Reward %d" % reward)
-        f.write('%f\n' % (reward))
+
+        # Compute the reward
+        bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues)
+        reward = bw_reward + queue_reward
+        print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
+              (reward, bw_reward, queue_reward))
+        print("#######################################")
+
+        # update Agents internal representations
+        # majority of computation happens here
         Agent.update(data, reward)
+
+        # write out the reward in this iteration
+        # print("Current Reward %d" % reward)
+        file.write('%f\n' % (reward))
 
         total_reward += reward
         total_iters += 1
+
+        # catch a SIGTERM/SIGKILL and terminate gracefully
         if saver.kill_now:
             break
-        # update the allocated bandwidth
-        # wait for update to happen
 
-        # Agent.displayAllHosts()
-        # Agent.displayALLHostsBandwidths()
-        # Agent.displayALLHostsPredictedBandwidths()
-        # Agent.displayAdjustments()
-
-        # print(stats.get_interface_stats())
-    f.close()
+    file.close()

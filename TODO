@@ -1,4 +1,7 @@
-1. Write a config file that is shared among all the modules (benchmark, iroko_plt, iroko_controller) This file should contain settings such as:
+1. Reward function requires many more tweaks: Right now, the agent barely converges to the (right) solution of setting bandwidth on one interface to zero, and the other to max. That is quite unsatisfactory and not very impressive. Ideally, what we want for now is a split distribution such as 5/5, 4/6, or 7/3. That requires thinking about a model which also factors in standard deviation into account without affecting the reward model too much by providing mixed signals.
+2. Our theoretical foundation right now is quite weak to be honest, I wonder if we can do a concrete analysis of what will work and what not, and how we expect our model to work. For example, right now we have an array of stats we provide, and an array of models we can apply to these stats. What are comparable models in literature to what we have?  I do not know ML papers well enough and I do not know how they are written. Maybe, we can emulate some of the works on deep learning and adopt the writing style for our paper?
+3. Are the current neural nets we have the right architecture? What architecture works and what does not? What does literature say? Right now we have little explanation about the number of layers etc.
+3. Write a config file that is shared among all the modules (benchmark, iroko_plt, iroko_controller) This file should contain settings such as:
     HostInterface MAP: Mapping of Interfaces to IPs
     HostIPs: List of IPs
     Agent: String
@@ -11,8 +14,10 @@
     duration: time of one experiment
     dir: the output directory of results
     tf: a list of traffic files to parse
-2. The reward function of the controller should be put into its own file. We want to be able to use multiple reward functions and easily switch between them. This requires a cleaner reward and state model.
-3. We need a parking lot topology. We should also allow dumbbell topologies of different sizes.
-4. The plotting of the reward, bandwidth, and queue function is not quite there yet. We should also maybe think about more metrics we want to collect. For example fairness, utilization, etc. There are still some of the metrics from our initial proposal which we never implemented. For example, latency experienced by hosts, which we can easily measure.
-5. Reward function requires many more tweaks.
-6. The agents need to be decluttered and cleaned up. We have to figure out if they are actually working correctly.
+The idea is a more flexible framework, right now a lot is hardcoded which makes changes hard.
+4. The reward function of the controller should be put into its own file. We want to be able to use multiple reward functions and easily switch between them. This requires a cleaner reward and state model. (DONE)
+5. We need a parking lot topology. We should also allow dumbbell topologies of different sizes, this should be an easy change.
+6. The plotting of the reward, bandwidth, and queue function is not quite there yet. We should also maybe think about more metrics we want to collect. For example fairness, utilization, etc. There are still some of the metrics from our initial proposal which we never implemented. For example, latency experienced by hosts, which we can easily measure.
+7. The agents need to be decluttered and cleaned up. We have to figure out if they are actually working correctly. (DONE)
+8. Queue size, while theoretically the best option, has limitations in accuracy it seems. Maybe RTT and deviation is a better metric.
+9. I am going to look into the paper and change it to the HotNets format, I will also go over the writing.

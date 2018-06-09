@@ -6,32 +6,13 @@ import threading
 MAX_CAPACITY = 10e6   # Max capacity of link
 
 
-class StatsCollector(threading.Thread):
-    """
-            NetworkMonitor is a Ryu app for collecting traffic information.
-    """
+class Collector(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
-        self.name = 'StatsCollector'
+        self.name = 'Collector'
         self.iface_list = []
-        self.bws_rx = {}
-        self.bws_tx = {}
-        self.free_bandwidths = {}
-        self.drops = {}
-        self.overlimits = {}
-        self.queues = {}
         self.kill = False
-
-    def run(self):
-        # self._set_interfaces()
-        while True:
-            if self.kill:
-                self.exit()
-            self._collect_stats()
-
-    def terminate(self):
-        self.kill = True
 
     def set_interfaces(self):
         cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
@@ -40,8 +21,62 @@ class StatsCollector(threading.Thread):
         for row in output.split('\n'):
             if row != '':
                 iface_list_temp.append(row)
-        # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
         self.iface_list = iface_list_temp
+
+    def run(self):
+        while True:
+            if self.kill:
+                self.exit()
+
+    def terminate(self):
+        self.kill = True
+
+
+class StatsCollector(Collector):
+
+    def __init__(self):
+        Collector.__init__(self)
+        self.name = 'StatsCollector'
+        self.iface_list = []
+        self.bws_rx = {}
+        self.bws_tx = {}
+        self.free_bandwidths = {}
+        self.drops = {}
+        self.overlimits = {}
+        self.queues = {}
+        self.d_vector = {}
+
+    def run(self):
+        self.set_interfaces()
+        self.init_stats()
+        self.init_deltas()
+        while True:
+            if self.kill:
+                self.exit()
+        self._collect_stats()
+
+    def init_deltas(self):
+        for iface in self.iface_list:
+            self.d_vector[iface] = {}
+            self.d_vector[iface]["delta_rx"] = 0
+            self.d_vector[iface]["delta_tx"] = 0
+            self.d_vector[iface]["delta_d"] = 0
+            self.d_vector[iface]["delta_ov"] = 0
+            self.d_vector[iface]["delta_q"] = 0
+            self.d_vector[iface]["delta_q_abs"] = 0
+            self.d_vector[iface]["delta_rx_abs"] = 0
+            self.d_vector[iface]["delta_tx_abs"] = 0
+        return self.d_vector
+
+    def init_stats(self):
+        for iface in self.iface_list:
+            self.bws_rx[iface] = 0
+            self.bws_tx[iface] = 0
+            self.free_bandwidths[iface] = 0
+            self.drops[iface] = 0
+            self.overlimits[iface] = 0
+            self.queues[iface] = 0
+        return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
     def _get_bandwidths(self, iface_list):
         # cmd3 = "ifstat -i %s -q 0.1 1 | awk '{if (NR==3) print $2}'" % (iface)
@@ -111,11 +146,9 @@ class StatsCollector(threading.Thread):
         return drops, overlimits, queues
 
     def _collect_stats(self):
-        # iface_list = self._get_interfaces()
         self.bws_rx, self.bws_tx = self._get_bandwidths(self.iface_list)
-        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
-        # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
-        # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
+        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(
+            self.iface_list)
 
     def _compute_delta(self, iface, bw_rx, bw_tx, drops, overlimits, queues):
         deltas = {}
@@ -150,112 +183,49 @@ class StatsCollector(threading.Thread):
         deltas["delta_tx_abs"] = self.bws_tx[iface] - bw_tx
         return deltas
 
-    def init_deltas(self):
-        d_vector = {}
-        for iface in self.iface_list:
-            d_vector[iface] = {}
-            d_vector[iface]["delta_rx"] = 0
-            d_vector[iface]["delta_tx"] = 0
-            d_vector[iface]["delta_d"] = 0
-            d_vector[iface]["delta_ov"] = 0
-            d_vector[iface]["delta_q"] = 0
-            d_vector[iface]["delta_q_abs"] = 0
-            d_vector[iface]["delta_rx_abs"] = 0
-            d_vector[iface]["delta_tx_abs"] = 0
-        return d_vector
 
     def get_interface_deltas(self, bws_rx, bws_tx, drops, overlimits, queues):
-        d_vector = {}
         for iface in self.iface_list:
-            d_vector[iface] = {}
-            d_vector[iface] = self._compute_delta(iface, bws_rx[iface], bws_tx[iface],
-                                                  drops[iface], overlimits[iface], queues[iface])
-        return d_vector
+            self.d_vector[iface] = self._compute_delta(
+                iface, bws_rx[iface], bws_tx[iface], drops[iface], overlimits[iface], queues[iface])
+        return self.d_vector
 
     def get_interface_stats(self):
         # self._get_flow_stats(self.iface_list)
-        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
+        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(
+            self.iface_list)
         return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
-    # def get_stats_sums(self, bandwidths, free_bandwidths, drops, overlimits, queues):
-    #     bw_sum = sum(bandwidths.itervalues())
-    #     bw_free_sum = sum(free_bandwidths.itervalues())
-    #     loss_sum = sum(drops.itervalues())
-    #     overlimit_sum = sum(overlimits.itervalues())
-    #     queued_sum = sum(queues.itervalues())
-    #     return bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum
 
-    # def show_stat(self):
-    #     '''
-    #             Show statistics information according to data type.
-    #             _type: 'port' / 'flow'
-    #     '''
-    #     #     print
-    #     bandwidths, free_bandwidths, drops, overlimits, queues = self.get_interface_stats()
-    #     bw_sum, bw_free_sum, loss_sum, overlimit_sum, queued_sum = self.get_stats_sums(
-    #         bandwidths, free_bandwidths, drops, overlimits, queues)
-    #     loss_d, overlimits_d, util_d, loss_increase, overlimits_increase, util_increase = self._get_deltas(
-    #         loss_sum, overlimit_sum, bw_sum)
-    #     print("Loss: %d Delta: %d Increase: %d" % (loss_sum, loss_d, loss_increase))
-    #     print("Overlimits: %d Delta: %d Increase: %d" % (overlimit_sum, overlimits_d, overlimits_increase))
-    #     print("Backlog: %d" % queued_sum)
-
-    #     print("Free BW Sum: %d" % bw_free_sum)
-    #     print("Current Util Sum: %f" % bw_sum)
-
-    #     max_capacity_sum = MAX_CAPACITY * bandwidths.__len__()
-    #     print("MAX_CAPACITY Sum: %d %d" % (max_capacity_sum, bandwidths.__len__()))
-    #     total_util_ratio = (bw_sum) / max_capacity_sum
-    #     total_util_avg = (bw_sum) / bandwidths.__len__()
-    #     print("Current Average Utilization: %f" % total_util_avg)
-    #     print("Current Ratio of Utilization: %f" % total_util_ratio)
-    # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports
-    # sudo ovs-vsctl list-br | xargs -L1 sudo ovs-ofctl dump-ports -O Openflow13
-
-
-class FlowCollector(threading.Thread):
-    """
-            NetworkMonitor is a Ryu app for collecting traffic information.
-    """
+class FlowCollector(Collector):
 
     def __init__(self, host_ips):
+        Collector.__init__(self)
         threading.Thread.__init__(self)
         self.name = 'FlowCollector'
-        self.iface_list = []
         self.host_ips = host_ips
         self.kill = False
         self.src_flows = {}
         self.dst_flows = {}
-        self.set_interfaces()
 
     def run(self):
-        # self._set_interfaces()
+        self.set_interfaces()
+        self.init_flows()
         while True:
             if self.kill:
                 self.exit()
             self._collect_flows()
 
-    def terminate(self):
-        self.kill = True
-
-    def set_interfaces(self):
-        cmd = "sudo ovs-vsctl list-br | xargs -L1 sudo ovs-vsctl list-ports"
-        output = subprocess.check_output(cmd, shell=True)
-        iface_list_temp = []
-        for row in output.split('\n'):
-            if row != '':
-                iface_list_temp.append(row)
-                self.src_flows[row] = [0] * len(self.host_ips)
-                self.dst_flows[row] = [0] * len(self.host_ips)
-        # return_list = [iface for iface in iface_list_temp if iface in i_h_map]  # filter against actual hosts
-        self.iface_list = iface_list_temp
+    def init_flows(self):
+        for iface in self.iface_list:
+            self.src_flows[iface] = [0] * len(self.host_ips)
+            self.dst_flows[iface] = [0] * len(self.host_ips)
 
     def _get_flow_stats(self, iface_list):
         processes = []
         for iface in iface_list:
             cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 10 ip 2>/dev/null | " +
-                   "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " +
-                   "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
+                   "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " + "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
             # output = subprocess.check_output(cmd, shell=True)
             proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
             processes.append((proc, iface))
@@ -279,9 +249,6 @@ class FlowCollector(threading.Thread):
     def _collect_flows(self):
         # iface_list = self._get_interfaces()
         self._get_flow_stats(self.iface_list)
-        # self.free_bandwidths = self._get_free_bandwidths(self.bandwidths)
-        # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(self.iface_list)
 
     def get_interface_flows(self):
-        # self._get_flow_stats(self.iface_list)
         return self.src_flows, self.dst_flows

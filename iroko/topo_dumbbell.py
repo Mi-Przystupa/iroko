@@ -57,10 +57,13 @@ class DumbbellTopo(Topo):
         """
         for i, host in enumerate(self.hostList):
             if i < len(self.hostList) / 2:
-                self.addLink(self.switch_w, host, bw=bw, max_queue_size=queue)   # use_htb=False
+                self.addLink(self.switch_w, host, bw=bw,
+                             max_queue_size=queue)   # use_htb=False
             else:
-                self.addLink(self.switch_e, host, bw=bw, max_queue_size=queue)   # use_htb=False
-        self.addLink(self.switch_w, self.switch_e, bw=bw, max_queue_size=queue)   # use_htb=False
+                self.addLink(self.switch_e, host, bw=bw,
+                             max_queue_size=queue)   # use_htb=False
+        self.addLink(self.switch_w, self.switch_e, bw=bw,
+                     max_queue_size=queue)   # use_htb=False
 
     def set_ovs_protocol(self, ovs_v):
         """
@@ -70,7 +73,8 @@ class DumbbellTopo(Topo):
 
     def _set_ovs_protocol(self, sw_list, ovs_v):
         for sw in sw_list:
-            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (sw, ovs_v)
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (
+                sw, ovs_v)
             os.system(cmd)
 
 
@@ -147,7 +151,8 @@ def config_topo(net, topo, ovs_v, is_ecmp):
 def create_db_topo(hosts, cpu=-1, bw=10, max_queue=100):
     """
             Firstly, start up Mininet;
-            secondly, generate traffics and test the performance of the network.
+            secondly, generate traffics and test the
+            performance of the network.
     """
     # Create Topo.
     topo = DumbbellTopo(hosts)
@@ -157,6 +162,7 @@ def create_db_topo(hosts, cpu=-1, bw=10, max_queue=100):
     # Start Mininet
     host = custom(CPULimitedHost, cpu=cpu)
     link = custom(TCLink, max_queue=max_queue)
-    net = Mininet(topo=topo, host=host, link=link, controller=None, autoSetMacs=True)
+    net = Mininet(topo=topo, host=host, link=link,
+                  controller=None, autoSetMacs=True)
 
     return net, topo

@@ -11,9 +11,9 @@ class RewardFunction:
         self.has_congestion = set()
 
     def get_reward(self, bw, queues):
-        if self.func_name == 'QueueBandwidth':
+        if self.func_name == 'q_bandwidth':
             return self._queue_bandwidth(bw, queues)
-        elif self.func_name == 'QueuePrecision':
+        elif self.func_name == 'q_precision':
             return self._queue_precision(queues)
         else:
             return self._queue_bandwidth_filtered(bw, queues)
@@ -25,7 +25,6 @@ class RewardFunction:
             bw_reward += float(bws_rx[iface]) / float(self.max_bw)
             # print('{} bw reward so far: {}'.format(i, bw_reward))
             queue_reward -= self.num_interfaces * (float(queues[iface]) / float(self.max_queue))**2
-
         return bw_reward, queue_reward
 
     def _queue_bandwidth_filtered(self, bws_rx, queues):
@@ -36,7 +35,6 @@ class RewardFunction:
                 print("Interface: %s BW: %f Queues: %d" % (iface, bws_rx[iface], queues[iface]))
                 bw_reward += float(bws_rx[iface]) / float(self.max_bw)
                 queue_reward -= (self.num_interfaces / 2) * (float(queues[iface]) / float(self.max_queue))**2
-
         return bw_reward, queue_reward
 
     def _queue_precision(self, queues):

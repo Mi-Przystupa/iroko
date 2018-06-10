@@ -53,7 +53,7 @@ class StatsCollector(Collector):
         while True:
             if self.kill:
                 self.exit()
-        self._collect_stats()
+            self._collect_stats()
 
     def init_deltas(self):
         for iface in self.iface_list:
@@ -192,8 +192,7 @@ class StatsCollector(Collector):
 
     def get_interface_stats(self):
         # self._get_flow_stats(self.iface_list)
-        self.drops, self.overlimits, self.queues = self._get_qdisc_stats(
-            self.iface_list)
+        # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(  self.iface_list)
         return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
 

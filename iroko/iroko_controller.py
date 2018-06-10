@@ -19,7 +19,7 @@ MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
 MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
 IS_EXPLOIT = False         # do we want to enable an exploit policy?
 ACTIVEAGENT = 'A'       # type of the agent in use
-R_FUN = 'q_bandwidth'   # type of the reward function the agent uses
+R_FUN = 'std_dev'   # type of the reward function the agent uses
 FEATURES = 5            # number of statistics we are using
 MAX_QUEUE = 500         # depth of the switch queues
 WAIT = 2                # seconds the agent waits per iteration
@@ -167,6 +167,7 @@ if __name__ == '__main__':
             break
 
         # Compute the reward
+        print bws_rx
         bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues)
         reward = bw_reward + queue_reward
         print("Total Reward: %f BW Reward: %f Queue Reward: %f" %

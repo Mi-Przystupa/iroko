@@ -11,13 +11,13 @@ class RewardFunction:
         self.max_bw = max_bw
         self.has_congestion = set()
 
-    def get_reward(self, bw, queues):
+    def get_reward(self, bw, queues, pred_bw):
         if self.func_name == 'q_bandwidth':
             return self._queue_bandwidth(bw, queues)
         elif self.func_name == 'q_precision':
             return self._queue_precision(queues)
         elif self.func_name == 'std_dev':
-            return self._std_dev(bw, queues)
+            return self._std_dev(bw, queues, pred_bw)
         else:
             return self._queue_bandwidth_filtered(bw, queues)
 
@@ -61,14 +61,13 @@ class RewardFunction:
                         queue_reward -= 1.0
         return bw_reward, queue_reward
 
-    def _std_dev(self, bws_rx, queues):
+    def _std_dev(self, bws_rx, queues, pred_bw):
         bw_reward = 0.0
         queue_reward = 0.0
         std_reward = 0
-	pbws = [bws_rx[iface] for iface in self.interfaces]
-        print (pbws)
-	if len(pbws) > 0:
-            std_reward -= (np.std(pbws) / float(self.max_bw))
+        pb_bws = pred_bw.values()
+        print (pb_bws)
+        std_reward -= (np.std(pb_bws) / float(self.max_bw))
 	for i, iface in enumerate(self.interfaces):
             bw_reward += float(bws_rx[iface]) / float(self.max_bw)
             queue_reward -= (self.num_interfaces / 2) * \

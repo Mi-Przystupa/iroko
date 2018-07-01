@@ -137,9 +137,10 @@ if __name__ == '__main__':
         # let the agent predict bandwidth based on all previous information
         Agent.predictBandwidthOnHosts()
         # perform actions
+        pred_bw = {}
         for h_iface in I_H_MAP:
-            ic.send_cntrl_pckt(
-                h_iface, Agent.getHostsPredictedBandwidth(h_iface))
+            pred_bw[h_iface] = Agent.getHostsPredictedBandwidth(h_iface)
+            ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - start_time), 3)))
         start_time = time.time()
@@ -168,7 +169,7 @@ if __name__ == '__main__':
 
         # Compute the reward
         print bws_rx
-        bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues)
+        bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues, pred_bw)
         reward = bw_reward + queue_reward
         print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
               (reward, bw_reward, queue_reward))

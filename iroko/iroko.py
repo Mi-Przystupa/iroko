@@ -24,7 +24,7 @@ import topo_ecmp
 import topo_non_block
 import topo_dumbbell
 
-MAX_QUEUE = 500
+MAX_QUEUE = 5000
 PARSER = ArgumentParser(description="Iroko PARSER")
 
 PARSER.add_argument('-d', '--dir', dest='output_dir', default='log',

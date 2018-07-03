@@ -72,6 +72,6 @@ class RewardFunction:
             bw_reward += float(bws_rx[iface]) / float(self.max_bw)
             queue_reward -= (self.num_interfaces / 2) * \
                 (float(queues[iface]) / float(self.max_queue))**2
-        print("STD Reward:",std_reward*3)
-	bw_reward += std_reward*3
+        print("STD Reward:",std_reward*2)
+	bw_reward += std_reward*2
         return bw_reward, queue_reward

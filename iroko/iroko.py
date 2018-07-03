@@ -60,7 +60,8 @@ PARSER.add_argument('--dctcp', dest='dctcp', default=False,
 PARSER.add_argument('--dumbbell', dest='dumbbell', default=False,
                     action='store_true', help='Run the experiment with a dumbbell topology.')
 
-PARSER.add_argument('--agent', dest='agent', default='A', help='options are A, B, C, D')
+PARSER.add_argument('--agent', dest='agent', default='A',
+                    help='options are A, B, C, D')
 
 ARGS = PARSER.parse_args()
 
@@ -116,10 +117,8 @@ def gen_traffic(net):
 
     output('*** Starting load-generators\n %s\n' % ARGS.input_file)
     for host in hosts:
-        tg_cmd = '%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' % (traffic_gen,
-                                                                    ARGS.input_file, host.defaultIntf(),
-                                                                    listen_port, sample_period_us,
-                                                                    ARGS.output_dir, host.name)
+        tg_cmd = ('%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' %
+                  (traffic_gen, ARGS.input_file, host.defaultIntf(), listen_port, sample_period_us, ARGS.output_dir, host.name))
         host.cmd(tg_cmd)
 
     sleep(1)
@@ -127,11 +126,12 @@ def gen_traffic(net):
     output('*** Triggering load-generators\n')
     for host in hosts:
         host.cmd('nc -nzv %s %d' % (host.IP(), listen_port))
-
     ifaces = get_intf_list(net)
 
-    monitor1 = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % ARGS.output_dir, 0.01))
-    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(ifaces, 1, '%s/qlen.txt' % ARGS.output_dir))
+    monitor1 = multiprocessing.Process(
+        target=monitor_devs_ng, args=('%s/rate.txt' % ARGS.output_dir, 0.01))
+    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
+        ifaces, 1, '%s/qlen.txt' % ARGS.output_dir))
 
     monitor1.start()
     monitor2.start()
@@ -208,8 +208,10 @@ def test_iperf(net):
         client.cmdPrint(cmd)
     ifaces = get_intf_list(net)
 
-    monitor1 = multiprocessing.Process(target=monitor_devs_ng, args=('%s/rate.txt' % ARGS.output_dir, 0.01))
-    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(ifaces, 1, '%s/qlen.txt' % ARGS.output_dir))
+    monitor1 = multiprocessing.Process(
+        target=monitor_devs_ng, args=('%s/rate.txt' % ARGS.output_dir, 0.01))
+    monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
+        ifaces, 1, '%s/qlen.txt' % ARGS.output_dir))
 
     monitor1.start()
     monitor2.start()
@@ -226,7 +228,8 @@ def test_iperf(net):
 
 
 def test_fattree(controller=None):
-    net, topo = topo_ecmp.create_ecmp_topo(pod=4, density=2, cpu=ARGS.cpu, max_queue=MAX_QUEUE, dctcp=ARGS.dctcp)
+    net, topo = topo_ecmp.create_ecmp_topo(
+        pod=4, density=2, cpu=ARGS.cpu, max_queue=MAX_QUEUE, dctcp=ARGS.dctcp)
     ovs_v = 13  # default value
     is_ecmp = True  # default value
 
@@ -242,7 +245,8 @@ def test_fattree(controller=None):
     if controller is not None:
         topo_ecmp.connect_controller(net, topo, c0)
         if controller == "Iroko":
-            Popen("sudo python iroko_controller.py --agent %s" % ARGS.agent, shell=True)
+            Popen("sudo python iroko_controller.py --agent %s" %
+                  ARGS.agent, shell=True)
         output('** Waiting for switches to connect to the controller\n')
         sleep(1)
     if ARGS.dctcp:
@@ -258,7 +262,8 @@ def test_fattree(controller=None):
 
 
 def test_non_block():
-    net, topo = topo_non_block.create_non_block_topo(pod=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
+    net, topo = topo_non_block.create_non_block_topo(
+        pod=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
     net.start()
     topo_non_block.config_topo(net, topo)
 
@@ -301,7 +306,8 @@ def test_hedera():
 
 
 def test_dumbbell():
-    net, topo = topo_dumbbell.create_db_topo(hosts=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
+    net, topo = topo_dumbbell.create_db_topo(
+        hosts=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
     ovs_v = 13  # default value
     is_ecmp = True  # default value
 
@@ -311,12 +317,12 @@ def test_dumbbell():
 
     topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)
-    Popen("sudo python iroko_controller.py --agent %s" % ARGS.agent, shell=True)
+    Popen("sudo python iroko_controller.py --agent %s" %
+          ARGS.agent, shell=True)
     #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
     #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
     output('** Waiting for switches to connect to the controller\n')
     sleep(2)
-
     # iperfTest(ARGS, net)
     gen_traffic(net)
 

@@ -20,7 +20,7 @@ MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
 IS_EXPLOIT = False         # do we want to enable an exploit policy?
 ACTIVEAGENT = 'A'       # type of the agent in use
 R_FUN = 'std_dev'   # type of the reward function the agent uses
-FEATURES = 5            # number of statistics we are using
+FEATURES = 2            # number of statistics we are using
 MAX_QUEUE = 5000         # depth of the switch queues
 WAIT = 2                # seconds the agent waits per iteration
 FRAMES = 3              # number of previous matrices to use
@@ -156,8 +156,7 @@ if __name__ == '__main__':
             # Create the data matrix for the agent based on the collected stats
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
-                state = [bws_rx[iface], bws_tx[iface], deltas["delta_q_abs"],
-                         deltas["delta_tx_abs"], deltas["delta_rx_abs"]]
+                state = [deltas["delta_q_abs"], queues[iface]]
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
         except Exception as e:

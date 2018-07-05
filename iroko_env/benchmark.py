@@ -5,8 +5,9 @@ from iroko_plt import IrokoPlotter
 from iroko_env import Iroko_Environment
 
 from tensorforce import TensorForceError
-from tensorforce.agents import Agent
+from tensorforce.agents import Agent, PPOAgent
 from tensorforce.execution import Runner
+
 
 
 
@@ -26,6 +27,8 @@ PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
+
+PARSER.add_argument('--asEnv', '-env', default=False, action='store_true', help='Flag to use RL environment version')
 
 ARGS = PARSER.parse_args()
 
@@ -147,6 +150,77 @@ if __name__ == '__main__':
         # traffic_files = ['incast_8']
         LABELS = ['incast']
         ARGS.train = True
+
+    if ARGS.env:
+	traffic_file = TRAFFIC_FILES[0]
+        environment = IrokoEnvironment(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, ARGS.offset, ARGS.epochs, (algo, conf),ARGS.offset, ARGS.epochs ) 
+	network_spec = [
+	    # dict(type='embedding', indices=100, size=32),
+	    # dict(type'flatten'),
+	    dict(type='dense', size=32),
+	    dict(type='dense', size=32)
+	]
+
+	agent = PPOAgent(
+	    states=environment.states,
+	    actions=environment.actions,
+	    network=network_spec,
+	    # Agent
+	    states_preprocessing=None,
+	    actions_exploration=None,
+	    reward_preprocessing=None,
+	    # MemoryModel
+	    update_mode=dict(
+		unit='episodes',
+		# 10 episodes per update
+		batch_size=20,
+		# Every 10 episodes
+		frequency=20
+	    ),
+	    memory=dict(
+		type='latest',
+		include_next_states=False,
+		capacity=5000
+	    ),
+	    # DistributionModel
+	    distributions=None,
+	    entropy_regularization=0.01,
+	    # PGModel
+	    baseline_mode='states',
+	    baseline=dict(
+		type='mlp',
+		sizes=[32, 32]
+	    ),
+	    baseline_optimizer=dict(
+		type='multi_step',
+		optimizer=dict(
+		    type='adam',
+		    learning_rate=1e-3
+		),
+		num_steps=5
+	    ),
+	    gae_lambda=0.97,
+	    # PGLRModel
+	    likelihood_ratio_clipping=0.2,
+	    # PPOAgent
+	    step_optimizer=dict(
+		type='adam',
+		learning_rate=1e-3
+	    ),
+	    subsampling_fraction=0.2,
+	    optimization_steps=25,
+	    execution=dict(
+		type='single',
+		session_config=None,
+		distributed_spec=None
+	    )
+	)
+
+        runner = Runner(agent=agent, environment=environment)
+	runner.run(episodes=ARGS.epochs)
+	runner.close()
+	print('done training')
+	return 
     # Train the agent
     # Compare against other algorithms, if necessary
     if ARGS.train is True:

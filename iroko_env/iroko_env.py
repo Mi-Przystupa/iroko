@@ -1,9 +1,32 @@
 from tensorforce.environments import Environment
 from iroko_controller import  *
 
+import argparser
+import os
+import sre_yield
+import numpy as np
+from iroko_plt import IrokoPlotter
+
+from subprocess import Popen, PIPE
+
+
 class Iroko_Environment(Environment):
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, input_dir, output_dir, duration, traffie_file, algorithm,
+            traffic_file, plotter, offset, epochs):
+
+        
+        #bench Mark calls
+        self.epochs = offset
+        self.plotter = plotter
+        self.tf = traffic_file
+        os.system('sudo mn -c') 
+        self.f = open("reward.txt", "a+")
+
+        self.algo = algorithm[0]
+        self.conf = algorithm[1]
+        self.startIroko()
+
+        #Iroko controller calls
         self.ic = IrokoController("Iroko")
         self.total_reward = TOTAL_ITERS = 0
        
@@ -16,6 +39,18 @@ class Iroko_Environment(Environment):
         self.num_actions = len(I_H_MAP)
         # open the reward file
         self.file = open('reward.txt', 'a+')
+
+    def startIroko(self):
+        e = self.epochs
+        self.pre_folder = "%s_%d" % (self.conf['pre'], e)
+        self.input_file = '%s/%s/%s' % (self.input_dir, self.conf['tf'], self.tf)
+        self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
+        Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s ' %
+            (self.input_file, self.out_dir, self.duration, self.algo), shell=True)
+        self.epochs += 1
+
+        #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
+        #    (self.input_file, self.out_dir, self.duration, self.algo, ARGS.agent), shell=True)
 
     def spawnCollectors(self):
         self.stats = StatsCollector()
@@ -33,10 +68,6 @@ class Iroko_Environment(Environment):
         print interfaces
 
 
-    def startSimulation(self):
-        print('do something')
-
-
     @property
     def states(self):
         return {'type': 'float', 'shape': (self.num_interfaces*self.num_features, )}
@@ -47,12 +78,13 @@ class Iroko_Environment(Environment):
 
     def close(self):
         #send kill command
+        self.f.close()
         print('closing')
 
     def reset(self):
-        self.startSimulation() 
-        return []
-
+        self.startIroko() 
+        self.spawnCollectors()
+        return np.zeros(18)
     def execute(self, action):
         terminal = False
         reward = 0.0
@@ -84,12 +116,15 @@ class Iroko_Environment(Environment):
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
         except Exception as e:
+
+            os.system('sudo chown -R $USER:$USER %s' % self.out_dir)
+            self.plotter.prune_bw(self.out_dir, self.tf, self.conf['sw'])
             # exit gracefully in case of an error
             template = "{0} occurred. Reason:{1!r}. Time to go..."
             message = template.format(type(e).__name__, e.args)
             print message
             data = default
-            return [], False, 0  
+            return data, False, 0  
 
         # Compute the reward
         print bws_rx

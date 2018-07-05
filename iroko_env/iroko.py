@@ -329,6 +329,27 @@ def test_dumbbell():
     kill_controller()
     net.stop()
 
+def test_dumbbell_env():
+    net, topo = topo_dumbbell.create_db_topo(
+        hosts=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
+    ovs_v = 13  # default value
+    is_ecmp = True  # default value
+
+    net.start()
+    c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+    net.addController(c0)
+
+    topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
+    topo_ecmp.connect_controller(net, topo, c0)
+    #Popen("sudo python iroko_controller.py --agent %s" %
+    #      ARGS.agent, shell=True)
+    #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
+    #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
+    # iperfTest(ARGS, net)
+    gen_traffic(net)
+    net.stop()
+
+
 
 if __name__ == '__main__':
     kill_controller()
@@ -352,6 +373,10 @@ if __name__ == '__main__':
         test_fattree(controller='Iroko')
     elif ARGS.dumbbell:
         test_dumbbell()
+    elif ARGS.dumbell_env:
+        test_dumbbell_env()
+    
+	
     else:
         error('Please specify either hedera, iroko, ecmp, or nonblocking!\n')
     clean()

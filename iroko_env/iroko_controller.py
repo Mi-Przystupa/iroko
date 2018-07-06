@@ -37,7 +37,7 @@ I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
            '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
 HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
-
+'''
 PARSER = ArgumentParser()
 PARSER.add_argument('--agent', dest='version',
                     default=ACTIVEAGENT, help='options are A, B, C, D')
@@ -45,7 +45,7 @@ PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
                     type=bool, help='flag to use explore or expoit environment')
 
 ARGS = PARSER.parse_args()
-
+'''
 
 class IrokoController():
     def __init__(self, name):
@@ -86,7 +86,16 @@ def init_agent(version, is_exploit, interfaces, num_features):
 
 
 if __name__ == '__main__':
+    PARSER = ArgumentParser()
+    PARSER.add_argument('--agent', dest='version',
+                    default=ACTIVEAGENT, help='options are A, B, C, D')
+    PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
+                    type=bool, help='flag to use explore or expoit environment')
+
+    ARGS = PARSER.parse_args()
+
     # set any configuration things
+
     # just incase
     ic = IrokoController("Iroko")
     ARGS.version = ARGS.version.lower()

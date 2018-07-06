@@ -63,6 +63,7 @@ PARSER.add_argument('--dumbbell', dest='dumbbell', default=False,
 PARSER.add_argument('--agent', dest='agent', default='A',
                     help='options are A, B, C, D')
 
+PARSER.add_argument('--dumbbell_env', dest='dumbbell_env', default='False', action='store_true', help='Just run traffic generator')
 ARGS = PARSER.parse_args()
 
 
@@ -373,7 +374,7 @@ if __name__ == '__main__':
         test_fattree(controller='Iroko')
     elif ARGS.dumbbell:
         test_dumbbell()
-    elif ARGS.dumbell_env:
+    elif ARGS.dumbbell_env:
         test_dumbbell_env()
     
 	

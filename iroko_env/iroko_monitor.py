@@ -45,6 +45,7 @@ class StatsCollector(Collector):
         self.overlimits = {}
         self.queues = {}
         self.d_vector = {}
+        self.interfaces_missing = False
 
     def run(self):
         self.set_interfaces()
@@ -52,7 +53,7 @@ class StatsCollector(Collector):
         self.init_deltas()
         while True:
             if self.kill:
-                self.exit()
+                break
             self._collect_stats()
 
     def init_deltas(self):
@@ -131,11 +132,16 @@ class StatsCollector(Collector):
             over_return = {}
             queue_return = {}
             try:
-                output = subprocess.check_output(cmd, shell=True)
-                drop_return = re_dropped.findall(output)
-                over_return = re_overlimit.findall(output)
-                queue_return = re_queued.findall(output)
+                if not self.interfaces_missing:
+                    output = subprocess.check_output(cmd, shell=True)
+                    drop_return = re_dropped.findall(output)
+                    over_return = re_overlimit.findall(output)
+                    queue_return = re_queued.findall(output)
+                else:
+                    raise Exception('interfaces missing')
             except Exception as e:
+
+                self.interfaces_missing = True 
                 # print("Empty Request %s" % e)
                 drop_return[0] = 0
                 over_return[0] = 0
@@ -193,6 +199,8 @@ class StatsCollector(Collector):
     def get_interface_stats(self):
         # self._get_flow_stats(self.iface_list)
         # self.drops, self.overlimits, self.queues = self._get_qdisc_stats(  self.iface_list)
+        if self.interfaces_missing:
+            raise Exception('interfaces missing') 
         return self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues
 
 
@@ -212,7 +220,7 @@ class FlowCollector(Collector):
         self.init_flows()
         while True:
             if self.kill:
-                self.exit()
+                break
             self._collect_flows()
 
     def init_flows(self):

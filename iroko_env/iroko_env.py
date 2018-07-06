@@ -1,7 +1,12 @@
 from tensorforce.environments import Environment
-from iroko_controller import  *
+#from iroko_controller import  *
 
-#import argparser
+from iroko_monitor import StatsCollector
+from iroko_monitor import FlowCollector
+from reward_function import RewardFunction
+
+import socket
+import signal
 import os
 import sre_yield
 import numpy as np
@@ -9,6 +14,64 @@ from iroko_plt import IrokoPlotter
 import time
 
 from subprocess import Popen, PIPE
+
+
+MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
+MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
+IS_EXPLOIT = False         # do we want to enable an exploit policy?
+ACTIVEAGENT = 'A'       # type of the agent in use
+R_FUN = 'std_dev'   # type of the reward function the agent uses
+FEATURES = 2            # number of statistics we are using
+MAX_QUEUE = 5000         # depth of the switch queues
+WAIT = 2                # seconds the agent waits per iteration
+FRAMES = 3              # number of previous matrices to use
+
+###########################################
+
+I_H_MAP = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
+           '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
+           '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
+           '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
+HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
+         "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
+I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
+           '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
+HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
+
+'''
+PARSER = ArgumentParser()
+PARSER.add_argument('--agent', dest='version',
+                    default=ACTIVEAGENT, help='options are A, B, C, D')
+PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
+                    type=bool, help='flag to use explore or expoit environment')
+
+ARGS = PARSER.parse_args()
+'''
+
+class IrokoController():
+    def __init__(self, name):
+        print("Initializing controller")
+        self.name = name
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def send_cntrl_pckt(self, interface, txrate):
+        ip = "192.168.10." + I_H_MAP[interface].split('.')[-1]
+        port = 20130
+        pckt = str(txrate) + '\0'
+        # print("interface: %s, ip: %s, rate: %s") % (interface, ip, txrate)
+        self.sock.sendto(pckt, (ip, port))
+
+
+class GracefulSave:
+    kill_now = False
+
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit)
+        signal.signal(signal.SIGTERM, self.exit)
+
+    def exit(self, signum, frame):
+        print("Time to die...")
+        self.kill_now = True
 
 
 class Iroko_Environment(Environment):
@@ -49,12 +112,37 @@ class Iroko_Environment(Environment):
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
         self.input_file = '%s/%s/%s' % (self.input_dir, self.conf['tf'], self.tf)
         self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
+
+        #
+        print('remember to not change duration here')
+        self.duration = 100 #for debugging, please delete
         Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
             (self.input_file, self.out_dir, self.duration, self.algo), shell=True)
         self.epochs += 1
 
         #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
         #    (self.input_file, self.out_dir, self.duration, self.algo, ARGS.agent), shell=True)
+
+    def KillEnv(self):
+        p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko' | awk '{print $2}'",
+                      stdout=PIPE, shell=True)
+        p_pox.wait()
+        procs = (p_pox.communicate()[0]).split('\n')
+        # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
+        #               stdout=PIPE, shell=True)
+        # p_ryu.wait()
+        # procs.extend((p_ryu.communicate()[0]).split('\n'))
+        # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
+        #               stdout=PIPE, shell=True)
+        # p_ryu.wait()
+        # procs.extend((p_ryu.communicate()[0]).split('\n'))
+        for pid in procs:
+            try:
+                pid = int(pid)
+                Popen('kill %d' % pid, shell=True).wait()
+            except Exception as e:
+                pass
+
 
     def spawnCollectors(self):
         self.stats = StatsCollector()
@@ -91,7 +179,8 @@ class Iroko_Environment(Environment):
         print('closing')
 
     def reset(self):
-        self.startIroko() 
+        #self.KillEnv()
+        #self.startIroko() 
         self.spawnCollectors()
         return np.zeros(self.num_interfaces*self.num_features)
     def execute(self, actions):
@@ -103,14 +192,13 @@ class Iroko_Environment(Environment):
         # let the agent predict bandwidth based on all previous information
         # perform actions
         pred_bw = {}
-        print(actions)
         for i, h_iface in enumerate(I_H_MAP):
-            pred_bw[h_iface] = actions[i] 
+            pred_bw[h_iface] =int(actions[i] *  MAX_CAPACITY)
             self.ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
 
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - self.start_time), 3)))
-        start_time = time.time()
+        self.start_time = time.time()
 
         try:
             # retrieve the current deltas before updating total values
@@ -133,6 +221,9 @@ class Iroko_Environment(Environment):
             # exit gracefully in case of an error
             template = "{0} occurred. Reason:{1!r}. Time to go..."
             message = template.format(type(e).__name__, e.args)
+
+            self.stats.terminate()
+            self.flows.terminate()
             print('a wild night eh')
             print message
             return data.reshape(self.num_interfaces*self.num_features), True, 0  
@@ -148,7 +239,7 @@ class Iroko_Environment(Environment):
         # print("Current Reward %d" % reward)
         self.file.write('%f\n' % (reward))
 
-        #total_reward += reward
+        self.total_reward += reward
         #total_iters += 1
 
 

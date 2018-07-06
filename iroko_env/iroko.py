@@ -136,7 +136,6 @@ def gen_traffic(net):
 
     monitor1.start()
     monitor2.start()
-
     sleep(ARGS.time)
     output('*** Stopping monitor\n')
     monitor1.terminate()
@@ -339,6 +338,9 @@ def test_dumbbell_env():
     net.start()
     c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
     net.addController(c0)
+
+    output('** Waiting for switches to connect to the controller\n')
+    sleep(2)
 
     topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)

@@ -5,7 +5,7 @@ from iroko_plt import IrokoPlotter
 from iroko_env import Iroko_Environment
 
 from tensorforce import TensorForceError
-from tensorforce.agents import Agent, PPOAgent
+from tensorforce.agents import Agent, PPOAgent, DDPGAgent
 from tensorforce.execution import Runner
 
 

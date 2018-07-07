@@ -15,6 +15,10 @@ import time
 
 from subprocess import Popen, PIPE
 
+from iroko import DumbbellSimulation, MAX_QUEUE
+
+
+
 
 MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
 MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
@@ -107,42 +111,48 @@ class Iroko_Environment(Environment):
         self.file = open('reward.txt', 'a+')
 
     def startIroko(self):
-        print('hello world')
         e = self.epochs
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
         self.input_file = '%s/%s/%s' % (self.input_dir, self.conf['tf'], self.tf)
         self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
 
         #
-        print('remember to not change duration here')
-        self.duration = 100 #for debugging, please delete
-        Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
-            (self.input_file, self.out_dir, self.duration, self.algo), shell=True)
+        #print('remember to not change duration here')
+        #self.duration = 100 #for debugging, please delete
+        cpu = .03 
+        max_queue = MAX_QUEUE
+
+        self.simulation = DumbbellSimulation(self.duration, cpu, max_queue, self.input_file, self.output_dir, self.duration)
+
+        self.simulation.daemon = True
+        self.simulation.start()
+        #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
+        #    (self.input_file, self.out_dir, self.duration, self.algo), shell=True)
         self.epochs += 1
+
+        #need to wait until Iroko is started for sure
+        time.sleep(5)
 
         #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
         #    (self.input_file, self.out_dir, self.duration, self.algo, ARGS.agent), shell=True)
 
-    def KillEnv(self):
-        p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko' | awk '{print $2}'",
-                      stdout=PIPE, shell=True)
-        p_pox.wait()
-        procs = (p_pox.communicate()[0]).split('\n')
-        # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
-        #               stdout=PIPE, shell=True)
-        # p_ryu.wait()
-        # procs.extend((p_ryu.communicate()[0]).split('\n'))
-        # p_ryu = Popen("ps aux | grep 'ryu' | awk '{print $2}'",
-        #               stdout=PIPE, shell=True)
-        # p_ryu.wait()
-        # procs.extend((p_ryu.communicate()[0]).split('\n'))
-        for pid in procs:
-            try:
-                pid = int(pid)
-                Popen('kill %d' % pid, shell=True).wait()
-            except Exception as e:
-                pass
+    def CheckIfDead(self,tocheck, retry, timeoutlength):
+        for i in range(0, retry):
+            if tocheck.isAlive():
+                tocheck.join(timeoutlength)
+            else:
+                break 
 
+    def KillEnv(self):
+        self.stats.terminate()
+        self.CheckIfDead(self.stats, 3, 1)
+
+        self.flows.terminate()
+        self.CheckIfDead(self.flows, 3, 1)        
+
+        print(self.simulation.isAlive())
+        self.simulation.terminate()
+        self.CheckIfDead(self.simulation, 3, 1)       
 
     def spawnCollectors(self):
         self.stats = StatsCollector()
@@ -179,8 +189,10 @@ class Iroko_Environment(Environment):
         print('closing')
 
     def reset(self):
-        #self.KillEnv()
-        #self.startIroko() 
+        self.KillEnv()
+        self.startIroko() 
+        print('iroko was started')
+
         self.spawnCollectors()
         return np.zeros(self.num_interfaces*self.num_features)
     def execute(self, actions):

@@ -72,6 +72,7 @@ class RewardFunction:
         print("STD NORMALIZED: %f" % std_reward)
         for i, iface in enumerate(self.host_ifaces.keys()):
             bw_reward += float(bws_tx[iface]) / float(self.max_bw)
+        for i, iface in enumerate(self.interfaces):
             queue_reward -= (self.num_interfaces / 2) * \
                 (float(queues[iface]) / float(self.max_queue))**2
         print("STD Reward:", std_reward * 2)

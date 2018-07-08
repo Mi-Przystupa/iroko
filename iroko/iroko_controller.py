@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
         # Compute the reward
         print bws_rx
-        bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues, pred_bw)
+        bw_reward, queue_reward = dopamin.get_reward(bws_tx, queues, pred_bw)
         reward = bw_reward + queue_reward
         print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
               (reward, bw_reward, queue_reward))

@@ -108,4 +108,4 @@ void add_to_total_bytes_out(long long val);
 // vim: set ts=4 sw=4 expandtab:
 
 #define BUFSIZE 65536
-#define BUFSIZE_UDP 9450
+#define BUFSIZE_UDP 1400

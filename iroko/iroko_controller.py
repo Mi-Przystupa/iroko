@@ -123,7 +123,7 @@ if __name__ == '__main__':
         I_H_MAP, interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
     # kind of a wild card, num_features depends on the input we have
-    num_features = FEATURES  # + len(HOSTS) * 2 + num_delta
+    num_features = FEATURES  + len(HOSTS) * 2 #+ num_delta
 
     # initialize the Agent
     Agent = init_agent(ARGS.version, IS_EXPLOIT, interfaces, num_features)
@@ -157,6 +157,8 @@ if __name__ == '__main__':
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
                 state = [deltas["delta_q_abs"], queues[iface]]
+                state.extend(src_flows[iface])
+                state.extend(dst_flows[iface])
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
         except Exception as e:

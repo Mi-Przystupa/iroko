@@ -123,7 +123,7 @@ if __name__ == '__main__':
         I_H_MAP, interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
     # kind of a wild card, num_features depends on the input we have
-    num_features = FEATURES  + len(HOSTS) * 2 #+ num_delta
+    num_features = FEATURES + len(HOSTS) * 2  # + num_delta
 
     # initialize the Agent
     Agent = init_agent(ARGS.version, IS_EXPLOIT, interfaces, num_features)
@@ -138,8 +138,10 @@ if __name__ == '__main__':
         Agent.predictBandwidthOnHosts()
         # perform actions
         pred_bw = {}
+        print("Actions:")
         for h_iface in I_H_MAP:
             pred_bw[h_iface] = Agent.getHostsPredictedBandwidth(h_iface)
+            print("%s: %3f mbit\t" % (h_iface, pred_bw[h_iface] * 10 / MAX_CAPACITY))
             ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - start_time), 3)))
@@ -169,11 +171,9 @@ if __name__ == '__main__':
             break
 
         # Compute the reward
-        print bws_rx
-        bw_reward, queue_reward = dopamin.get_reward(bws_tx, queues, pred_bw)
+        bw_reward, queue_reward = dopamin.get_reward(
+            bws_rx, bws_tx, queues, pred_bw)
         reward = bw_reward + queue_reward
-        print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
-              (reward, bw_reward, queue_reward))
         print("#######################################")
 
         # update Agents internal representations

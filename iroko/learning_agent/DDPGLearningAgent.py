@@ -222,7 +222,7 @@ class LearningAgent:
         # actions should be a dictionary of specified actions
         actions = self._getActions()
         if self.display_action % 10 == 0:
-            print('curr action: {}'.format(actions))
+            # print('curr action: {}'.format(actions))
             self.display_action = 0
         for host in self.hosts.keys():
             a = np.clip(np.abs(actions[host]), self.min_alloc, self.max_alloc)

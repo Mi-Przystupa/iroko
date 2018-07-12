@@ -14,7 +14,6 @@ from iroko_plt import IrokoPlotter
 import time
 
 from subprocess import Popen, PIPE
-
 from iroko import DumbbellSimulation, MAX_QUEUE
 
 
@@ -85,7 +84,6 @@ class Iroko_Environment(Environment):
         
         #bench Mark calls
         self.epochs = offset
-        self.plotter = plotter
         self.tf = traffic_file
         os.system('sudo mn -c') 
         self.f = open("reward.txt", "a+")
@@ -94,8 +92,8 @@ class Iroko_Environment(Environment):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.duration = duration
-        self.startIroko()
 
+        self.startIroko(20)
         #Iroko controller calls
         self.ic = IrokoController("Iroko")
         self.total_reward = TOTAL_ITERS = 0
@@ -110,24 +108,23 @@ class Iroko_Environment(Environment):
         # open the reward file
         self.file = open('reward.txt', 'a+')
 
-    def startIroko(self):
+    def startIroko(self, duration=None):
         e = self.epochs
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
         self.input_file = '%s/%s/%s' % (self.input_dir, self.conf['tf'], self.tf)
         self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
 
-        #
-        #print('remember to not change duration here')
-        #self.duration = 100 #for debugging, please delete
         cpu = .03 
         max_queue = MAX_QUEUE
 
-        self.simulation = DumbbellSimulation(self.duration, cpu, max_queue, self.input_file, self.output_dir, self.duration)
-
-        self.simulation.daemon = True
-        self.simulation.start()
-        #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
-        #    (self.input_file, self.out_dir, self.duration, self.algo), shell=True)
+        #self.simulation = DumbbellSimulation(self.duration, cpu, max_queue, self.input_file, self.output_dir, self.duration)
+        #self.simulation.daemon = True
+        #self.simulation.start()
+        if not duration:
+            #is for initialization purposes, no sense running for full time, just long enough to set other parameters
+            duration = self.duration
+        self.p = Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
+            (self.input_file, self.out_dir, duration, self.algo), shell=True,stdout=PIPE)
         self.epochs += 1
 
         #need to wait until Iroko is started for sure
@@ -150,9 +147,12 @@ class Iroko_Environment(Environment):
         self.flows.terminate()
         self.CheckIfDead(self.flows, 3, 1)        
 
-        print(self.simulation.isAlive())
-        self.simulation.terminate()
-        self.CheckIfDead(self.simulation, 3, 1)       
+        print('wait for Iroko to finish it to finish')
+        self.p.wait()
+#        old way to run simulation
+#        print(self.simulation.isAlive())
+#        self.simulation.terminate()
+#        self.CheckIfDead(self.simulation, 3, 1)       
 
     def spawnCollectors(self):
         self.stats = StatsCollector()
@@ -191,15 +191,19 @@ class Iroko_Environment(Environment):
     def reset(self):
         self.KillEnv()
         self.startIroko() 
-        print('iroko was started')
-
         self.spawnCollectors()
         return np.zeros(self.num_interfaces*self.num_features)
+
     def execute(self, actions):
         terminal = False
         reward = 0.0
-
         data = np.zeros((self.num_interfaces, self.num_features))
+
+        if self.p.poll() != None:
+            print('Generator Finished. Simulation over')
+            self.KillEnv()
+            return data.reshape(self.num_interfaces*self.num_features), True, 0  
+
 
         # let the agent predict bandwidth based on all previous information
         # perform actions
@@ -229,7 +233,6 @@ class Iroko_Environment(Environment):
         except Exception as e:
 
             os.system('sudo chown -R $USER:$USER %s' % self.out_dir)
-            #self.plotter.prune_bw(self.out_dir, self.tf, self.conf['sw'])
             # exit gracefully in case of an error
             template = "{0} occurred. Reason:{1!r}. Time to go..."
             message = template.format(type(e).__name__, e.args)

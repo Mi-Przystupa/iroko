@@ -7,6 +7,7 @@ from iroko_env import Iroko_Environment
 from tensorforce import TensorForceError
 from tensorforce.agents import Agent, PPOAgent, DDPGAgent
 from tensorforce.execution import Runner
+import numpy as np
 
 
 
@@ -126,6 +127,9 @@ def yn_choice(message, default='y'):
     shall = raw_input("%s (y/N) " % message).lower() == 'y'
     return shall
 
+def end_of_episode(plotter, r):
+    episode_rewards = np.array(r.episode_rewards)
+    print('Average Episode Reward: {}'.format(episode_rewards.mean()))
 
 if __name__ == '__main__':
 
@@ -156,7 +160,7 @@ if __name__ == '__main__':
         algorithms = {}
         algorithms['dumbbell_env'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
         TRAFFIC_FILES = ['incast_2']
-        DURATION = 600
+        DURATION = 40#600
         # traffic_files = ['incast_4']
         # traffic_files = ['incast_8']
         LABELS = ['incast']
@@ -171,8 +175,8 @@ if __name__ == '__main__':
         network_spec = [
             # dict(type='embedding', indices=100, size=32),
             # dict(type'flatten'),
-            dict(type='dense', size=32),
-            dict(type='dense', size=32)
+            dict(type='dense', size=400, activation='relu'),
+            dict(type='dense', size=300, activation='relu')
         ]
 
         agent = PPOAgent(
@@ -229,9 +233,9 @@ if __name__ == '__main__':
             distributed_spec=None
             )
         )
-
+        end = lambda r: end_of_episode(plotter, r)
         runner = Runner(agent=agent, environment=environment)
-        runner.run(episodes=ARGS.epochs)
+        runner.run(episodes=ARGS.epochs, episode_finished=end)
         runner.close()
         print('done training')
     # Train the agent

@@ -25,48 +25,6 @@ import topo_non_block
 import topo_dumbbell
 
 MAX_QUEUE = 5000
-'''
-PARSER = ArgumentParser(description="Iroko PARSER")
-
-PARSER.add_argument('-d', '--dir', dest='output_dir', default='log',
-                    help='Output directory')
-
-PARSER.add_argument('-i', '--input', dest='input_file',
-                    default='../inputs/stag_prob_0_2_3_data',
-                    help='Traffic generator input file')
-
-PARSER.add_argument('-t', '--time', dest='time', type=int, default=60,
-                    help='Duration (sec) to run the experiment')
-
-PARSER.add_argument('-p', '--cpu', dest='cpu', type=float, default=-1,
-                    help='cpu fraction to allocate to each host')
-
-PARSER.add_argument('-n', '--nonblocking', dest='nonblocking', default=False,
-                    action='store_true', help='Run the experiment on the noneblocking topo')
-
-PARSER.add_argument('--iperf', dest='iperf', default=False, action='store_true',
-                    help='Use iperf to generate traffics')
-
-PARSER.add_argument('--hedera', dest='hedera', default=False,
-                    action='store_true', help='Run the experiment with hedera GFF scheduler')
-
-PARSER.add_argument('--ecmp', dest='ECMP', default=False,
-                    action='store_true', help='Run the experiment with ECMP routing')
-
-PARSER.add_argument('--iroko', dest='iroko', default=False,
-                    action='store_true', help='Run the experiment with Iroko rate limiting')
-
-PARSER.add_argument('--dctcp', dest='dctcp', default=False,
-                    action='store_true', help='Run the experiment with DCTCP congestion control')
-PARSER.add_argument('--dumbbell', dest='dumbbell', default=False,
-                    action='store_true', help='Run the experiment with a dumbbell topology.')
-
-PARSER.add_argument('--agent', dest='agent', default='A',
-                    help='options are A, B, C, D')
-
-PARSER.add_argument('--dumbbell_env', dest='dumbbell_env', default='False', action='store_true', help='Just run traffic generator')
-ARGS = PARSER.parse_args()
-'''
 
 def start_tcpprobe():
     os.system("killall -9 cat")
@@ -449,12 +407,55 @@ class DumbbellSimulation(threading.Thread):
 
 
 
+def handleARGS():
+    PARSER = ArgumentParser(description="Iroko PARSER")
+
+    PARSER.add_argument('-d', '--dir', dest='output_dir', default='log',
+                        help='Output directory')
+
+    PARSER.add_argument('-i', '--input', dest='input_file',
+                        default='../inputs/stag_prob_0_2_3_data',
+                        help='Traffic generator input file')
+
+    PARSER.add_argument('-t', '--time', dest='time', type=int, default=60,
+                        help='Duration (sec) to run the experiment')
+
+    PARSER.add_argument('-p', '--cpu', dest='cpu', type=float, default=-1,
+                        help='cpu fraction to allocate to each host')
+
+    PARSER.add_argument('-n', '--nonblocking', dest='nonblocking', default=False,
+                        action='store_true', help='Run the experiment on the noneblocking topo')
+
+    PARSER.add_argument('--iperf', dest='iperf', default=False, action='store_true',
+                        help='Use iperf to generate traffics')
+
+    PARSER.add_argument('--hedera', dest='hedera', default=False,
+                        action='store_true', help='Run the experiment with hedera GFF scheduler')
+
+    PARSER.add_argument('--ecmp', dest='ECMP', default=False,
+                        action='store_true', help='Run the experiment with ECMP routing')
+
+    PARSER.add_argument('--iroko', dest='iroko', default=False,
+                        action='store_true', help='Run the experiment with Iroko rate limiting')
+
+    PARSER.add_argument('--dctcp', dest='dctcp', default=False,
+                        action='store_true', help='Run the experiment with DCTCP congestion control')
+    PARSER.add_argument('--dumbbell', dest='dumbbell', default=False,
+                        action='store_true', help='Run the experiment with a dumbbell topology.')
+
+    PARSER.add_argument('--agent', dest='agent', default='A',
+                        help='options are A, B, C, D')
+
+    PARSER.add_argument('--dumbbell_env', dest='dumbbell_env', default='False', action='store_true', help='Just run traffic generator')
+    ARGS = PARSER.parse_args()
+    return ARGS
 
 
 
 if __name__ == '__main__':
-    kill_controller()
-    clean()
+    ARGS = handleARGS()
+    #kill_controller()
+    #clean()
     setLogLevel('output')
     if not os.path.exists(ARGS.output_dir):
         print(ARGS.output_dir)

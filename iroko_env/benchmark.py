@@ -133,6 +133,7 @@ def yn_choice(message, default='y'):
 def end_of_episode(plotter, r):
     episode_rewards = np.array(r.episode_rewards)
     print('Average Episode Reward: {}'.format(episode_rewards.mean()))
+    return True
 
 
 if __name__ == '__main__':
@@ -242,9 +243,8 @@ if __name__ == '__main__':
         def end(r):
             return end_of_episode(plotter, r)
         runner = Runner(agent=agent, environment=environment)
-        runner.run(episodes=ARGS.epochs, episode_finished=end)
+        runner.run(num_episodes=ARGS.epochs,episode_finished=end)
         runner.close()
-        print("Done with training")
 
     # Train the agent
     # Compare against other algorithms, if necessary

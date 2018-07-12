@@ -142,7 +142,7 @@ class Iroko_Environment(Environment):
         self.flows.terminate()
         self.CheckIfDead(self.flows, 3, 1)
 
-        print('wait for Iroko to finish it to finish')
+        print('wait for simulation to end')
         self.p.wait()
 
     def spawnCollectors(self):
@@ -177,6 +177,7 @@ class Iroko_Environment(Environment):
         print('closing')
 
     def reset(self):
+        print('reseting environment')
         self.KillEnv()
         self.startIroko()
         self.spawnCollectors()
@@ -218,7 +219,7 @@ class Iroko_Environment(Environment):
                 state = [deltas["delta_q_abs"], self.queues[iface]]
                 state.extend(self.src_flows[iface])
                 state.extend(self.dst_flows[iface])
-                # print("Current State %s " % iface, state)
+                print("Current State %s " % iface, state)
                 data[i] = np.array(state)
         except Exception as e:
             os.system('sudo chown -R $USER:$USER %s' % self.out_dir)

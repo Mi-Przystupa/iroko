@@ -26,6 +26,7 @@ import topo_dumbbell
 
 MAX_QUEUE = 5000
 
+
 def start_tcpprobe():
     os.system("killall -9 cat")
     ''' Install tcp_probe module and dump to file '''
@@ -288,6 +289,7 @@ def test_dumbbell():
     kill_controller()
     net.stop()
 
+
 def test_dumbbell_env():
     net, topo = topo_dumbbell.create_db_topo(
         hosts=4, cpu=ARGS.cpu, max_queue=MAX_QUEUE, bw=10)
@@ -303,7 +305,7 @@ def test_dumbbell_env():
 
     topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
     topo_ecmp.connect_controller(net, topo, c0)
-    #Popen("sudo python iroko_controller.py --agent %s" %
+    # Popen("sudo python iroko_controller.py --agent %s" %
     #      ARGS.agent, shell=True)
     #     #makeTerm(c0, cmd="./ryu/bin/ryu-manager --observe-links --ofp-tcp-listen-port 6653 network_monitor.py")
     #     #makeTerm(c0, cmd="sudo python iroko_controller.py")
@@ -311,14 +313,16 @@ def test_dumbbell_env():
     gen_traffic(net)
     net.stop()
 
+
 import re
 import time
 import threading
 
+
 class DumbbellSimulation(threading.Thread):
     def __init__(self, duration, cpu, max_queue, input_file, output_dir, time):
         threading.Thread.__init__(self)
-        self.name ='Dumbbell Simulation'
+        self.name = 'Dumbbell Simulation'
         self.kill = False
         self.duration = duration
         self.cpu = cpu
@@ -327,6 +331,7 @@ class DumbbellSimulation(threading.Thread):
         self.input_file = input_file
         self.output_dir = output_dir
         self.time = time
+        self.num_ifaces = 0
 
     def run(self):
         print('Starting network')
@@ -340,7 +345,8 @@ class DumbbellSimulation(threading.Thread):
         hosts = net.hosts
         traffic_gen = 'cluster_loadgen/loadgen'
         if not os.path.isfile(traffic_gen):
-            error('The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
+            error(
+                'The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
             return
 
         output('*** Starting load-generators\n %s\n' % self.input_file)
@@ -369,7 +375,7 @@ class DumbbellSimulation(threading.Thread):
                 sleep(1)
             else:
                 break
-        #sleep(self.time)
+        # sleep(self.time)
         output('*** Stopping monitor\n')
         monitor1.terminate()
         monitor2.terminate()
@@ -385,7 +391,6 @@ class DumbbellSimulation(threading.Thread):
             hosts=4, cpu=self.cpu, max_queue=self.max_queue, bw=10)
         ovs_v = 13  # default value
         is_ecmp = True  # default value
-
         net.start()
         c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
         net.addController(c0)
@@ -396,15 +401,14 @@ class DumbbellSimulation(threading.Thread):
         topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
         topo_ecmp.connect_controller(net, topo, c0)
 
-        #begin sending traffic
+        self.num_ifaces = topo.num_ifaces
+        # begin sending traffic
         self.gen_traffic(net)
         net.stop()
         self.kill = True
 
     def terminate(self):
         self.kill = True
-
-
 
 
 def handleARGS():
@@ -446,16 +450,16 @@ def handleARGS():
     PARSER.add_argument('--agent', dest='agent', default='A',
                         help='options are A, B, C, D')
 
-    PARSER.add_argument('--dumbbell_env', dest='dumbbell_env', default='False', action='store_true', help='Just run traffic generator')
+    PARSER.add_argument('--dumbbell_env', dest='dumbbell_env', default='False',
+                        action='store_true', help='Just run traffic generator')
     ARGS = PARSER.parse_args()
     return ARGS
 
 
-
 if __name__ == '__main__':
     ARGS = handleARGS()
-    #kill_controller()
-    #clean()
+    # kill_controller()
+    # clean()
     setLogLevel('output')
     if not os.path.exists(ARGS.output_dir):
         print(ARGS.output_dir)
@@ -477,8 +481,7 @@ if __name__ == '__main__':
         test_dumbbell()
     elif ARGS.dumbbell_env:
         test_dumbbell_env()
-    
-	
+
     else:
         error('Please specify either hedera, iroko, ecmp, or nonblocking!\n')
     clean()

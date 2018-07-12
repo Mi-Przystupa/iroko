@@ -30,6 +30,7 @@ class DumbbellTopo(Topo):
         self.switch_e = None
         self.hostList = []
         self.switchList = []
+        self.num_ifaces = 0
 
         # Topo initiation
         Topo.__init__(self)
@@ -62,8 +63,10 @@ class DumbbellTopo(Topo):
             else:
                 self.addLink(self.switch_e, host, bw=bw,
                              max_queue_size=queue)   # use_htb=False
+            self.num_ifaces += 2
         self.addLink(self.switch_w, self.switch_e, bw=bw,
                      max_queue_size=queue)   # use_htb=False
+        self.num_ifaces += 2
 
     def set_ovs_protocol(self, ovs_v):
         """

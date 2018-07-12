@@ -495,7 +495,7 @@ size_t send_recv_data(struct traffic_gen_info *tgen_info, size_t max_send_recv_s
             tgen_info->bytes_transferred += ret;
             add_to_total_bytes_out(ret);
         }
-        else if (ret == -1 && errno != EAGAIN)
+        else if (ret == -1)
         {
             //printf("%s:%d errno=%d\n", __FILE__, __LINE__, errno);
             perror("write");
@@ -519,7 +519,7 @@ size_t send_recv_data(struct traffic_gen_info *tgen_info, size_t max_send_recv_s
     }
     else if (tgen_info->type == TYPE_UDP)
     {
-        ret = sendto(tgen_info->sock, send_buf, send_recv_size, MSG_DONTWAIT, (const struct sockaddr *)&tgen_info->dstaddr, socklen);
+        ret = sendto(tgen_info->sock, send_buf, send_recv_size, MSG_WAITALL, (const struct sockaddr *)&tgen_info->dstaddr, socklen);
         if (ret > 0)
         {
             tgen_info->bytes_left -= ret;

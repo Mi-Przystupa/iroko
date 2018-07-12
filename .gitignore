@@ -148,28 +148,25 @@ Hedera/tcp\.txt
 results/
 .DS_Store
 
-iroko/ecmp/client\.txt
-iroko/ecmp/log/
-iroko/ecmp/1
-iroko/ecmp/tmp/
 *.sublime-workspace
 *.sublime-project
 
-iroko/ecmp/reports\.txt
-
-iroko/ecmp/results\.txt
 
 iroko/log/
 
 lodgen
 tags
-iroko/1
 Hedera/1
 
+iroko/ecmp/client\.txt
+iroko/ecmp/log/
+iroko/ecmp/1
+iroko/ecmp/tmp/
+iroko/ecmp/reports\.txt
+iroko/ecmp/results\.txt
+iroko/1
 iroko/results/
 iroko/graphs/reference_backups/
-
-
 iroko/actor*
 iroko/critic*
 iroko/buffer\.npy
@@ -185,3 +182,27 @@ iroko/LearningAgent/*.swp
 iroko/\.directory
 iroko/pull\.sh
 sftp-config*.json
+
+#iroko_env/ecmp/client\.txt
+#iroko_env/ecmp/log/
+#iroko_env/ecmp/1
+#iroko_env/ecmp/tmp/
+#iroko_env/ecmp/reports\.txt
+#iroko_env/ecmp/results\.txt
+#iroko_env/1
+#iroko_env/results/
+#iroko_env/graphs/reference_backups/
+#iroko_env/actor*
+#iroko_env/critic*
+#iroko_env/buffer\.npy
+#iroko_env/index\.npy
+#iroko_env/plots/
+#iroko_env/reward\.txt
+#iroko_env/LearningAgent/actor*
+#iroko_env/LearningAgent/critic*
+#iroko_env/LearningAgent/actor
+#iroko_env/LearningAgent/critic
+#iroko_env/LearningAgent/*.npy
+#iroko_env/LearningAgent/*.swp
+#iroko_env/\.directory
+#iroko_env/pull\.sh

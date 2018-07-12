@@ -8,7 +8,6 @@ from reward_function import RewardFunction
 import socket
 import signal
 import os
-import sre_yield
 import numpy as np
 from iroko_plt import IrokoPlotter
 import time
@@ -17,15 +16,12 @@ from subprocess import Popen, PIPE
 from iroko import DumbbellSimulation, MAX_QUEUE
 
 
-
-
 MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
 MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
 IS_EXPLOIT = False         # do we want to enable an exploit policy?
 ACTIVEAGENT = 'A'       # type of the agent in use
 R_FUN = 'std_dev'   # type of the reward function the agent uses
 FEATURES = 2            # number of statistics we are using
-MAX_QUEUE = 5000         # depth of the switch queues
 WAIT = 2                # seconds the agent waits per iteration
 FRAMES = 3              # number of previous matrices to use
 
@@ -50,6 +46,7 @@ PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
 
 ARGS = PARSER.parse_args()
 '''
+
 
 class IrokoController():
     def __init__(self, name):
@@ -79,13 +76,12 @@ class GracefulSave:
 
 class Iroko_Environment(Environment):
     def __init__(self, input_dir, output_dir, duration, traffic_file, algorithm,
-            plotter, offset, epochs):
+                 plotter, offset, epochs):
 
-        
-        #bench Mark calls
+        # bench Mark calls
         self.epochs = offset
         self.tf = traffic_file
-        os.system('sudo mn -c') 
+        os.system('sudo mn -c')
         self.f = open("reward.txt", "a+")
         self.algo = algorithm[0]
         self.conf = algorithm[1]
@@ -94,15 +90,16 @@ class Iroko_Environment(Environment):
         self.duration = duration
 
         self.startIroko(20)
-        #Iroko controller calls
+        # Iroko controller calls
         self.ic = IrokoController("Iroko")
-        self.total_reward = TOTAL_ITERS = 0
-       
+        self.total_reward = 0
+
         time.sleep(2)
         self.spawnCollectors()
-        self.dopamin = RewardFunction(I_H_MAP,self.interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
+        self.dopamin = RewardFunction(
+            I_H_MAP, self.interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
-        self.num_features = FEATURES
+        self.num_features = FEATURES + len(HOSTS) *2
         self.num_interfaces = len(self.stats.iface_list)
         self.num_actions = len(I_H_MAP)
         # open the reward file
@@ -111,54 +108,48 @@ class Iroko_Environment(Environment):
     def startIroko(self, duration=None):
         e = self.epochs
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
-        self.input_file = '%s/%s/%s' % (self.input_dir, self.conf['tf'], self.tf)
+        self.input_file = '%s/%s/%s' % (self.input_dir,
+                                        self.conf['tf'], self.tf)
         self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
-
-        cpu = .03 
-        max_queue = MAX_QUEUE
 
         #self.simulation = DumbbellSimulation(self.duration, cpu, max_queue, self.input_file, self.output_dir, self.duration)
         #self.simulation.daemon = True
-        #self.simulation.start()
+        # self.simulation.start()
         if not duration:
-            #is for initialization purposes, no sense running for full time, just long enough to set other parameters
+            # is for initialization purposes, no sense running for full time, just long enough to set other parameters
             duration = self.duration
         self.p = Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
-            (self.input_file, self.out_dir, duration, self.algo), shell=True,stdout=PIPE)
+                       (self.input_file, self.out_dir, duration, self.algo), shell=True, stdout=PIPE)
         self.epochs += 1
 
-        #need to wait until Iroko is started for sure
+        # need to wait until Iroko is started for sure
         time.sleep(5)
 
-        #Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
+        # Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s --agent %s' %
         #    (self.input_file, self.out_dir, self.duration, self.algo, ARGS.agent), shell=True)
 
-    def CheckIfDead(self,tocheck, retry, timeoutlength):
+    def CheckIfDead(self, tocheck, retry, timeoutlength):
         for i in range(0, retry):
             if tocheck.isAlive():
                 tocheck.join(timeoutlength)
             else:
-                break 
+                break
 
     def KillEnv(self):
         self.stats.terminate()
         self.CheckIfDead(self.stats, 3, 1)
 
         self.flows.terminate()
-        self.CheckIfDead(self.flows, 3, 1)        
+        self.CheckIfDead(self.flows, 3, 1)
 
         print('wait for Iroko to finish it to finish')
         self.p.wait()
-#        old way to run simulation
-#        print(self.simulation.isAlive())
-#        self.simulation.terminate()
-#        self.CheckIfDead(self.simulation, 3, 1)       
 
     def spawnCollectors(self):
         self.stats = StatsCollector()
-        self.stats.daemon=True
+        self.stats.daemon = True
         self.stats.start()
-         # Launch an asynchronous flow collector
+        # Launch an asynchronous flow collector
         self.flows = FlowCollector(HOSTS)
         self.flows.daemon = True
         self.flows.start()
@@ -172,46 +163,43 @@ class Iroko_Environment(Environment):
         # initialize the stats matrix
         self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues = self.stats.get_interface_stats()
 
-
-
-
     @property
     def states(self):
-        return {'type': 'float', 'shape': (self.num_interfaces*self.num_features, )}
+        return {'type': 'float', 'shape': (self.num_interfaces * self.num_features, )}
 
     @property
     def actions(self):
-        return {'type': 'float', 'shape': (len(self.stats.iface_list), ), 'max_value':1.0, 'min_value': 0.1}
+        return {'type': 'float', 'shape': (len(self.stats.iface_list), ), 'max_value': 1.0, 'min_value': 0.1}
 
     def close(self):
-        #send kill command
+        # send kill command
         self.f.close()
         print('closing')
 
     def reset(self):
         self.KillEnv()
-        self.startIroko() 
+        self.startIroko()
         self.spawnCollectors()
-        return np.zeros(self.num_interfaces*self.num_features)
+        return np.zeros(self.num_interfaces * self.num_features)
 
     def execute(self, actions):
         terminal = False
         reward = 0.0
         data = np.zeros((self.num_interfaces, self.num_features))
 
-        if self.p.poll() != None:
+        if self.p.poll() is not None:
             print('Generator Finished. Simulation over')
             self.KillEnv()
-            return data.reshape(self.num_interfaces*self.num_features), True, 0  
-
+            return data.reshape(self.num_interfaces * self.num_features), True, 0
 
         # let the agent predict bandwidth based on all previous information
         # perform actions
         pred_bw = {}
         for i, h_iface in enumerate(I_H_MAP):
-            pred_bw[h_iface] =int(actions[i] *  MAX_CAPACITY)
+            pred_bw[h_iface] = int(actions[i] * MAX_CAPACITY)
+            print("%s: %3f mbit\t" %
+                  (h_iface, pred_bw[h_iface] * 10 / MAX_CAPACITY))
             self.ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
-
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - self.start_time), 3)))
         self.start_time = time.time()
@@ -222,12 +210,13 @@ class Iroko_Environment(Environment):
                 self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues)
             # get the absolute values as well as active interface flow
             self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues = self.stats.get_interface_stats()
-            src_flows, dst_flows = self.flows.get_interface_flows()
-
+            self.src_flows, self.dst_flows = self.flows.get_interface_flows()
             # Create the data matrix for the agent based on the collected stats
             for i, iface in enumerate(self.interfaces):
                 deltas = delta_vector[iface]
                 state = [deltas["delta_q_abs"], self.queues[iface]]
+                state.extend(self.src_flows[iface])
+                state.extend(self.dst_flows[iface])
                 # print("Current State %s " % iface, state)
                 data[i] = np.array(state)
         except Exception as e:
@@ -241,14 +230,12 @@ class Iroko_Environment(Environment):
             self.flows.terminate()
             print('a wild night eh')
             print message
-            return data.reshape(self.num_interfaces*self.num_features), True, 0  
+            return data.reshape(self.num_interfaces * self.num_features), True, 0
 
         # Compute the reward
-        print self.bws_rx
-        bw_reward, queue_reward = self.dopamin.get_reward(self.bws_rx, self.queues, pred_bw)
+        bw_reward, queue_reward = self.dopamin.get_reward(
+            self.bws_rx, self.bws_tx, self.queues, pred_bw)
         reward = bw_reward + queue_reward
-        print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
-              (reward, bw_reward, queue_reward))
         print("#######################################")
 
         # print("Current Reward %d" % reward)
@@ -257,11 +244,8 @@ class Iroko_Environment(Environment):
         self.total_reward += reward
         #total_iters += 1
 
+        return data.reshape(self.num_interfaces * self.num_features), False, reward
 
-        return data.reshape(self.num_interfaces*self.num_features), False, reward
 
 if __name__ == '__main__':
     controller = Iroko_Environment([])
-    print(MAX_CAPACITY)
-    print('hello')
-

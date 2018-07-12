@@ -37,15 +37,15 @@ I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
            '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
 HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
-'''
-PARSER = ArgumentParser()
-PARSER.add_argument('--agent', dest='version',
-                    default=ACTIVEAGENT, help='options are A, B, C, D')
-PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
-                    type=bool, help='flag to use explore or expoit environment')
 
-ARGS = PARSER.parse_args()
-'''
+# PARSER = ArgumentParser()
+# PARSER.add_argument('--agent', dest='version',
+#                     default=ACTIVEAGENT, help='options are A, B, C, D')
+# PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
+#                     type=bool, help='flag to use explore or expoit environment')
+
+# ARGS = PARSER.parse_args()
+
 
 class IrokoController():
     def __init__(self, name):
@@ -88,14 +88,12 @@ def init_agent(version, is_exploit, interfaces, num_features):
 if __name__ == '__main__':
     PARSER = ArgumentParser()
     PARSER.add_argument('--agent', dest='version',
-                    default=ACTIVEAGENT, help='options are A, B, C, D')
+                        default=ACTIVEAGENT, help='options are A, B, C, D')
     PARSER.add_argument('--exploit', '-e', dest='exploit', default=IS_EXPLOIT,
-                    type=bool, help='flag to use explore or expoit environment')
+                        type=bool, help='flag to use explore or expoit environment')
 
     ARGS = PARSER.parse_args()
-
     # set any configuration things
-
     # just incase
     ic = IrokoController("Iroko")
     ARGS.version = ARGS.version.lower()
@@ -132,7 +130,7 @@ if __name__ == '__main__':
         I_H_MAP, interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
     # kind of a wild card, num_features depends on the input we have
-    num_features = FEATURES  # + len(HOSTS) * 2 + num_delta
+    num_features = FEATURES + len(HOSTS) * 2  # + num_delta
 
     # initialize the Agent
     Agent = init_agent(ARGS.version, IS_EXPLOIT, interfaces, num_features)
@@ -147,8 +145,10 @@ if __name__ == '__main__':
         Agent.predictBandwidthOnHosts()
         # perform actions
         pred_bw = {}
+        print("Actions:")
         for h_iface in I_H_MAP:
             pred_bw[h_iface] = Agent.getHostsPredictedBandwidth(h_iface)
+            print("%s: %3f mbit\t" % (h_iface, pred_bw[h_iface] * 10 / MAX_CAPACITY))
             ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - start_time), 3)))
@@ -166,6 +166,8 @@ if __name__ == '__main__':
             for i, iface in enumerate(interfaces):
                 deltas = delta_vector[iface]
                 state = [deltas["delta_q_abs"], queues[iface]]
+                state.extend(src_flows[iface])
+                state.extend(dst_flows[iface])
                 # print("Current State %s " % iface, state)
                 data[i] = torch.Tensor(state)
         except Exception as e:
@@ -176,11 +178,9 @@ if __name__ == '__main__':
             break
 
         # Compute the reward
-        print bws_rx
-        bw_reward, queue_reward = dopamin.get_reward(bws_rx, queues, pred_bw)
+        bw_reward, queue_reward = dopamin.get_reward(
+            bws_rx, bws_tx, queues, pred_bw)
         reward = bw_reward + queue_reward
-        print("Total Reward: %f BW Reward: %f Queue Reward: %f" %
-              (reward, bw_reward, queue_reward))
         print("#######################################")
 
         # update Agents internal representations

@@ -394,16 +394,16 @@ void start_flow(struct traffic_gen_info *tgen_info)
         exit(1);
     }
 
-    if (fcntl(tgen_info->sock, F_SETFL, O_NONBLOCK) < 0) {
-        perror("fcntl");
-        exit(1);
-    }
+    // if (fcntl(tgen_info->sock, F_SETFL, O_NONBLOCK) < 0) {
+    //     perror("fcntl");
+    //     exit(1);
+    // }
 
     if (tgen_info->dest_random)
         tgen_info->dstaddr.sin_addr.s_addr = get_random_ip(tgen_info);
 
     if (tgen_info->type != TYPE_UDP)
-    { 
+    {
         if (connect(tgen_info->sock, (struct sockaddr *) &tgen_info->dstaddr, sizeof(struct sockaddr)) < 0) {
             if (errno != EINPROGRESS) {
                 //printf("%s:%d errno=%d\n", __FILE__, __LINE__, errno);

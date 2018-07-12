@@ -58,10 +58,10 @@ void *cntrl_thread_main(void *arg)
             // fprintf(stderr, "%s Error on receive: %s\n", net_interface, strerror(errno));
         }
         tx_rate = atol(pckt.buf_size);
-        printf("tx_rate: %lu\n", tx_rate);
+        fprintf(stderr,"Host %s: tx_rate: %lu\n", net_interface, tx_rate);
         char cmd[200];
         sprintf(cmd, "tc class change dev %s parent 5:0 classid 5:1 htb rate %lu burst 15k", net_interface, tx_rate);
-        printf("cmd: %s\n", cmd);
+        fprintf(stderr, "Host %s: cmd: %s\n", net_interface, cmd);
         int ret = system(cmd);
         if (!ret)
             perror("Problem with tc");

@@ -99,7 +99,7 @@ class Iroko_Environment(Environment):
         self.dopamin = RewardFunction(
             I_H_MAP, self.interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
-        self.num_features = FEATURES + len(HOSTS) *2
+        self.num_features = FEATURES + len(HOSTS) * 2
         self.num_interfaces = len(self.stats.iface_list)
         self.num_actions = len(I_H_MAP)
         # open the reward file
@@ -195,6 +195,7 @@ class Iroko_Environment(Environment):
         # let the agent predict bandwidth based on all previous information
         # perform actions
         pred_bw = {}
+        print("Actions:")
         for i, h_iface in enumerate(I_H_MAP):
             pred_bw[h_iface] = int(actions[i] * MAX_CAPACITY)
             print("%s: %3f mbit\t" %
@@ -220,7 +221,6 @@ class Iroko_Environment(Environment):
                 # print("Current State %s " % iface, state)
                 data[i] = np.array(state)
         except Exception as e:
-
             os.system('sudo chown -R $USER:$USER %s' % self.out_dir)
             # exit gracefully in case of an error
             template = "{0} occurred. Reason:{1!r}. Time to go..."
@@ -238,14 +238,9 @@ class Iroko_Environment(Environment):
         reward = bw_reward + queue_reward
         print("#######################################")
 
-        # print("Current Reward %d" % reward)
         self.file.write('%f\n' % (reward))
 
         self.total_reward += reward
         #total_iters += 1
 
         return data.reshape(self.num_interfaces * self.num_features), False, reward
-
-
-if __name__ == '__main__':
-    controller = Iroko_Environment([])

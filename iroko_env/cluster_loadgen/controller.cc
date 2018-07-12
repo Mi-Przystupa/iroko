@@ -13,7 +13,7 @@ int cntrl_init()
 {
     int ret = 0;
     tx_rate = INT_MAX;
-    
+
     if ((cntrl_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
         perror("Controller Socket");
         ret = cntrl_sock;
@@ -49,21 +49,22 @@ exit:
 
 void *cntrl_thread_main(void *arg)
 {
-    int rcvd_bytes = 0;
     cntrl_pckt pckt;
 
     while(!interrupted) {
         bzero((void*)&pckt, sizeof(pckt));
-        rcvd_bytes = recv(cntrl_sock, &pckt, sizeof(cntrl_pckt), 0);
+        int rcvd_bytes = recv(cntrl_sock, &pckt, sizeof(cntrl_pckt), 0);
         if (rcvd_bytes != sizeof(cntrl_pckt)) {
-            fprintf(stderr, "%s Error on receive: %s\n", net_interface, strerror(errno));
+            // fprintf(stderr, "%s Error on receive: %s\n", net_interface, strerror(errno));
         }
         tx_rate = atol(pckt.buf_size);
         printf("tx_rate: %lu\n", tx_rate);
         char cmd[200];
         sprintf(cmd, "tc class change dev %s parent 5:0 classid 5:1 htb rate %lu burst 15k", net_interface, tx_rate);
         printf("cmd: %s\n", cmd);
-        system(cmd);
+        int ret = system(cmd);
+        if (!ret)
+            perror("Problem with tc");
     }
 
     return NULL;

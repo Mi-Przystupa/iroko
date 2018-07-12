@@ -10,8 +10,6 @@ from tensorforce.execution import Runner
 import numpy as np
 
 
-
-
 PARSER = argparse.ArgumentParser()
 # parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
 
@@ -23,13 +21,15 @@ PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
 PARSER.add_argument('--test', '-t', dest='test', default=False,
                     action='store_true', help='Run the full tests of the algorithm.')
-PARSER.add_argument('--agent', '-a', dest='agent', default='A', help='A, B, C, D')
+PARSER.add_argument('--agent', '-a', dest='agent',
+                    default='A', help='A, B, C, D')
 PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
 
-PARSER.add_argument('--asEnv', '-env', dest='env',  default=False, action='store_true', help='Flag to use RL environment version')
+PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
+                    action='store_true', help='Flag to use RL environment version')
 
 ARGS = PARSER.parse_args()
 
@@ -75,7 +75,8 @@ DUMBBELL_SW = '100[1]|1002-eth3'
 def get_test_config():
     algos = {}
     # algos['nonblocking'] = {'sw': NONBLOCK_SW, 'tf': 'default', 'pre': 'nonblocking', 'color': 'royalblue'}
-    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko', 'pre': 'fattree-iroko', 'color': 'green'}
+    algos['iroko'] = {'sw': FATTREE_SW, 'tf': 'iroko',
+                      'pre': 'fattree-iroko', 'color': 'green'}
     # algos['ecmp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-ecmp', 'color': 'magenta'}
     # algos['dctcp'] = {'sw': FATTREE_SW, 'tf': 'default', 'pre': 'fattree-dctcp', 'color': 'brown'}
     # algos['hedera'] = {'sw': HEDERA_SW, 'tf': 'hedera', 'pre': 'fattree-hedera', 'color': 'red'}
@@ -107,7 +108,8 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
         for tf in traffic_files:
             input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
-            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' % (input_file, out_dir, duration, algo))
+            os.system('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
+                      (input_file, out_dir, duration, algo))
             os.system('sudo chown -R $USER:$USER %s' % out_dir)
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
@@ -127,9 +129,11 @@ def yn_choice(message, default='y'):
     shall = raw_input("%s (y/N) " % message).lower() == 'y'
     return shall
 
+
 def end_of_episode(plotter, r):
     episode_rewards = np.array(r.episode_rewards)
     print('Average Episode Reward: {}'.format(episode_rewards.mean()))
+
 
 if __name__ == '__main__':
 
@@ -147,7 +151,8 @@ if __name__ == '__main__':
     # Train on the dumbbell topology
     if ARGS.dumbbell is True:
         algorithms = {}
-        algorithms['dumbbell'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        algorithms['dumbbell'] = {
+            'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
         TRAFFIC_FILES = ['incast_2']
         DURATION = 600
         # traffic_files = ['incast_4']
@@ -155,22 +160,22 @@ if __name__ == '__main__':
         LABELS = ['incast']
         #ARGS.train = True
 
-    if ARGS.env:
+    if ARGS.env is True:
 
         algorithms = {}
-        algorithms['dumbbell_env'] = {'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
+        algorithms['dumbbell_env'] = {
+            'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
         TRAFFIC_FILES = ['incast_2']
-        DURATION = 40#600
+        DURATION = 600
         # traffic_files = ['incast_4']
         # traffic_files = ['incast_8']
         LABELS = ['incast']
         #ARGS.train = True
 
-
         traffic_file = TRAFFIC_FILES[0]
-        algo,conf = algorithms.items()[0]
-        environment = Iroko_Environment(INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf),
-                plotter,ARGS.offset, ARGS.epochs ) 
+        algo, conf = algorithms.items()[0]
+        environment = Iroko_Environment(
+            INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), plotter, ARGS.offset, ARGS.epochs)
 
         network_spec = [
             # dict(type='embedding', indices=100, size=32),
@@ -189,16 +194,16 @@ if __name__ == '__main__':
             reward_preprocessing=None,
             # MemoryModel
             update_mode=dict(
-            unit='episodes',
-            # 10 episodes per update
-            batch_size=20,
-            # Every 10 episodes
-            frequency=20
+                unit='episodes',
+                # 10 episodes per update
+                batch_size=20,
+                # Every 10 episodes
+                frequency=20
             ),
             memory=dict(
-            type='latest',
-            include_next_states=False,
-            capacity=5000
+                type='latest',
+                include_next_states=False,
+                capacity=5000
             ),
             # DistributionModel
             distributions=None,
@@ -206,67 +211,80 @@ if __name__ == '__main__':
             # PGModel
             baseline_mode='states',
             baseline=dict(
-            type='mlp',
-            sizes=[32, 32]
+                type='mlp',
+                sizes=[32, 32]
             ),
             baseline_optimizer=dict(
-            type='multi_step',
-            optimizer=dict(
-                type='adam',
-                learning_rate=1e-3
-            ),
-            num_steps=5
+                type='multi_step',
+                optimizer=dict(
+                    type='adam',
+                    learning_rate=1e-3
+                ),
+                num_steps=5
             ),
             gae_lambda=0.97,
             # PGLRModel
             likelihood_ratio_clipping=0.2,
             # PPOAgent
             step_optimizer=dict(
-            type='adam',
-            learning_rate=1e-3
+                type='adam',
+                learning_rate=1e-3
             ),
             subsampling_fraction=0.2,
             optimization_steps=25,
             execution=dict(
-            type='single',
-            session_config=None,
-            distributed_spec=None
+                type='single',
+                session_config=None,
+                distributed_spec=None
             )
         )
-        end = lambda r: end_of_episode(plotter, r)
+
+        def end(r):
+            return end_of_episode(plotter, r)
         runner = Runner(agent=agent, environment=environment)
         runner.run(episodes=ARGS.epochs, episode_finished=end)
         runner.close()
-        print('done training')
+        print("Done with training")
+
     # Train the agent
     # Compare against other algorithms, if necessary
     if ARGS.train is True:
         if ARGS.epochs is 0:
-            print("Please specify the number of epochs you would like to train with (--epoch)!")
+            print(
+                "Please specify the number of epochs you would like to train with (--epoch)!")
             exit(1)
         for algo, conf in algorithms.items():
-            print("Training the %s agent for %d epoch(s)." % (algo, ARGS.epochs))
+            print("Training the %s agent for %d epoch(s)." %
+                  (algo, ARGS.epochs))
             if ARGS.plot is not True:
-                train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epochs, (algo, conf))
+                train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES,
+                      ARGS.offset, ARGS.epochs, (algo, conf))
             # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
-            plotter.plot_avgreward("reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
-            plotter.plot_train_bw('results', 'plots/%s_train_bw' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_bw_iface('results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_bw_avg('results', 'plots/%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_qlen('results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_qlen_iface('results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
-            plotter.plot_train_qlen_avg('results', 'plots/%s_train_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_avgreward(
+                "reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
+            plotter.plot_train_bw('results', 'plots/%s_train_bw' %
+                                  algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_bw_iface(
+                'results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_bw_avg(
+                'results', 'plots/%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen(
+                'results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen_iface(
+                'results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
+            plotter.plot_train_qlen_avg(
+                'results', 'plots/%s_train_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
 
     # Compare the agents performance against other algorithms
     if ARGS.test is True:
         for e in range(ARGS.epochs):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))
-            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, algorithms)
-            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' % e, TRAFFIC_FILES, LABELS, algorithms)
+            run_tests(INPUT_DIR, OUTPUT_DIR, DURATION,
+                      TRAFFIC_FILES, algorithms)
+            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' %
+                                 e, TRAFFIC_FILES, LABELS, algorithms)
             plotter.plot_test_qlen('results', 'plots/test_qlen_sum_%d' %
                                    e, QLEN_TRAFFICS, QLEN_LABELS, algorithms, FATTREE_SW)
     elif not ARGS.train:
         print("Doing nothing...\nRun the command with --train to train/ the Iroko agent and/or --test to run benchmarks.")
-
-

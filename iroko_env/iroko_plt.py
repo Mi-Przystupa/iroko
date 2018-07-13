@@ -16,12 +16,13 @@ from monitor.helper import cdf
 
 class IrokoPlotter():
 
-    def __init__(self, num_ifaces, epochs):
+    def __init__(self, plt_dir, num_ifaces, epochs):
         self.name = 'IrokoPlotter'
         self.max_bw = 10                 # Max capacity of link normalized to mbit
         self.max_queue = 50                # Max queue per link
         self.num_ifaces = num_ifaces       # Num of monitored interfaces
         self.epochs = epochs
+        self.plt_dir = plt_dir
 
     def moving_average(self, input_list, n=100):
         cumsum, moving_aves = [0], []
@@ -178,7 +179,7 @@ class IrokoPlotter():
                 p_legend.append(algo)
                 index += 1
             plt.legend(p_bar, p_legend, loc='upper left')
-            plt.savefig(plt_name)
+            plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.grid(True)
         plt.gcf().clear()
 
@@ -200,7 +201,7 @@ class IrokoPlotter():
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 plt.plot(results['xcdf_qlen'], results['ycdf_qlen'], label=labels[i], color=conf['color'], lw=2)
             plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')
-            plt.savefig(plt_name)
+            plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.gcf().clear()
 
     def plot_train_bw(self, input_dir, plt_name, traffic_files, algorithm):
@@ -237,7 +238,7 @@ class IrokoPlotter():
             plt.ylabel('Normalized Average Bisection Bandwidth')
             axes = plt.gca()
             axes.set_ylim([-0.1, 1.1])
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
     def plot_train_bw_avg(self, input_dir, plt_name, traffic_files, algorithm):
@@ -265,7 +266,7 @@ class IrokoPlotter():
             plt.xlabel('Iterations')
             plt.ylabel('Average Interface Bisection Bandwidth')
             plt.legend(loc='center right')
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
     def plot_train_bw_iface(self, input_dir, plt_name, traffic_files, algorithm):
@@ -305,7 +306,7 @@ class IrokoPlotter():
             axes = plt.gca()
             axes.set_ylim([-0.1, 1.1])
             plt.legend(loc='center right')
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
     def plot_train_qlen(self, input_dir, plt_name, traffic_files, algorithm):
@@ -341,7 +342,7 @@ class IrokoPlotter():
             plt.ylabel('Average Queue Length')
             axes = plt.gca()
             axes.set_ylim([0, self.max_queue])
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
     def plot_train_qlen_avg(self, input_dir, plt_name, traffic_files, algorithm):
@@ -369,7 +370,7 @@ class IrokoPlotter():
             plt.xlabel('Iterations')
             plt.ylabel('Average Interface Queue Length')
             plt.legend(loc='center left')
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
     def plot_train_qlen_iface(self, input_dir, plt_name, traffic_files, algorithm):
@@ -409,10 +410,10 @@ class IrokoPlotter():
             axes = plt.gca()
             # axes.set_ylim([0, self.max_queue])
             plt.legend(loc='center right')
-            plt.savefig("%s_%s" % (plt_name, tf))
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()
 
-    def plot_reward(self, fname, pltname):
+    def plot_reward(self, fname, plt_name):
         float_rewards = []
         with open(fname) as f:
             str_rewards = f.readlines()
@@ -422,9 +423,10 @@ class IrokoPlotter():
         plt.plot(float_rewards)
         plt.ylabel('Reward')
         plt.savefig(pltname)
+        plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.gcf().clear()
 
-    def plot_avgreward(self, fname, pltname):
+    def plot_avgreward(self, fname, plt_name):
         with open(fname) as f:
             content = f.readlines()
         # you may also want to remove whitespace characters like `\n` at the end of each line
@@ -442,5 +444,5 @@ class IrokoPlotter():
         plt.ylabel('Reward')
         plt.xlabel('Iterations')
         plt.legend(loc='center right')
-        plt.savefig(pltname)
+        plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.gcf().clear()

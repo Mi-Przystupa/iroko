@@ -99,6 +99,15 @@ def train(input_dir, output_dir, duration, traffic_files, offset, epochs, algori
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
 
+def prune(input_dir, output_dir, duration, traffic_files, offset, epochs, algorithm):
+    conf = algorithm[1]
+    algo = algorithm[0]
+    for e in range(offset, epochs + offset):
+        for tf in traffic_files:
+            input_file = '%s/%s/%s' % (input_dir, conf['tf'], tf)
+            pre_folder = "%s_%d" % (conf['pre'], e)
+            out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
+            plotter.prune_bw(out_dir, tf, conf['sw'])
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
     os.system('sudo mn -c')
@@ -148,7 +157,7 @@ if __name__ == '__main__':
     algorithms = get_test_config()
     # Stupid hack, do not like.
     n = get_num_interfaces(DUMBBELL_SW)
-    plotter = IrokoPlotter(n, ARGS.epochs + ARGS.offset)
+    plotter = IrokoPlotter("plots", n, ARGS.epochs + ARGS.offset)
     # Train on the dumbbell topology
     if ARGS.dumbbell is True:
         algorithms = {}
@@ -161,7 +170,7 @@ if __name__ == '__main__':
         LABELS = ['incast']
         #ARGS.train = True
 
-    if ARGS.env is True:
+    elif ARGS.env is True:
 
         algorithms = {}
         algorithms['dumbbell_env'] = {
@@ -175,80 +184,96 @@ if __name__ == '__main__':
 
         traffic_file = TRAFFIC_FILES[0]
         algo, conf = algorithms.items()[0]
-        environment = Iroko_Environment(
-            INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), plotter, ARGS.offset, ARGS.epochs)
+        if ARGS.plot is not True:
+            environment = Iroko_Environment(
+                INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), plotter, ARGS.offset, ARGS.epochs)
 
-        network_spec = [
-            # dict(type='embedding', indices=100, size=32),
-            # dict(type'flatten'),
-            dict(type='dense', size=400, activation='relu'),
-            dict(type='dense', size=300, activation='relu')
-        ]
+            network_spec = [
+                # dict(type='embedding', indices=100, size=32),
+                # dict(type'flatten'),
+                dict(type='dense', size=400, activation='relu'),
+                dict(type='dense', size=300, activation='relu')
+            ]
 
-        agent = PPOAgent(
-            states=environment.states,
-            actions=environment.actions,
-            network=network_spec,
-            # Agent
-            states_preprocessing=None,
-            actions_exploration=None,
-            reward_preprocessing=None,
-            # MemoryModel
-            update_mode=dict(
-                unit='episodes',
-                # 10 episodes per update
-                batch_size=20,
-                # Every 10 episodes
-                frequency=20
-            ),
-            memory=dict(
-                type='latest',
-                include_next_states=False,
-                capacity=5000
-            ),
-            # DistributionModel
-            distributions=None,
-            entropy_regularization=0.01,
-            # PGModel
-            baseline_mode='states',
-            baseline=dict(
-                type='mlp',
-                sizes=[32, 32]
-            ),
-            baseline_optimizer=dict(
-                type='multi_step',
-                optimizer=dict(
+            agent = PPOAgent(
+                states=environment.states,
+                actions=environment.actions,
+                network=network_spec,
+                # Agent
+                states_preprocessing=None,
+                actions_exploration=None,
+                reward_preprocessing=None,
+                # MemoryModel
+                update_mode=dict(
+                       unit='episodes',
+                    # 10 episodes per update
+                    batch_size=20,
+                    # Every 10 episodes
+                    frequency=20
+                ),
+                memory=dict(
+                    type='latest',
+                    include_next_states=False,
+                    capacity=5000
+                ),
+                # DistributionModel
+                distributions=None,
+                entropy_regularization=0.01,
+                # PGModel
+                baseline_mode='states',
+                baseline=dict(
+                    type='mlp',
+                    sizes=[32, 32]
+                ),
+                baseline_optimizer=dict(
+                    type='multi_step',
+                    optimizer=dict(
+                        type='adam',
+                        learning_rate=1e-3
+                    ),
+                    num_steps=5
+                ),
+                gae_lambda=0.97,
+                # PGLRModel
+                likelihood_ratio_clipping=0.2,
+                # PPOAgent
+                step_optimizer=dict(
                     type='adam',
                     learning_rate=1e-3
                 ),
-                num_steps=5
-            ),
-            gae_lambda=0.97,
-            # PGLRModel
-            likelihood_ratio_clipping=0.2,
-            # PPOAgent
-            step_optimizer=dict(
-                type='adam',
-                learning_rate=1e-3
-            ),
-            subsampling_fraction=0.2,
-            optimization_steps=25,
-            execution=dict(
-                type='single',
-                session_config=None,
-                distributed_spec=None
+                subsampling_fraction=0.2,
+                optimization_steps=25,
+                execution=dict(
+                    type='single',
+                    session_config=None,
+                    distributed_spec=None
+                )
             )
-        )
 
-        def end(r):
-            return end_of_episode(plotter, r)
-        runner = Runner(agent=agent, environment=environment)
-        runner.run(num_episodes=ARGS.epochs,episode_finished=end)
-        runner.close()
+            def end(r):
+                return end_of_episode(plotter, r)
+            runner = Runner(agent=agent, environment=environment)
+            runner.run(num_episodes=ARGS.epochs,episode_finished=end)
+            runner.close()
+            prune(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epochs, (algo, conf))
+        plotter.plot_avgreward(
+           "reward.txt", "avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
+        plotter.plot_train_bw('results', '%s_train_bw' %
+                              algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_train_bw_iface(
+            'results', '%s_env_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_train_bw_avg(
+            'results', '%s_env_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_train_qlen(
+            'results', '%s_env_qlen' % algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_train_qlen_iface(
+            'results', '%s_env_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_train_qlen_avg(
+            'results', '%s_env_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
 
     # Train the agent
     # Compare against other algorithms, if necessary
-    if ARGS.train is True:
+    elif ARGS.train is True:
         if ARGS.epochs is 0:
             print(
                 "Please specify the number of epochs you would like to train with (--epoch)!")
@@ -259,32 +284,32 @@ if __name__ == '__main__':
             if ARGS.plot is not True:
                 train(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES,
                       ARGS.offset, ARGS.epochs, (algo, conf))
-            # plotter.plot_reward("reward.txt", "plots/reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
+            # plotter.plot_reward("reward.txt", "reward_%s_%s" % (algo, ARGS.epoch + ARGS.offset))
             plotter.plot_avgreward(
-                "reward.txt", "plots/avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
-            plotter.plot_train_bw('results', 'plots/%s_train_bw' %
+                "reward.txt", "avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
+            plotter.plot_train_bw('results', '%s_train_bw' %
                                   algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_bw_iface(
-                'results', 'plots/%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
+                'results', '%s_train_bw_alt' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_bw_avg(
-                'results', 'plots/%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
+                'results', '%s_train_bw_avg' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen(
-                'results', 'plots/%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
+                'results', '%s_train_qlen' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen_iface(
-                'results', 'plots/%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
+                'results', '%s_train_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
             plotter.plot_train_qlen_avg(
-                'results', 'plots/%s_train_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
+                'results', '%s_train_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
 
     # Compare the agents performance against other algorithms
-    if ARGS.test is True:
+    elif ARGS.test is True:
         for e in range(ARGS.epochs):
             print("Running benchmarks for %d seconds each with input matrix at %s and output at %s"
                   % (DURATION, INPUT_DIR, OUTPUT_DIR))
             run_tests(INPUT_DIR, OUTPUT_DIR, DURATION,
                       TRAFFIC_FILES, algorithms)
-            plotter.plot_test_bw('results', 'plots/test_bw_sum_%d' %
+            plotter.plot_test_bw('results', 'test_bw_sum_%d' %
                                  e, TRAFFIC_FILES, LABELS, algorithms)
-            plotter.plot_test_qlen('results', 'plots/test_qlen_sum_%d' %
+            plotter.plot_test_qlen('results', 'test_qlen_sum_%d' %
                                    e, QLEN_TRAFFICS, QLEN_LABELS, algorithms, FATTREE_SW)
     elif not ARGS.train:
         print("Doing nothing...\nRun the command with --train to train/ the Iroko agent and/or --test to run benchmarks.")

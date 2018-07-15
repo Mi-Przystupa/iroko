@@ -228,7 +228,7 @@ class FlowCollector(Collector):
     def _get_flow_stats(self, iface_list):
         processes = []
         for iface in iface_list:
-            cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 10 ip 2>/dev/null | " +
+            cmd = ("sudo timeout 1 tcpdump -l -i " + iface + " -n -c 20 ip 2>/dev/null | " +
                    "grep -P -o \'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*? > ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\' | " + "grep -P -o \'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\' | xargs -n 2 echo | awk \'!a[$0]++\'")
             # output = subprocess.check_output(cmd, shell=True)
             proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)

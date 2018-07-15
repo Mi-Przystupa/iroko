@@ -72,7 +72,7 @@ class RewardFunction:
         queue_reward = 0.0
         std_reward = 0
         pb_bws = pred_bw.values()
-        std_reward = -(np.std(pb_bws) / float(self.max_bw)) * 2
+        std_reward = -(np.std(pb_bws) / float(self.max_bw))
         for i, iface in enumerate(self.host_ifaces.keys()):
             bw_reward += float(bws_tx[iface]) / float(self.max_bw)
         for i, iface in enumerate(self.interfaces):

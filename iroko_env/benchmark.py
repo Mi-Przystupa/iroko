@@ -27,8 +27,8 @@ PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
-PARSER.add_argument('--load', type=bool, default=False, help='Load agent')
-PARSER.add_argument('--save-dir', default='./model/', help='Model save dir')
+PARSER.add_argument('--load', default=False, action='store_true', help='Load agent')
+PARSER.add_argument('--save-dir',dest='save_dir', default='./model/', help='Model save dir')
 
 PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
                     action='store_true', help='Flag to use RL environment version')

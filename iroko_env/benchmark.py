@@ -27,6 +27,8 @@ PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
+PARSER.add_argument('--load', type=bool, default=False, help='Load agent')
+PARSER.add_argument('--save-dir', default='./model/', help='Model save dir')
 
 PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
                     action='store_true', help='Flag to use RL environment version')
@@ -142,6 +144,7 @@ def yn_choice(message, default='y'):
 def end_of_episode(plotter, r):
     episode_rewards = np.array(r.episode_rewards)
     print('Average Episode Reward: {}'.format(episode_rewards.mean()))
+    r.agent.save_model(directory=ARGS.save_dir)
     return True
 
 
@@ -249,6 +252,9 @@ if __name__ == '__main__':
                     distributed_spec=None
                 )
             )
+
+            if ARGS.load:
+                agent.restore_model(directory=ARGS.save_dir)
 
             def end(r):
                 return end_of_episode(plotter, r)

@@ -109,3 +109,6 @@ void add_to_total_bytes_out(long long val);
 
 #define BUFSIZE 65536
 #define BUFSIZE_UDP 1400
+
+extern float bw;
+extern int bw_count;

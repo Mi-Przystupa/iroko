@@ -101,6 +101,9 @@ void *client_thread_main(void *arg)
             tgen_info = *iter;
             //curr_test_time = get_test_time();
 
+            struct timeval time;
+            gettimeofday(&time, NULL);
+            memset(send_buf, time, sizeof(struct timeval));
             if (!tgen_info->done)
             {
                 if (curr_test_time >= tgen_info->stop_time)

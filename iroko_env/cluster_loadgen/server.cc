@@ -257,6 +257,12 @@ void recv_send_tcp()
         }
         else
         {
+            struct timeval *sent_time, recv_time;
+            sent_time = (timeval*) buf;
+            gettimeofday(&recv_time, NULL);
+            bw += retval/((1000000 * recv_time.tv_sec + recv_time.tv_usec) - (1000000 * sent_time->tv_sec + sent_time->tv_usec));
+            bw_count++;
+
             if (retval == sizeof(struct rpc_req_info) && client_data.bytes_transferred == 0)
             {
                 struct rpc_req_info *rpc_info;

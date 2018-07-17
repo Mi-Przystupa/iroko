@@ -61,6 +61,9 @@ struct in_addr my_addr;
 char send_buf[BUFSIZE];
 char recv_buf[BUFSIZE];
 
+extern float bw;
+extern int bw_count;
+
 struct in_addr get_interface_addr(const char *interface);
 int parse_input_file(char *filename, vector<struct traffic_gen_info *> &tgen_info_vector, int *line_count, int *field_count);
 void start_flow(struct traffic_gen_info *tgen_info);
@@ -101,6 +104,9 @@ void *client_thread_main(void *arg)
             tgen_info = *iter;
             //curr_test_time = get_test_time();
 
+            struct timeval time;
+            gettimeofday(&time, NULL);
+            memcpy(send_buf, &time, sizeof(timeval));
             if (!tgen_info->done)
             {
                 if (curr_test_time >= tgen_info->stop_time)

@@ -204,7 +204,7 @@ void counting_thread_main()
         {
             rate_in = (diff_bytes_in/diff_time*8.0/1000000.0);
             rate_out = (diff_bytes_out/diff_time*8.0/1000000.0);
-            printf("%f %g %g %lld %lld %f\n", curr_time, rate_in, rate_out, curr_bytes_in, curr_bytes_out, bw_count?(bw/bw_count):0);
+            printf("host_stat: %f %g %g %lld %lld %f\n", curr_time, rate_in, rate_out, curr_bytes_in, curr_bytes_out, bw_count?(bw/bw_count):0);
             bw = 0;
             bw_count = 0;
             fflush(stdout);

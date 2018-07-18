@@ -104,9 +104,6 @@ void *client_thread_main(void *arg)
             tgen_info = *iter;
             //curr_test_time = get_test_time();
 
-            struct timeval time;
-            gettimeofday(&time, NULL);
-            memcpy(send_buf, &time, sizeof(timeval));
             if (!tgen_info->done)
             {
                 if (curr_test_time >= tgen_info->stop_time)
@@ -490,6 +487,17 @@ size_t send_recv_data(struct traffic_gen_info *tgen_info, size_t max_send_recv_s
     if ((tgen_info->type == TYPE_UDP) && (send_recv_size > BUFSIZE_UDP))
     {
         send_recv_size = BUFSIZE_UDP;
+    }
+
+    memset(send_buf, 0, send_recv_size);
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    unsigned int magic = MAGIC;
+    void* ptr = send_buf;
+    while(ptr < send_buf+send_recv_size-(sizeof(magic)+sizeof(time))) {
+        memcpy(ptr, &magic, sizeof(magic));
+        memcpy(ptr+sizeof(magic), &time, sizeof(timeval));
+        ptr+=(sizeof(magic)+sizeof(time));
     }
 
     if (tgen_info->type == TYPE_TCP)

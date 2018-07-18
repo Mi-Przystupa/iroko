@@ -103,6 +103,24 @@ class IrokoPlotter():
             fp.close()
             return data
 
+    def get_eff_bw_stats(self, input_file):
+        data = read_list(input_file, " ")
+        eff_bw = []
+        for row in data:
+            if row[0] != "host_stat:":
+                continue
+
+            ebw = 0
+
+            try:
+                ebw = float(row[-1])
+            except:
+                continue
+
+            eff_bw.append(ebw)
+
+        return eff_bw
+
     def get_qlen_stats(self, input_file, pat_iface):
         data = read_list(input_file)
         pat_iface = re.compile(pat_iface)
@@ -305,6 +323,47 @@ class IrokoPlotter():
             plt.ylabel('Normalized Average Bisection Bandwidth')
             axes = plt.gca()
             axes.set_ylim([-0.1, 1.1])
+            plt.legend(loc='center right')
+            plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
+            plt.gcf().clear()
+
+    def plot_effective_bw(self, input_dir, plt_name, traffic_files, algorithm):
+        plt_dir = os.path.dirname(plt_name)
+        if not os.path.exists(plt_dir):
+            if not plt_dir == '':
+                os.makedirs(plt_dir)
+        algo = algorithm[0]
+        conf = algorithm[1]
+        # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
+        bb = {}
+        hosts = ["h1", "h2", "h3", "h4"]
+        for tf in traffic_files:
+            for epoch in range(self.epochs):
+                bb['%s_%s' % (algo, epoch)] = {}
+                for host in hosts:
+                    input_file = input_dir + '/%s_%d/%s/%s.out' % (conf['pre'], epoch, tf, host)
+                    eff_bw_stat = self.get_eff_bw_stats(input_file)
+                    avg_eff_bw = np.median(eff_bw_stat)
+                    print("Effective Bandwidth Average: %s %s Epoch %d" % (algo, tf, epoch))
+                    print(avg_eff_bw)
+                    bb['%s_%s' % (algo, epoch)][host] = avg_eff_bw
+
+            for host, avg_eff_bw in bb['%s_%s' % (algo, 0)].items():
+                p_bar = []
+                p_legend = []
+                for i in range(self.epochs):
+                    p_bar.append(bb['%s_%d' % (algo, i)][host])
+                    p_legend.append('Epoch %i' % i)
+                print("Host %s: Total Average Effective Bandwidth: %f" % (host, avg(p_bar)))
+                plt.plot(p_bar, label=host)
+            x_val = list(range(self.epochs + 1))
+            if self.epochs > 100:
+                x_step = x_val[0::(self.epochs / 10)]
+                plt.xticks(x_step)
+            plt.xlabel('Epoch')
+            plt.ylabel('Average Effective Bandwidth (bytes/sec)')
+            axes = plt.gca()
+            # axes.set_ylim([0, self.max_queue])
             plt.legend(loc='center right')
             plt.savefig("%s/%s_%s" % (self.plt_dir, plt_name, tf))
             plt.gcf().clear()

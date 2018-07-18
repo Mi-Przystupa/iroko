@@ -221,6 +221,20 @@ void accept_incoming_connections()
     }
 }
 
+void measure_eff_bw(char* buf, int retval)
+{
+    for(int* ptr = (int*)buf; ptr<(buf+retval); ptr++) {
+        if (*ptr == MAGIC) {
+            struct timeval *sent_time, recv_time;
+            sent_time = (timeval*) (++ptr);
+            gettimeofday(&recv_time, NULL);
+            bw += retval/((recv_time.tv_sec + recv_time.tv_usec*0.000001) - (sent_time->tv_sec + sent_time->tv_usec*0.000001));
+            bw_count++;
+            break;
+        }
+    }
+}
+
 void recv_send_tcp()
 {
     int retval;
@@ -257,12 +271,7 @@ void recv_send_tcp()
         }
         else
         {
-            struct timeval *sent_time, recv_time;
-            sent_time = (timeval*) buf;
-            gettimeofday(&recv_time, NULL);
-            bw += retval/((1000000 * recv_time.tv_sec + recv_time.tv_usec) - (1000000 * sent_time->tv_sec + sent_time->tv_usec));
-            bw_count++;
-
+            measure_eff_bw(buf, retval);
             if (retval == sizeof(struct rpc_req_info) && client_data.bytes_transferred == 0)
             {
                 struct rpc_req_info *rpc_info;
@@ -356,6 +365,8 @@ void recv_all_udp()
     retval = 0;
     do {
         retval = recvfrom(udp_server_sock, buf, BUFSIZE, MSG_DONTWAIT, &client_addr, &addr_len);
+        measure_eff_bw(buf, retval);
+
         if (retval > 0)
             byte_count += retval;
     } while (retval > 0);

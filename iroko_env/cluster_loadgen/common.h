@@ -112,3 +112,5 @@ void add_to_total_bytes_out(long long val);
 
 extern float bw;
 extern int bw_count;
+
+#define MAGIC 0xdeadbeef

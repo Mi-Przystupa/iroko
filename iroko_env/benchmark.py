@@ -276,6 +276,8 @@ if __name__ == '__main__':
             'results', '%s_env_qlen_alt' % algo, TRAFFIC_FILES, (algo, conf))
         plotter.plot_train_qlen_avg(
             'results', '%s_env_qlen_avg' % algo, TRAFFIC_FILES, (algo, conf))
+        plotter.plot_effective_bw(
+            'results', '%s_env_effective_bw' % algo, TRAFFIC_FILES, (algo, conf))
 
     # Train the agent
     # Compare against other algorithms, if necessary

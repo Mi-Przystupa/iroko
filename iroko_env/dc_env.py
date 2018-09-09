@@ -10,7 +10,7 @@ import numpy as np
 import time
 
 from subprocess import Popen, PIPE
-from iroko import DumbbellSimulation, MAX_QUEUE
+from iroko import MAX_QUEUE
 
 import gym
 from gym import error, spaces, utils
@@ -63,7 +63,23 @@ class GracefulSave:
         print("Time to die...")
         self.kill_now = True
 
-class DataCenterEnv(gym.Env):
+
+class DCEnv(gym.Env):
+
+    def __init__(self, input_dir, output_dir, duration, traffic_file, algorithm, offset, epochs):
+        raise NotImplementedError("Method create_filter not implemented!")
+
+    def step(self, action):
+        raise NotImplementedError("Method step not implemented!")
+
+    def reset(self):
+        raise NotImplementedError("Method reset not implemented!")
+
+    def render(self, mode='human', close=False):
+        raise NotImplementedError("Method render not implemented!")
+
+
+class IrokoEnv(DCEnv):
 
     def __init__(self, input_dir, output_dir, duration, traffic_file, algorithm,
                  offset, epochs):
@@ -90,10 +106,10 @@ class DataCenterEnv(gym.Env):
         self.num_interfaces = len(self.stats.iface_list)
         self.num_actions = len(I_H_MAP)
 
-        self.action_space = spaces.Box(low=0.0, high=1.0, 
-                shape=(self.num_actions, 1 ))
+        self.action_space = spaces.Box(low=0.0, high=1.0,
+                                       shape=(self.num_actions, 1))
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf,
-                shape=(self.num_interfaces * self.num_features,1 ))
+                                            shape=(self.num_interfaces * self.num_features, 1))
 
     def step(self, action):
         terminal = False
@@ -161,9 +177,7 @@ class DataCenterEnv(gym.Env):
         return np.zeros(self.num_interfaces * self.num_features)
 
     def render(self, mode='human', close=False):
-        print('nothing to draw at the moment')      
-
-    
+        print('nothing to draw at the moment')
 
     def startTraffic(self, duration=None):
         e = self.epochs
@@ -181,7 +195,6 @@ class DataCenterEnv(gym.Env):
 
         # need to wait until Iroko is started for sure
         time.sleep(5)
-
 
     def CheckIfDead(self, tocheck, retry, timeoutlength):
         for i in range(0, retry):
@@ -217,7 +230,3 @@ class DataCenterEnv(gym.Env):
         self.start_time = time.time()
         # initialize the stats matrix
         self.bws_rx, self.bws_tx, self.drops, self.overlimits, self.queues = self.stats.get_interface_stats()
-
-
-
-

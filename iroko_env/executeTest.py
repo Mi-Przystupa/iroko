@@ -2,8 +2,7 @@ import argparse
 import os  # noqa
 import sre_yield
 from iroko_plt import IrokoPlotter
-from iroko_env import Iroko_Environment
-from DataCenterEnv import DataCenterEnv
+from dc_env import IrokoEnv
 
 from tensorforce import TensorForceError
 from tensorforce.agents import Agent, PPOAgent, DDPGAgent
@@ -151,7 +150,7 @@ if __name__ == '__main__':
         traffic_file = TRAFFIC_FILES[0]
         algo, conf = algorithms.items()[0]
         if ARGS.plot is not True:
-            environment = DataCenterEnv(
+            environment = IrokoEnv(
                 INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), ARGS.offset, ARGS.epochs)
 
             environment.reset()

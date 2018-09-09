@@ -27,10 +27,12 @@ PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
-PARSER.add_argument('--load', default=False, action='store_true', help='Load agent')
-PARSER.add_argument('--save-dir',dest='save_dir', default='./model/', help='Model save dir')
+PARSER.add_argument('--load', default=False,
+                    action='store_true', help='Load agent')
+PARSER.add_argument('--save-dir', dest='save_dir',
+                    default='./model/', help='Model save dir')
 
-PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
+PARSER.add_argument('--env', '-env', dest='env', default=False,
                     action='store_true', help='Flag to use RL environment version')
 
 ARGS = PARSER.parse_args()
@@ -101,6 +103,7 @@ def train(input_dir, output_dir, duration, traffic_files, offset, epochs, algori
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
 
+
 def prune(input_dir, output_dir, duration, traffic_files, offset, epochs, algorithm):
     conf = algorithm[1]
     algo = algorithm[0]
@@ -110,6 +113,7 @@ def prune(input_dir, output_dir, duration, traffic_files, offset, epochs, algori
             pre_folder = "%s_%d" % (conf['pre'], e)
             out_dir = '%s/%s/%s' % (output_dir, pre_folder, tf)
             plotter.prune_bw(out_dir, tf, conf['sw'])
+
 
 def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
     os.system('sudo mn -c')
@@ -125,10 +129,9 @@ def run_tests(input_dir, output_dir, duration, traffic_files, algorithms):
             plotter.prune_bw(out_dir, tf, conf['sw'])
     f.close()
 
-# This is a stupid hack, but it works
-
 
 def get_num_interfaces(pattern):
+    # This is a stupid hack, but it works
     n = []
     for each in sre_yield.AllStrings(r'%s' % pattern):
         n.append(each)
@@ -208,7 +211,7 @@ if __name__ == '__main__':
                 reward_preprocessing=None,
                 # MemoryModel
                 update_mode=dict(
-                       unit='episodes',
+                    unit='episodes',
                     # 10 episodes per update
                     batch_size=20,
                     # Every 10 episodes
@@ -259,11 +262,12 @@ if __name__ == '__main__':
             def end(r):
                 return end_of_episode(plotter, r)
             runner = Runner(agent=agent, environment=environment)
-            runner.run(num_episodes=ARGS.epochs,episode_finished=end)
+            runner.run(num_episodes=ARGS.epochs, episode_finished=end)
             runner.close()
-            prune(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES, ARGS.offset, ARGS.epochs, (algo, conf))
+            prune(INPUT_DIR, OUTPUT_DIR, DURATION, TRAFFIC_FILES,
+                  ARGS.offset, ARGS.epochs, (algo, conf))
         plotter.plot_avgreward(
-           "reward.txt", "avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
+            "reward.txt", "avgreward_%s_%s" % (algo, ARGS.epochs + ARGS.offset))
         plotter.plot_train_bw('results', '%s_train_bw' %
                               algo, TRAFFIC_FILES, (algo, conf))
         plotter.plot_train_bw_iface(

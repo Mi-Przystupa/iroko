@@ -148,7 +148,7 @@ def test_ping(net):
 def test_iperf(net):
     """
         Start iperf test.
-        Currently uses a kind off stupid solution. Needs improvement.
+        Currently uses a kind of stupid solution. Needs improvement.
     """
     hosts = net.hosts
     clients = []
@@ -313,105 +313,7 @@ def test_dumbbell_env():
     gen_traffic(net)
     net.stop()
 
-
-import re
-import time
-import threading
-
-
-class DumbbellSimulation(threading.Thread):
-    def __init__(self, duration, cpu, max_queue, input_file, output_dir, time):
-        threading.Thread.__init__(self)
-        self.name = 'Dumbbell Simulation'
-        self.kill = False
-        self.duration = duration
-        self.cpu = cpu
-        self.max_queue = max_queue
-
-        self.input_file = input_file
-        self.output_dir = output_dir
-        self.time = time
-        self.num_ifaces = 0
-
-    def run(self):
-        print('Starting network')
-        self.test_dumbbell_env()
-        print('done simulation')
-
-    def gen_traffic(self, net):
-        ''' Run the traffic generator and monitor all of the interfaces '''
-        listen_port = 12345
-        sample_period_us = 1000000
-        hosts = net.hosts
-        traffic_gen = 'cluster_loadgen/loadgen'
-        if not os.path.isfile(traffic_gen):
-            error(
-                'The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
-            return
-
-        output('*** Starting load-generators\n %s\n' % self.input_file)
-        for host in hosts:
-            tg_cmd = ('%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' %
-                      (traffic_gen, self.input_file, host.defaultIntf(), listen_port, sample_period_us, self.output_dir, host.name))
-            host.cmd(tg_cmd)
-
-        sleep(1)
-
-        output('*** Triggering load-generators\n')
-        for host in hosts:
-            host.cmd('nc -nzv %s %d' % (host.IP(), listen_port))
-        ifaces = get_intf_list(net)
-
-        monitor1 = multiprocessing.Process(
-            target=monitor_devs_ng, args=('%s/rate.txt' % self.output_dir, 0.01))
-        monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
-            ifaces, 1, '%s/qlen.txt' % self.output_dir))
-
-        monitor1.start()
-        monitor2.start()
-
-        for i in range(0, self.time):
-            if not self.kill:
-                sleep(1)
-            else:
-                break
-        # sleep(self.time)
-        output('*** Stopping monitor\n')
-        monitor1.terminate()
-        monitor2.terminate()
-
-        os.system("killall bwm-ng")
-
-        output('*** Stopping load-generators\n')
-        for host in hosts:
-            host.cmd('killall loadgen')
-
-    def test_dumbbell_env(self):
-        net, topo = topo_dumbbell.create_db_topo(
-            hosts=4, cpu=self.cpu, max_queue=self.max_queue, bw=10)
-        ovs_v = 13  # default value
-        is_ecmp = True  # default value
-        net.start()
-        c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
-        net.addController(c0)
-
-        output('** Waiting for switches to connect to the controller\n')
-        sleep(2)
-
-        topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
-        topo_ecmp.connect_controller(net, topo, c0)
-
-        self.num_ifaces = topo.num_ifaces
-        # begin sending traffic
-        self.gen_traffic(net)
-        net.stop()
-        self.kill = True
-
-    def terminate(self):
-        self.kill = True
-
-
-def handleARGS():
+def handle_args():
     PARSER = ArgumentParser(description="Iroko PARSER")
 
     PARSER.add_argument('-d', '--dir', dest='output_dir', default='log',
@@ -457,7 +359,7 @@ def handleARGS():
 
 
 if __name__ == '__main__':
-    ARGS = handleARGS()
+    ARGS = handle_args()
     # kill_controller()
     # clean()
     setLogLevel('output')

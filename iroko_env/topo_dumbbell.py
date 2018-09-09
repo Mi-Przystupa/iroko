@@ -9,8 +9,6 @@ from mininet.util import custom
 
 from subprocess import Popen, PIPE
 from time import sleep, time
-from multiprocessing import Process
-from argparse import ArgumentParser
 
 import sys
 import os
@@ -99,49 +97,14 @@ def set_host_ip(net, topo):
 
 
 def connect_controller(net, topo, controller):
-    # for sw in topo.EdgeSwitchList:
-    #     net.addLink(sw, controller)
-    # for sw in topo.AggSwitchList:
-    #     net.addLink(sw, controller)
-    # for sw in topo.CoreSwitchList:
-    #     net.addLink(sw, controller)
-    i = 1
-    for host in topo.hostList:
-        # link.setIP("192.168.0.1")
+    for i, host in enumerate(topo.hostList):
         host_o = net.get(host)
         # Configure host
         net.addLink(controller, host)
         host_o.cmd("ifconfig %s-eth1 192.168.10.%d" % (host, i))
         host_o.cmd("route add -net 192.168.5.0/24 dev %s-eth1" % (host))
-
-        # Configure controller
-        # intf = controller.intfs[i - 1]
-        # intf.rename("c0-%s-eth1" % host)
         controller.cmd("ifconfig c0-eth%s 192.168.5.%d" % (i - 1, i))
         controller.cmd("route add 192.168.10.%d dev c0-eth%s" % (i, i - 1))
-
-        i += 1
-        # host.setIP("10.%d.0.%d" % (i, j))
-
-# def install_proactive(net, topo):
-#     """
-#             Install proactive flow entries for the switch.
-#     """
-#     hostList = []
-#     for k in range(len(topo.hostList)):
-#         hostList.append(net.get(topo.hostList[k]))
-#             cmd = "ovs-ofctl add-flow %s -O OpenFlow13 \
-#                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,arp, \
-#                 nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, i, j, k)
-#             os.system(cmd)
-#             cmd = "ovs-ofctl add-flow %s -O OpenFlow13 \
-#                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,ip, \
-#                 nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, i, j, k)
-#             os.system(cmd)
-#             j += 1
-#             if j == 3:
-#                 j = 1
-#                 i += 1
 
 
 def config_topo(net, topo, ovs_v, is_ecmp):

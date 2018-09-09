@@ -105,7 +105,8 @@ class Fattree(Topo):
             for i in range(0, end):
                 for j in range(0, end):
                     self.addLink(
-                        self.AggSwitchList[switch + i], self.EdgeSwitchList[switch + j],
+                        self.AggSwitchList[switch +
+                                           i], self.EdgeSwitchList[switch + j],
                         bw=bw_a2e, max_queue_size=max_queue, enable_ecn=dctcp)   # use_htb=False
 
         # Edge to Host
@@ -121,13 +122,16 @@ class Fattree(Topo):
             Set the OpenFlow version for switches.
         """
         for switch in self.CoreSwitchList:
-            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (
+                switch, ovs_v)
             os.system(cmd)
         for switch in self.AggSwitchList:
-            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (
+                switch, ovs_v)
             os.system(cmd)
         for switch in self.EdgeSwitchList:
-            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (switch, ovs_v)
+            cmd = "sudo ovs-vsctl set bridge %s protocols=OpenFlow%d " % (
+                switch, ovs_v)
             os.system(cmd)
 
 
@@ -145,7 +149,7 @@ def set_host_ip(net, topo):
             i += 1
 
 
-def create_subnetList(topo, num):
+def create_subnet_list(topo, num):
     """
         Create the subnet list of the certain Pod.
     """
@@ -186,11 +190,13 @@ def install_proactive(net, topo, ovs_v):
         for i in range(1, topo.density + 1):
             cmd = "ovs-ofctl add-flow %s -O OpenFlow%d \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,arp, \
-                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, ovs_v, num, i, topo.pod / 2 + i)
+                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, ovs_v, num, i,
+                                                         topo.pod / 2 + i)
             os.system(cmd)
             cmd = "ovs-ofctl add-flow %s -O OpenFlow%d \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,ip, \
-                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, ovs_v, num, i, topo.pod / 2 + i)
+                nw_dst=10.%d.0.%d,actions=output:%d'" % (sw, ovs_v, num, i,
+                                                         topo.pod / 2 + i)
             os.system(cmd)
 
         # Upstream.
@@ -214,18 +220,20 @@ def install_proactive(net, topo, ovs_v):
     # Aggregate Switch
     for sw in topo.AggSwitchList:
         num = int(sw[-2:])
-        subnetList = create_subnetList(topo, num)
+        subnetList = create_subnet_list(topo, num)
 
         # Downstream.
         k = 1
         for i in subnetList:
             cmd = "ovs-ofctl add-flow %s -O OpenFlow%d \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,arp, \
-                nw_dst=10.%d.0.0/16, actions=output:%d'" % (sw, ovs_v, i, topo.pod / 2 + k)
+                nw_dst=10.%d.0.0/16, actions=output:%d'" % (sw, ovs_v, i,
+                                                            topo.pod / 2 + k)
             os.system(cmd)
             cmd = "ovs-ofctl add-flow %s -O OpenFlow%d \
                 'table=0,idle_timeout=0,hard_timeout=0,priority=40,ip, \
-                nw_dst=10.%d.0.0/16, actions=output:%d'" % (sw, ovs_v, i, topo.pod / 2 + k)
+                nw_dst=10.%d.0.0/16, actions=output:%d'" % (sw, ovs_v, i,
+                                                            topo.pod / 2 + k)
             os.system(cmd)
             k += 1
 
@@ -302,20 +310,23 @@ def connect_controller(net, topo, controller):
         # host.setIP("10.%d.0.%d" % (i, j))
 
 
-def create_ecmp_topo(pod, density, ip="127.0.0.1", port=6653, max_queue=100, cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
+def create_ecmp_topo(pod, density, ip="127.0.0.1", port=6653, max_queue=100,
+                     cpu=-1, bw_c2a=10, bw_a2e=10, bw_e2h=10, dctcp=False):
     """
         Create network topology and run the Mininet.
     """
     # Create Topo.
     topo = Fattree(pod, density)
     topo.create_nodes()
-    topo.create_links(max_queue=max_queue, bw_c2a=bw_c2a, bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
+    topo.create_links(max_queue=max_queue, bw_c2a=bw_c2a,
+                      bw_a2e=bw_a2e, bw_e2h=bw_e2h, dctcp=dctcp)
     # Start Mininet
     # CONTROLLER_IP = ip
     # CONTROLLER_PORT = port
     link = custom(TCLink, max_queue=max_queue, enable_ecn=dctcp)
     host = custom(CPULimitedHost, cpu=cpu)
-    net = Mininet(topo=topo, host=host, link=link, controller=None, autoSetMacs=True)
+    net = Mininet(topo=topo, host=host, link=link,
+                  controller=None, autoSetMacs=True)
     # net.addController('controller', controller=RemoteController, ip=CONTROLLER_IP, port=CONTROLLER_PORT)
 
     # net.start()

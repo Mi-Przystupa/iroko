@@ -2,7 +2,7 @@ import argparse
 import os  # noqa
 import sre_yield
 from iroko_plt import IrokoPlotter
-from dc_env import IrokoEnv
+from iroko_env import IrokoEnv
 
 from tensorforce import TensorForceError
 from tensorforce.agents import Agent, PPOAgent, DDPGAgent
@@ -22,8 +22,10 @@ PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
                     default='False', help='Only plot the results for training.')
 PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
                     default='False', help='Train on a simple dumbbell topology')
-PARSER.add_argument('--load', default=False, action='store_true', help='Load agent')
-PARSER.add_argument('--save-dir',dest='save_dir', default='./model/', help='Model save dir')
+PARSER.add_argument('--load', default=False,
+                    action='store_true', help='Load agent')
+PARSER.add_argument('--save-dir', dest='save_dir',
+                    default='./model/', help='Model save dir')
 
 PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
                     action='store_true', help='Flag to use RL environment version')
@@ -152,13 +154,12 @@ if __name__ == '__main__':
         if ARGS.plot is not True:
             environment = IrokoEnv(
                 INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), ARGS.offset, ARGS.epochs)
-            environment.spawnCollectors()
+            environment.spawn_collectors()
             environment.start_traffic()
             for i in range(0, 100):
                 action = environment.action_space.sample()
                 print(action)
                 environment.step(action)
-
 
     else:
         print("Doing nothing...\nRun the command with --train to train/ the Iroko agent and/or --test to run benchmarks.")

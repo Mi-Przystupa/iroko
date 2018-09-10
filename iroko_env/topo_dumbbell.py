@@ -1,15 +1,13 @@
 from mininet.net import Mininet
-from mininet.node import Controller, RemoteController
-from mininet.cli import CLI
+from mininet.node import RemoteController
 from mininet.log import setLogLevel
-from mininet.link import Link, Intf, TCLink
+from mininet.log import info, output, warn, error, debug
+from mininet.link import TCLink
 from mininet.topo import Topo
-from mininet.node import OVSKernelSwitch, CPULimitedHost
+from mininet.node import CPULimitedHost
 from mininet.util import custom
 
-from subprocess import Popen, PIPE
-from time import sleep, time
-
+from time import sleep
 import sys
 import os
 
@@ -26,9 +24,8 @@ class DumbbellTopo(Topo):
         self.num_hosts = hosts
         self.switch_w = None
         self.switch_e = None
-        self.hostList = []
-        self.switchList = []
-        self.num_ifaces = 0
+        self.hostlist = []
+        self.switchlist = []
 
         # Topo initiation
         Topo.__init__(self)
@@ -40,37 +37,35 @@ class DumbbellTopo(Topo):
     def _create_switches(self, ):
         self.switch_w = self.addSwitch(name="1001", failMode='standalone')
         self.switch_e = self.addSwitch(name="1002", failMode='standalone')
-        self.switchList.append(self.switch_w)
-        self.switchList.append(self.switch_e)
+        self.switchlist.append(self.switch_w)
+        self.switchlist.append(self.switch_e)
 
-    def _create_hosts(self, NUMBER):
+    def _create_hosts(self, num):
         """
             Create hosts.
         """
-        for i in range(1, NUMBER + 1):
-            self.hostList.append(self.addHost("h" + str(i), cpu=1.0 / NUMBER))
+        for i in range(1, num + 1):
+            self.hostlist.append(self.addHost("h" + str(i), cpu=1.0 / num))
 
     def create_links(self, bw=10, queue=100):
         """
                 Add links between switch and hosts.
         """
-        for i, host in enumerate(self.hostList):
-            if i < len(self.hostList) / 2:
+        for i, host in enumerate(self.hostlist):
+            if i < len(self.hostlist) / 2:
                 self.addLink(self.switch_w, host, bw=bw,
                              max_queue_size=queue)   # use_htb=False
             else:
                 self.addLink(self.switch_e, host, bw=bw,
                              max_queue_size=queue)   # use_htb=False
-            self.num_ifaces += 2
         self.addLink(self.switch_w, self.switch_e, bw=bw,
                      max_queue_size=queue)   # use_htb=False
-        self.num_ifaces += 2
 
     def set_ovs_protocol(self, ovs_v):
         """
             Set the OpenFlow version for switches.
         """
-        self._set_ovs_protocol(self.switchList, ovs_v)
+        self._set_ovs_protocol(self.switchlist, ovs_v)
 
     def _set_ovs_protocol(self, sw_list, ovs_v):
         for sw in sw_list:
@@ -79,56 +74,82 @@ class DumbbellTopo(Topo):
             os.system(cmd)
 
 
-def set_host_ip(net, topo):
-    hostList = []
-    for k in range(len(topo.hostList)):
-        hostList.append(net.get(topo.hostList[k]))
-    i = 1
-    j = 1
-    # for host in hostList:
-    #     host.setIP("10.0.0.%d" % i)
-    #     i += 1
-    for host in hostList:
-        host.setIP("10.%d.0.%d" % (i, j))
-        j += 1
-        if j == 3:
-            j = 1
+class TopoEnv():
+
+    def __init__(self, num_hosts, max_queue):
+        self.num_hosts = num_hosts
+        self.net, self.topo = self._create_network(
+            num_hosts, max_queue=max_queue)
+        self._configure_network()
+
+    def _set_host_ip(self, net, topo):
+        hostlist = []
+        for k in range(len(topo.hostlist)):
+            hostlist.append(net.get(topo.hostlist[k]))
+        i = 1
+        j = 1
+        for host in hostlist:
+            host.setIP("10.%d.0.%d" % (i, j))
+            j += 1
+            if j == 3:
+                j = 1
+                i += 1
+
+    def _connect_controller(self, controller):
+        i = 1
+        for host in self.topo.hostlist:
+            # link.setIP("192.168.0.1")
+            host_o = self.net.get(host)
+            # Configure host
+            self.net.addLink(controller, host)
+            host_o.cmd("ifconfig %s-eth1 192.168.10.%d" % (host, i))
+            host_o.cmd("route add -net 192.168.5.0/24 dev %s-eth1" % (host))
+
+            # Configure controller
+            # intf = controller.intfs[i - 1]
+            # intf.rename("c0-%s-eth1" % host)
+            controller.cmd("ifconfig c0-eth%s 192.168.5.%d" % (i - 1, i))
+            controller.cmd("route add 192.168.10.%d dev c0-eth%s" % (i, i - 1))
+
             i += 1
+            # host.setIP("10.%d.0.%d" % (i, j))
 
+    def _config_topo(self, ovs_v, is_ecmp):
+        # Set OVS's protocol as OF13.
+        self.topo.set_ovs_protocol(ovs_v)
+        # Set hosts IP addresses.
+        self._set_host_ip(self.net, self.topo)
 
-def connect_controller(net, topo, controller):
-    for i, host in enumerate(topo.hostList):
-        host_o = net.get(host)
-        # Configure host
-        net.addLink(controller, host)
-        host_o.cmd("ifconfig %s-eth1 192.168.10.%d" % (host, i))
-        host_o.cmd("route add -net 192.168.5.0/24 dev %s-eth1" % (host))
-        controller.cmd("ifconfig c0-eth%s 192.168.5.%d" % (i - 1, i))
-        controller.cmd("route add 192.168.10.%d dev c0-eth%s" % (i, i - 1))
+    def _configure_network(self):
+        ovs_v = 13  # default value
+        is_ecmp = True  # default value
+        c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+        self.net.addController(c0)
 
+        output('** Waiting for switches to connect to the controller\n')
+        sleep(2)
+        self._config_topo(ovs_v, is_ecmp)
+        self._connect_controller(c0)
 
-def config_topo(net, topo, ovs_v, is_ecmp):
-    # Set OVS's protocol as OF13.
-    topo.set_ovs_protocol(ovs_v)
-    # Set hosts IP addresses.
-    set_host_ip(net, topo)
+    def _create_network(self, num_hosts, cpu=-1, bw=10, max_queue=100):
+        setLogLevel('output')
+        # Create Topo
+        topo = DumbbellTopo(num_hosts)
+        topo.create_nodes()
+        topo.create_links(bw=bw, queue=max_queue)
 
+        # Start Mininet
+        host = custom(CPULimitedHost, cpu=cpu)
+        link = custom(TCLink, max_queue=max_queue)
+        net = Mininet(topo=topo, host=host, link=link,
+                      controller=None, autoSetMacs=True)
 
-def create_db_topo(hosts, cpu=-1, bw=10, max_queue=100):
-    """
-            Firstly, start up Mininet;
-            secondly, generate traffics and test the
-            performance of the network.
-    """
-    # Create Topo.
-    topo = DumbbellTopo(hosts)
-    topo.create_nodes()
-    topo.create_links(bw=bw, queue=max_queue)
+        net.start()
 
-    # Start Mininet
-    host = custom(CPULimitedHost, cpu=cpu)
-    link = custom(TCLink, max_queue=max_queue)
-    net = Mininet(topo=topo, host=host, link=link,
-                  controller=None, autoSetMacs=True)
+        return net, topo
 
-    return net, topo
+    def get_net(self):
+        return self.net
+
+    def get_topo(self):
+        return self.topo

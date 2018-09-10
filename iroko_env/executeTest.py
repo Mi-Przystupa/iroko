@@ -141,7 +141,7 @@ if __name__ == '__main__':
         algorithms['dumbbell_env'] = {
             'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
         TRAFFIC_FILES = ['incast_2']
-        DURATION = 600
+        DURATION = 60
         # traffic_files = ['incast_4']
         # traffic_files = ['incast_8']
         LABELS = ['incast']
@@ -152,9 +152,8 @@ if __name__ == '__main__':
         if ARGS.plot is not True:
             environment = IrokoEnv(
                 INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), ARGS.offset, ARGS.epochs)
-
-            environment.reset()
-
+            environment.spawnCollectors()
+            environment.start_traffic()
             for i in range(0, 100):
                 action = environment.action_space.sample()
                 print(action)

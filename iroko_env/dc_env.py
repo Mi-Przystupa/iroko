@@ -127,17 +127,16 @@ class IrokoEnv(DCEnv):
         self.output_dir = output_dir
         self.duration = duration
 
-        self.startTraffic(20)
+        self.net = self.create_topo()
         # Iroko controller calls
         self.ic = BandwidthController("Iroko")
-
+        self.interfaces = self.get_intf_list(self.net)
         time.sleep(2)
-        self.spawnCollectors()
         self.dopamin = RewardFunction(
             I_H_MAP, self.interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
 
         self.num_features = FEATURES + len(HOSTS) * 2
-        self.num_interfaces = len(self.stats.iface_list)
+        self.num_interfaces = len(self.interfaces)
         self.num_actions = len(I_H_MAP)
 
         self.action_space = spaces.Box(low=0.0, high=1.0,
@@ -203,13 +202,6 @@ class IrokoEnv(DCEnv):
 
         return data.reshape(self.num_interfaces * self.num_features), False, reward
 
-    def reset(self):
-        print('reseting environment')
-        self.KillEnv()
-        self.startTraffic()
-        self.spawnCollectors()
-        return np.zeros(self.num_interfaces * self.num_features)
-
     def render(self, mode='human', close=False):
         print('nothing to draw at the moment')
 
@@ -222,7 +214,10 @@ class IrokoEnv(DCEnv):
                     sw_intfs.append(intf)
         return sw_intfs
 
-    def gen_traffic(self, net, duration):
+    def gen_traffic(self, net, out_dir, input_file, duration):
+        if not os.path.exists(out_dir):
+            print(out_dir)
+            os.makedirs(out_dir)
         ''' Run the traffic generator and monitor all of the interfaces '''
         listen_port = 12345
         sample_period_us = 1000000
@@ -233,10 +228,10 @@ class IrokoEnv(DCEnv):
                 'The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
             return
 
-        output('*** Starting load-generators\n %s\n' % self.input_file)
+        output('*** Starting load-generators\n %s\n' % input_file)
         for host in hosts:
             tg_cmd = ('%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' %
-                      (traffic_gen, self.input_file, host.defaultIntf(), listen_port, sample_period_us, self.out_dir, host.name))
+                      (traffic_gen, input_file, host.defaultIntf(), listen_port, sample_period_us, out_dir, host.name))
             host.cmd(tg_cmd)
 
         sleep(1)
@@ -247,9 +242,9 @@ class IrokoEnv(DCEnv):
         ifaces = self.get_intf_list(net)
 
         monitor1 = multiprocessing.Process(
-            target=monitor_devs_ng, args=('%s/rate.txt' % self.out_dir, 0.01))
+            target=monitor_devs_ng, args=('%s/rate.txt' % out_dir, 0.01))
         monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
-            ifaces, 1, '%s/qlen.txt' % self.out_dir))
+            ifaces, 1, '%s/qlen.txt' % out_dir))
 
         monitor1.start()
         monitor2.start()
@@ -263,25 +258,17 @@ class IrokoEnv(DCEnv):
         output('*** Stopping load-generators\n')
         for host in hosts:
             host.cmd('killall loadgen')
-
-    def kill_controller(self):
-        p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko_controller' | awk '{print $2}'",
-                      stdout=PIPE, shell=True)
-        p_pox.wait()
-        procs = (p_pox.communicate()[0]).split('\n')
-        for pid in procs:
-            try:
-                pid = int(pid)
-                Popen('kill %d' % pid, shell=True).wait()
-            except Exception as e:
-                pass
+        net.stop()
+        print("CLEANING")
+        self.clean()
 
     def clean(self):
         Popen('killall iperf3', shell=True).wait()
-        Popen('killall xterm', shell=True).wait()
-        Popen('killall python2.7', shell=True).wait()
+        # Popen('killall xterm', shell=True).wait()
+        # Popen('killall python2.7', shell=True).wait()
 
-    def test_dumbbell_env(self, duration):
+    def create_topo(self):
+        setLogLevel('output')
         net, topo = topo_dumbbell.create_db_topo(
             hosts=4, cpu=-1, max_queue=MAX_QUEUE, bw=10)
         ovs_v = 13  # default value
@@ -296,32 +283,16 @@ class IrokoEnv(DCEnv):
 
         topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
         topo_dumbbell.connect_controller(net, topo, c0)
-        self.gen_traffic(net, duration)
-        net.stop()
+        return net
 
-    def dummy_function(self, input_file, out_dir, duration, algo):
-        if os.getuid() != 0:
-            logging.error("You are NOT root")
-            exit(1)
-        setLogLevel('output')
-        if not os.path.exists(self.out_dir):
-            print(self.out_dir)
-            os.makedirs(self.out_dir)
-        self.test_dumbbell_env(duration)
-        self.clean()
-
-    def startTraffic(self, duration=None):
+    def start_traffic(self):
         e = self.epochs
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
-        self.input_file = '%s/%s/%s' % (self.input_dir,
-                                        self.conf['tf'], self.tf)
-        self.out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
-
-        if not duration:
-            # is for initialization purposes, no sense running for full time, just long enough to set other parameters
-            duration = self.duration
-        self.p = FuncThread(self.dummy_function,
-                            self.input_file, self.out_dir, duration, self.algo)
+        input_file = '%s/%s/%s' % (self.input_dir,
+                                   self.conf['tf'], self.tf)
+        out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
+        self.p = FuncThread(self.gen_traffic, self.net,
+                            out_dir, input_file, self.duration)
         self.p.start()
         self.epochs += 1
 
@@ -336,14 +307,14 @@ class IrokoEnv(DCEnv):
                 break
 
     def KillEnv(self):
+
+        print('wait for simulation to end')
+        self.p.join()  # this blocks until the process terminates
         self.stats.terminate()
         self.CheckIfDead(self.stats, 3, 1)
 
         self.flows.terminate()
         self.CheckIfDead(self.flows, 3, 1)
-
-        print('wait for simulation to end')
-        self.p.join()  # this blocks until the process terminates
 
     def spawnCollectors(self):
         self.stats = StatsCollector()

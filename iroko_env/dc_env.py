@@ -2,6 +2,26 @@
 from iroko_monitor import StatsCollector
 from iroko_monitor import FlowCollector
 from reward_function import RewardFunction
+import os
+import logging
+import multiprocessing
+
+from mininet.net import Mininet
+from mininet.node import RemoteController
+from mininet.cli import CLI
+
+from time import sleep
+from mininet.node import OVSKernelSwitch, CPULimitedHost
+from mininet.util import custom
+from mininet.log import setLogLevel, info, output, warn, error, debug
+
+from subprocess import Popen, PIPE
+from argparse import ArgumentParser
+from monitor.monitor import monitor_devs_ng
+from monitor.monitor import monitor_qlen
+from mininet.link import TCLink
+from hedera.DCTopo import FatTreeTopo
+from multiprocessing import Process, Queue
 
 import socket
 import signal
@@ -10,7 +30,8 @@ import numpy as np
 import time
 
 from subprocess import Popen, PIPE
-from iroko import MAX_QUEUE
+import topo_dumbbell
+MAX_QUEUE = 5000
 
 import gym
 from gym import error, spaces, utils
@@ -36,6 +57,19 @@ HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2",
 I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
            '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
 HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
+
+
+import threading
+
+
+class FuncThread(threading.Thread):
+    def __init__(self, target, *args):
+        self._target = target
+        self._args = args
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self._target(*self._args)
 
 
 class BandwidthController():
@@ -116,7 +150,7 @@ class IrokoEnv(DCEnv):
         reward = 0.0
         data = np.zeros((self.num_interfaces, self.num_features))
 
-        if self.p.poll() is not None:
+        if not self.p.isAlive():
             print('Generator Finished. Simulation over')
             self.KillEnv()
             return data.reshape(self.num_interfaces * self.num_features), True, 0
@@ -179,6 +213,103 @@ class IrokoEnv(DCEnv):
     def render(self, mode='human', close=False):
         print('nothing to draw at the moment')
 
+    def get_intf_list(self, net):
+        switches = net.switches
+        sw_intfs = []
+        for switch in switches:
+            for intf in switch.intfNames():
+                if intf is not 'lo':
+                    sw_intfs.append(intf)
+        return sw_intfs
+
+    def gen_traffic(self, net, duration):
+        ''' Run the traffic generator and monitor all of the interfaces '''
+        listen_port = 12345
+        sample_period_us = 1000000
+        hosts = net.hosts
+        traffic_gen = 'cluster_loadgen/loadgen'
+        if not os.path.isfile(traffic_gen):
+            error(
+                'The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
+            return
+
+        output('*** Starting load-generators\n %s\n' % self.input_file)
+        for host in hosts:
+            tg_cmd = ('%s -f %s -i %s -l %d -p %d 2&>1 > %s/%s.out &' %
+                      (traffic_gen, self.input_file, host.defaultIntf(), listen_port, sample_period_us, self.out_dir, host.name))
+            host.cmd(tg_cmd)
+
+        sleep(1)
+
+        output('*** Triggering load-generators\n')
+        for host in hosts:
+            host.cmd('nc -nzv %s %d' % (host.IP(), listen_port))
+        ifaces = self.get_intf_list(net)
+
+        monitor1 = multiprocessing.Process(
+            target=monitor_devs_ng, args=('%s/rate.txt' % self.out_dir, 0.01))
+        monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
+            ifaces, 1, '%s/qlen.txt' % self.out_dir))
+
+        monitor1.start()
+        monitor2.start()
+        sleep(duration)
+        output('*** Stopping monitor\n')
+        monitor1.terminate()
+        monitor2.terminate()
+
+        os.system("killall bwm-ng")
+
+        output('*** Stopping load-generators\n')
+        for host in hosts:
+            host.cmd('killall loadgen')
+
+    def kill_controller(self):
+        p_pox = Popen("ps aux | grep -E 'pox|ryu|iroko_controller' | awk '{print $2}'",
+                      stdout=PIPE, shell=True)
+        p_pox.wait()
+        procs = (p_pox.communicate()[0]).split('\n')
+        for pid in procs:
+            try:
+                pid = int(pid)
+                Popen('kill %d' % pid, shell=True).wait()
+            except Exception as e:
+                pass
+
+    def clean(self):
+        Popen('killall iperf3', shell=True).wait()
+        Popen('killall xterm', shell=True).wait()
+        Popen('killall python2.7', shell=True).wait()
+
+    def test_dumbbell_env(self, duration):
+        net, topo = topo_dumbbell.create_db_topo(
+            hosts=4, cpu=-1, max_queue=MAX_QUEUE, bw=10)
+        ovs_v = 13  # default value
+        is_ecmp = True  # default value
+
+        net.start()
+        c0 = RemoteController('c0', ip='127.0.0.1', port=6653)
+        net.addController(c0)
+
+        output('** Waiting for switches to connect to the controller\n')
+        sleep(2)
+
+        topo_dumbbell.config_topo(net, topo, ovs_v, is_ecmp)
+        topo_dumbbell.connect_controller(net, topo, c0)
+        self.gen_traffic(net, duration)
+        net.stop()
+
+    def dummy_function(self, input_file, out_dir, duration, algo):
+        if os.getuid() != 0:
+            logging.error("You are NOT root")
+            exit(1)
+        setLogLevel('output')
+        if not os.path.exists(self.out_dir):
+            print(self.out_dir)
+            os.makedirs(self.out_dir)
+        self.test_dumbbell_env(duration)
+        self.clean()
+
     def startTraffic(self, duration=None):
         e = self.epochs
         self.pre_folder = "%s_%d" % (self.conf['pre'], e)
@@ -189,8 +320,9 @@ class IrokoEnv(DCEnv):
         if not duration:
             # is for initialization purposes, no sense running for full time, just long enough to set other parameters
             duration = self.duration
-        self.p = Popen('sudo python iroko.py -i %s -d %s -p 0.03 -t %d --%s' %
-                       (self.input_file, self.out_dir, duration, self.algo), shell=True, stdout=PIPE)
+        self.p = FuncThread(self.dummy_function,
+                            self.input_file, self.out_dir, duration, self.algo)
+        self.p.start()
         self.epochs += 1
 
         # need to wait until Iroko is started for sure
@@ -211,7 +343,7 @@ class IrokoEnv(DCEnv):
         self.CheckIfDead(self.flows, 3, 1)
 
         print('wait for simulation to end')
-        self.p.wait()
+        self.p.join()  # this blocks until the process terminates
 
     def spawnCollectors(self):
         self.stats = StatsCollector()

@@ -23,6 +23,13 @@ class IrokoPlotter():
         self.num_ifaces = num_ifaces       # Num of monitored interfaces
         self.epochs = epochs
 
+    def check_plt_dir(plt_name):
+        plt_dir = os.path.dirname(plt_name)
+        if not os.path.exists(plt_dir):
+            if not plt_dir == '':
+                os.makedirs(plt_dir)
+        return plt_dir
+
     def moving_average(self, input_list, n=100):
         cumsum, moving_aves = [0], []
         for i, x in enumerate(input_list, 1):
@@ -140,7 +147,7 @@ class IrokoPlotter():
         return vals
 
     def plot_test_bw(self, input_dir, plt_name, traffic_files, labels, algorithms):
-
+        self.check_plt_dir(plt_name)
         fbb = self.num_ifaces * self.max_bw
         num_plot = 2
         num_t = len(traffic_files)
@@ -155,7 +162,8 @@ class IrokoPlotter():
             bb[algo] = []
             for tf in traffic_files:
                 print("algo:", tf)
-                input_file = input_dir + '/%s/%s/rate_summary.json' % (conf['pre'], tf)
+                input_file = input_dir + \
+                    '/%s/%s/rate_summary.json' % (conf['pre'], tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = float(results['avg_bw'])
                 print(avg_bw)
@@ -183,6 +191,7 @@ class IrokoPlotter():
         plt.gcf().clear()
 
     def plot_test_qlen(self, input_dir, plt_name, traffic_files, labels, algorithms, iface):
+        self.check_plt_dir(plt_name)
         fig = plt.figure(1)
         fig.set_size_inches(8.5, 6.5)
         for i, tf in enumerate(traffic_files):
@@ -198,16 +207,15 @@ class IrokoPlotter():
                 print("%s:%s" % (algo, tf))
                 input_file = input_dir + '/%s/%s/qlen.txt' % (conf['pre'], tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
-                plt.plot(results['xcdf_qlen'], results['ycdf_qlen'], label=labels[i], color=conf['color'], lw=2)
-            plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')
+                plt.plot(results['xcdf_qlen'], results['ycdf_qlen'],
+                         label=labels[i], color=conf['color'], lw=2)
+            plt.legend(bbox_to_anchor=(1.5, 1.22),
+                       loc='upper right', fontsize='x-large')
             plt.savefig(plt_name)
         plt.gcf().clear()
 
     def plot_train_bw(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         fbb = self.num_ifaces * self.max_bw
@@ -216,7 +224,8 @@ class IrokoPlotter():
         for tf in traffic_files:
             for e in range(self.epochs):
                 bb['%s_%s' % (algo, e)] = []
-                input_file = input_dir + '/%s_%d/%s/rate_summary.json' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_summary.json' % (conf['pre'], e, tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = float(results['avg_bw'])
                 print("%s %s Epoch %d: Avg BW %f" % (algo, tf, e, avg_bw))
@@ -241,10 +250,7 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_bw_avg(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -252,7 +258,8 @@ class IrokoPlotter():
             print("Average BW: %s: %s" % (algo, tf))
             bb = {}
             for e in range(self.epochs):
-                input_file = input_dir + '/%s_%d/%s/rate_filtered.json' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_filtered.json' % (conf['pre'], e, tf)
                 results = self.get_bw_dict(input_file)
                 for iface, bw_list in results.items():
                     if iface not in bb:
@@ -269,10 +276,7 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_bw_iface(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         fbb = self.max_bw
@@ -281,20 +285,23 @@ class IrokoPlotter():
         for tf in traffic_files:
             for epoch in range(self.epochs):
                 bb['%s_%s' % (algo, epoch)] = {}
-                input_file = input_dir + '/%s_%d/%s/rate_summary.json' % (conf['pre'], epoch, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_summary.json' % (conf['pre'], epoch, tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = results['avg_bw_iface']
                 print("Average BW %s %s Epoch %d" % (algo, tf, epoch))
                 print(avg_bw)
                 for iface, bw in avg_bw.iteritems():
-                    bb['%s_%s' % (algo, epoch)].setdefault(iface, []).append(float(bw) / fbb)
+                    bb['%s_%s' % (algo, epoch)].setdefault(
+                        iface, []).append(float(bw) / fbb)
             for iface, bw in bb['%s_%s' % (algo, 0)].iteritems():
                 p_bar = []
                 p_legend = []
                 for i in range(self.epochs):
                     p_bar.append(bb['%s_%d' % (algo, i)][iface][0])
                     p_legend.append('Epoch %i' % i)
-                print("Interface %s: Total Average Bandwidth: %f" % (iface, avg(p_bar)))
+                print("Interface %s: Total Average Bandwidth: %f" %
+                      (iface, avg(p_bar)))
                 plt.plot(p_bar, label=iface)
             x_val = list(range(self.epochs + 1))
             if self.epochs > 100:
@@ -309,10 +316,7 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -320,7 +324,8 @@ class IrokoPlotter():
         for tf in traffic_files:
             for e in range(self.epochs):
                 bb['%s_%s' % (algo, e)] = []
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 avg_qlen = float(results['avg_qlen'])
                 print("%s %s Epoch %d: Avg Qlen %f" % (algo, tf, e, avg_qlen))
@@ -345,10 +350,7 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen_avg(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -356,7 +358,8 @@ class IrokoPlotter():
             print("Qlen Evolving Average: %s: %s" % (algo, tf))
             bb = {}
             for e in range(self.epochs):
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 full_qlens = results["full_qlen_iface"]
                 for iface, qlen_list in full_qlens.items():
@@ -373,10 +376,7 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen_iface(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
+        self.check_plt_dir(plt_name)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -384,13 +384,15 @@ class IrokoPlotter():
         for tf in traffic_files:
             for epoch in range(self.epochs):
                 bb['%s_%s' % (algo, epoch)] = {}
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], epoch, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], epoch, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 avg_qlen = results["avg_qlen_iface"]
                 print("Qlen Average: %s %s Epoch %d" % (algo, tf, epoch))
                 print(avg_qlen)
                 for iface, qlen in avg_qlen.items():
-                    bb['%s_%s' % (algo, epoch)].setdefault(iface, []).append(float(qlen))
+                    bb['%s_%s' % (algo, epoch)].setdefault(
+                        iface, []).append(float(qlen))
 
             for iface, bw in bb['%s_%s' % (algo, 0)].items():
                 p_bar = []
@@ -398,7 +400,8 @@ class IrokoPlotter():
                 for i in range(self.epochs):
                     p_bar.append(bb['%s_%d' % (algo, i)][iface][0])
                     p_legend.append('Epoch %i' % i)
-                print("Interface %s: Total Average Qlen: %f" % (iface, avg(p_bar)))
+                print("Interface %s: Total Average Qlen: %f" %
+                      (iface, avg(p_bar)))
                 plt.plot(p_bar, label=iface)
             x_val = list(range(self.epochs + 1))
             if self.epochs > 100:
@@ -412,7 +415,8 @@ class IrokoPlotter():
             plt.savefig("%s_%s" % (plt_name, tf))
             plt.gcf().clear()
 
-    def plot_reward(self, fname, pltname):
+    def plot_reward(self, fname, plt_name):
+        self.check_plt_dir(plt_name)
         float_rewards = []
         with open(fname) as f:
             str_rewards = f.readlines()
@@ -421,10 +425,11 @@ class IrokoPlotter():
             float_rewards.append(float(reward))
         plt.plot(float_rewards)
         plt.ylabel('Reward')
-        plt.savefig(pltname)
+        plt.savefig(plt_name)
         plt.gcf().clear()
 
-    def plot_avgreward(self, fname, pltname):
+    def plot_avgreward(self, fname, plt_name):
+        self.check_plt_dir(plt_name)
         with open(fname) as f:
             content = f.readlines()
         # you may also want to remove whitespace characters like `\n` at the end of each line
@@ -442,5 +447,5 @@ class IrokoPlotter():
         plt.ylabel('Reward')
         plt.xlabel('Iterations')
         plt.legend(loc='center right')
-        plt.savefig(pltname)
+        plt.savefig(plt_name)
         plt.gcf().clear()

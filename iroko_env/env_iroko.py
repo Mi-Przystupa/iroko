@@ -6,6 +6,7 @@ from mininet.log import setLogLevel, info, output, warn, error, debug
 import socket
 import numpy as np
 import time
+import signal
 
 from topo_dumbbell import TopoConfig
 from env_base import BaseEnv
@@ -113,7 +114,7 @@ class DCEnv(BaseEnv):
                 break
 
     def kill_env(self):
-
+        BaseEnv.kill_env(self)
         self.stats.terminate()
         self.check_if_dead(self.stats, 3, 1)
 

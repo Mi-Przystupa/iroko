@@ -30,7 +30,7 @@ class BaseEnv(gym.Env):
         print('nothing to draw at the moment')
 
     def kill_env(self):
-        raise NotImplementedError("Method kill_env not implemented!")
+        self.net.stop()
 
     def create_and_configure_topo(self):
         raise NotImplementedError("Method create_net_env not implemented!")
@@ -79,15 +79,12 @@ class BaseEnv(gym.Env):
         output('*** Stopping load-generators\n')
         for host in hosts:
             host.cmd('killall loadgen')
-        net.stop()
 
-    def start_traffic(self, conf, traffic_file, input_dir, output_dir, epoch, duration):
-        self.pre_folder = "%s_%d" % (conf['pre'], epoch)
-        input_file = '%s/%s/%s' % (input_dir, conf['tf'], traffic_file)
-        out_dir = '%s/%s/%s' % (output_dir, self.pre_folder, traffic_file)
-        self.traffic_gen = mp.Process(target=self.gen_traffic,
-                                      args=(self.net, out_dir,
-                                            input_file, duration))
-        self.traffic_gen.start()
+    def start_traffic(self, conf, input_file, out_dir, epoch, duration):
+        traffic_proc = mp.Process(target=self.gen_traffic,
+                                  args=(self.net, out_dir,
+                                        input_file, duration))
+        traffic_proc.start()
         # need to wait until Iroko is started for sure
         sleep(5)
+        return traffic_proc

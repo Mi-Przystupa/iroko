@@ -18,11 +18,21 @@ class IrokoPlotter():
 
     def __init__(self, plt_dir, num_ifaces, epochs):
         self.name = 'IrokoPlotter'
-        self.max_bw = 10                 # Max capacity of link normalized to mbit
-        self.max_queue = 50                # Max queue per link
-        self.num_ifaces = num_ifaces       # Num of monitored interfaces
-        self.epochs = epochs
-        self.plt_dir = plt_dir
+        self.max_bw = 10                # Max capacity of link adjusted to mbit
+        self.max_queue = 50             # Max queue per link
+        self.num_ifaces = num_ifaces    # Num of monitored interfaces
+        self.epochs = epochs            # Number of total epochs that are run
+        self.plt_dir = plt_dir          # Directory of the plots
+        self.check_plt_dir(plt_dir)     # Check if the directory actually exists
+
+    def check_plt_dir(self, plt_name):
+        if not os.path.exists(plt_name):
+            print("Folder %s does not exist! Creating..." % plt_name)
+            plt_dir = os.path.dirname(plt_name)
+            if plt_dir == '':
+                os.makedirs(plt_name)
+            else:
+                os.makedirs(plt_dir)
 
     def moving_average(self, input_list, n=100):
         cumsum, moving_aves = [0], []
@@ -159,7 +169,6 @@ class IrokoPlotter():
         return vals
 
     def plot_test_bw(self, input_dir, plt_name, traffic_files, labels, algorithms):
-
         fbb = self.num_ifaces * self.max_bw
         num_plot = 2
         num_t = len(traffic_files)
@@ -226,10 +235,6 @@ class IrokoPlotter():
         plt.gcf().clear()
 
     def plot_train_bw(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         fbb = self.num_ifaces * self.max_bw
@@ -264,10 +269,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_bw_avg(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -293,10 +294,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_bw_iface(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         fbb = self.max_bw
@@ -336,10 +333,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_effective_bw(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -380,10 +373,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -417,10 +406,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen_avg(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -446,10 +431,6 @@ class IrokoPlotter():
             plt.gcf().clear()
 
     def plot_train_qlen_iface(self, input_dir, plt_name, traffic_files, algorithm):
-        plt_dir = os.path.dirname(plt_name)
-        if not os.path.exists(plt_dir):
-            if not plt_dir == '':
-                os.makedirs(plt_dir)
         algo = algorithm[0]
         conf = algorithm[1]
         # folders = glob.glob('%s/%s_*' % (input_dir, conf['pre']))
@@ -497,7 +478,7 @@ class IrokoPlotter():
             float_rewards.append(float(reward))
         plt.plot(float_rewards)
         plt.ylabel('Reward')
-        plt.savefig(pltname)
+        plt.savefig(plt_name)
         plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.gcf().clear()
 

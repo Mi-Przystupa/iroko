@@ -14,7 +14,7 @@ PARSER.add_argument('--algo', '-d', dest='algo',
                     default='iroko', help='Specify the algorithm to run.')
 PARSER.add_argument('--topo', '-to', dest='topo',
                     default='dumbbell', help='Specify the topology to operate on.')
-PARSER.add_argument('--epoch', '-e', dest='epochs', type=int, default=100,
+PARSER.add_argument('--epoch', '-e', dest='epochs', type=int, default=1,
                     help='Specify the number of epochs Iroko should be trained.')
 PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
@@ -145,14 +145,15 @@ if __name__ == '__main__':
 
         traffic_file = TRAFFIC_FILES[0]
         config = configs[ARGS.algo]
-        environment = EnvFactory.create(ARGS.algo, ARGS.offset)
-        environment.start_traffic(
-            config, traffic_file, INPUT_DIR, OUTPUT_DIR, DURATION)
-        for i in range(ARGS.offset, ARGS.epochs):
-            action = environment.action_space.sample()
-            print(action)
-            environment.step(action)
-
+        for epoch in range(ARGS.offset, ARGS.epochs):
+            dc_env = EnvFactory.create(ARGS.algo, ARGS.offset)
+            dc_env.start_traffic(
+                config, traffic_file, INPUT_DIR, OUTPUT_DIR, epoch, DURATION)
+            while(dc_env.traffic_gen.is_alive()):
+                action = dc_env.action_space.sample()
+                dc_env.step(action)
+            print('Generator Finished. Simulation over. Clearing dc_env...')
+            dc_env.kill_env()
     else:
         print(
             "Doing nothing...\nRun the command with --algo iroko to train/ the Iroko agent.")

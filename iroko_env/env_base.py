@@ -1,24 +1,13 @@
 
 import os
-import multiprocessing
+import multiprocessing as mp
 from mininet.log import setLogLevel, info, output, warn, error, debug
 from time import sleep
 from monitor.monitor import monitor_devs_ng
 from monitor.monitor import monitor_qlen
-import threading
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-
-
-class FuncThread(threading.Thread):
-    def __init__(self, target, *args):
-        self._target = target
-        self._args = args
-        threading.Thread.__init__(self)
-
-    def run(self):
-        self._target(*self._args)
 
 
 class BaseEnv(gym.Env):
@@ -73,9 +62,9 @@ class BaseEnv(gym.Env):
             host.cmd('nc -nzv %s %d' % (host.IP(), listen_port))
         ifaces = self.topo_conf.get_intf_list()
 
-        monitor1 = multiprocessing.Process(
+        monitor1 = mp.Process(
             target=monitor_devs_ng, args=('%s/rate.txt' % out_dir, 0.01))
-        monitor2 = multiprocessing.Process(target=monitor_qlen, args=(
+        monitor2 = mp.Process(target=monitor_qlen, args=(
             ifaces, 1, '%s/qlen.txt' % out_dir))
 
         monitor1.start()
@@ -92,13 +81,13 @@ class BaseEnv(gym.Env):
             host.cmd('killall loadgen')
         net.stop()
 
-    def start_traffic(self, conf, traffic_file, input_dir, output_dir, duration):
-        self.pre_folder = "%s_%d" % (conf['pre'], self.epoch)
+    def start_traffic(self, conf, traffic_file, input_dir, output_dir, epoch, duration):
+        self.pre_folder = "%s_%d" % (conf['pre'], epoch)
         input_file = '%s/%s/%s' % (input_dir, conf['tf'], traffic_file)
         out_dir = '%s/%s/%s' % (output_dir, self.pre_folder, traffic_file)
-        self.p = FuncThread(self.gen_traffic, self.net,
-                            out_dir, input_file, duration)
-        self.p.start()
-        self.epoch += 1
+        self.traffic_gen = mp.Process(target=self.gen_traffic,
+                                      args=(self.net, out_dir,
+                                            input_file, duration))
+        self.traffic_gen.start()
         # need to wait until Iroko is started for sure
         sleep(5)

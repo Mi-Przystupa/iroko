@@ -56,11 +56,6 @@ class DCEnv(BaseEnv):
         reward = 0.0
         data = np.zeros((self.num_interfaces, self.num_features))
 
-        if not self.p.isAlive():
-            print('Generator Finished. Simulation over')
-            self.kill_env()
-            return data.reshape(self.num_interfaces * self.num_features), True, 0
-
         # let the agent predict bandwidth based on all previous information
         # perform actions
         pred_bw = {}
@@ -119,8 +114,6 @@ class DCEnv(BaseEnv):
 
     def kill_env(self):
 
-        print('wait for simulation to end')
-        self.p.join()  # this blocks until the process terminates
         self.stats.terminate()
         self.check_if_dead(self.stats, 3, 1)
 

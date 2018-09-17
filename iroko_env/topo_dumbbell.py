@@ -10,7 +10,6 @@ from mininet.util import custom
 from time import sleep
 import sys
 import os
-
 parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parentdir)
 
@@ -74,12 +73,24 @@ class DumbbellTopo(Topo):
             os.system(cmd)
 
 
-class TopoEnv():
+class TopoConfig():
+    MAX_QUEUE = 5000        # max queue of all switches
+    MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
+    MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
+    I_H_MAP = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
+               '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
+               '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
+               '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
+    HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
+             "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
+    I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
+               '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
+    HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
-    def __init__(self, num_hosts, max_queue):
+    def __init__(self, num_hosts):
         self.num_hosts = num_hosts
         self.net, self.topo = self._create_network(
-            num_hosts, max_queue=max_queue)
+            num_hosts, max_queue=self.MAX_QUEUE)
         self._configure_network()
 
     def _set_host_ip(self, net, topo):
@@ -153,3 +164,12 @@ class TopoEnv():
 
     def get_topo(self):
         return self.topo
+
+    def get_intf_list(self):
+        switches = self.net.switches
+        sw_intfs = []
+        for switch in switches:
+            for intf in switch.intfNames():
+                if intf is not 'lo':
+                    sw_intfs.append(intf)
+        return sw_intfs

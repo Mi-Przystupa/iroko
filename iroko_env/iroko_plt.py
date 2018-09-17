@@ -174,7 +174,8 @@ class IrokoPlotter():
             bb[algo] = []
             for tf in traffic_files:
                 print("algo:", tf)
-                input_file = input_dir + '/%s/%s/rate_summary.json' % (conf['pre'], tf)
+                input_file = input_dir + \
+                    '/%s/%s/rate_summary.json' % (conf['pre'], tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = float(results['avg_bw'])
                 print(avg_bw)
@@ -217,8 +218,10 @@ class IrokoPlotter():
                 print("%s:%s" % (algo, tf))
                 input_file = input_dir + '/%s/%s/qlen.txt' % (conf['pre'], tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
-                plt.plot(results['xcdf_qlen'], results['ycdf_qlen'], label=labels[i], color=conf['color'], lw=2)
-            plt.legend(bbox_to_anchor=(1.5, 1.22), loc='upper right', fontsize='x-large')
+                plt.plot(results['xcdf_qlen'], results['ycdf_qlen'],
+                         label=labels[i], color=conf['color'], lw=2)
+            plt.legend(bbox_to_anchor=(1.5, 1.22),
+                       loc='upper right', fontsize='x-large')
             plt.savefig("%s/%s" % (self.plt_dir, plt_name))
         plt.gcf().clear()
 
@@ -235,7 +238,8 @@ class IrokoPlotter():
         for tf in traffic_files:
             for e in range(self.epochs):
                 bb['%s_%s' % (algo, e)] = []
-                input_file = input_dir + '/%s_%d/%s/rate_summary.json' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_summary.json' % (conf['pre'], e, tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = float(results['avg_bw'])
                 print("%s %s Epoch %d: Avg BW %f" % (algo, tf, e, avg_bw))
@@ -271,7 +275,8 @@ class IrokoPlotter():
             print("Average BW: %s: %s" % (algo, tf))
             bb = {}
             for e in range(self.epochs):
-                input_file = input_dir + '/%s_%d/%s/rate_filtered.json' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_filtered.json' % (conf['pre'], e, tf)
                 results = self.get_bw_dict(input_file)
                 for iface, bw_list in results.items():
                     if iface not in bb:
@@ -300,20 +305,23 @@ class IrokoPlotter():
         for tf in traffic_files:
             for epoch in range(self.epochs):
                 bb['%s_%s' % (algo, epoch)] = {}
-                input_file = input_dir + '/%s_%d/%s/rate_summary.json' % (conf['pre'], epoch, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/rate_summary.json' % (conf['pre'], epoch, tf)
                 results = self.get_bw_dict(input_file)
                 avg_bw = results['avg_bw_iface']
                 print("Average BW %s %s Epoch %d" % (algo, tf, epoch))
                 print(avg_bw)
                 for iface, bw in avg_bw.iteritems():
-                    bb['%s_%s' % (algo, epoch)].setdefault(iface, []).append(float(bw) / fbb)
+                    bb['%s_%s' % (algo, epoch)].setdefault(
+                        iface, []).append(float(bw) / fbb)
             for iface, bw in bb['%s_%s' % (algo, 0)].iteritems():
                 p_bar = []
                 p_legend = []
                 for i in range(self.epochs):
                     p_bar.append(bb['%s_%d' % (algo, i)][iface][0])
                     p_legend.append('Epoch %i' % i)
-                print("Interface %s: Total Average Bandwidth: %f" % (iface, avg(p_bar)))
+                print("Interface %s: Total Average Bandwidth: %f" %
+                      (iface, avg(p_bar)))
                 plt.plot(p_bar, label=iface)
             x_val = list(range(self.epochs + 1))
             if self.epochs > 100:
@@ -341,10 +349,12 @@ class IrokoPlotter():
             for epoch in range(self.epochs):
                 bb['%s_%s' % (algo, epoch)] = {}
                 for host in hosts:
-                    input_file = input_dir + '/%s_%d/%s/%s.out' % (conf['pre'], epoch, tf, host)
+                    input_file = input_dir + \
+                        '/%s_%d/%s/%s.out' % (conf['pre'], epoch, tf, host)
                     eff_bw_stat = self.get_eff_bw_stats(input_file)
                     avg_eff_bw = np.median(eff_bw_stat)
-                    print("Effective Bandwidth Average: %s %s Epoch %d" % (algo, tf, epoch))
+                    print("Effective Bandwidth Average: %s %s Epoch %d" %
+                          (algo, tf, epoch))
                     print(avg_eff_bw)
                     bb['%s_%s' % (algo, epoch)][host] = avg_eff_bw
 
@@ -354,7 +364,8 @@ class IrokoPlotter():
                 for i in range(self.epochs):
                     p_bar.append(bb['%s_%d' % (algo, i)][host])
                     p_legend.append('Epoch %i' % i)
-                print("Host %s: Total Average Effective Bandwidth: %f" % (host, avg(p_bar)))
+                print("Host %s: Total Average Effective Bandwidth: %f" %
+                      (host, avg(p_bar)))
                 plt.plot(p_bar, label=host)
             x_val = list(range(self.epochs + 1))
             if self.epochs > 100:
@@ -380,7 +391,8 @@ class IrokoPlotter():
         for tf in traffic_files:
             for e in range(self.epochs):
                 bb['%s_%s' % (algo, e)] = []
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 avg_qlen = float(results['avg_qlen'])
                 print("%s %s Epoch %d: Avg Qlen %f" % (algo, tf, e, avg_qlen))
@@ -416,7 +428,8 @@ class IrokoPlotter():
             print("Qlen Evolving Average: %s: %s" % (algo, tf))
             bb = {}
             for e in range(self.epochs):
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], e, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 full_qlens = results["full_qlen_iface"]
                 for iface, qlen_list in full_qlens.items():
@@ -444,13 +457,15 @@ class IrokoPlotter():
         for tf in traffic_files:
             for epoch in range(self.epochs):
                 bb['%s_%s' % (algo, epoch)] = {}
-                input_file = input_dir + '/%s_%d/%s/qlen.txt' % (conf['pre'], epoch, tf)
+                input_file = input_dir + \
+                    '/%s_%d/%s/qlen.txt' % (conf['pre'], epoch, tf)
                 results = self.get_qlen_stats(input_file, conf['sw'])
                 avg_qlen = results["avg_qlen_iface"]
                 print("Qlen Average: %s %s Epoch %d" % (algo, tf, epoch))
                 print(avg_qlen)
                 for iface, qlen in avg_qlen.items():
-                    bb['%s_%s' % (algo, epoch)].setdefault(iface, []).append(float(qlen))
+                    bb['%s_%s' % (algo, epoch)].setdefault(
+                        iface, []).append(float(qlen))
 
             for iface, bw in bb['%s_%s' % (algo, 0)].items():
                 p_bar = []
@@ -458,7 +473,8 @@ class IrokoPlotter():
                 for i in range(self.epochs):
                     p_bar.append(bb['%s_%d' % (algo, i)][iface][0])
                     p_legend.append('Epoch %i' % i)
-                print("Interface %s: Total Average Qlen: %f" % (iface, avg(p_bar)))
+                print("Interface %s: Total Average Qlen: %f" %
+                      (iface, avg(p_bar)))
                 plt.plot(p_bar, label=iface)
             x_val = list(range(self.epochs + 1))
             if self.epochs > 100:

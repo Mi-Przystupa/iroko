@@ -6,9 +6,6 @@ from time import sleep
 from monitor.monitor import monitor_devs_ng
 from monitor.monitor import monitor_qlen
 import threading
-
-from topo_dumbbell import TopoEnv
-
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
@@ -24,10 +21,15 @@ class FuncThread(threading.Thread):
         self._target(*self._args)
 
 
-class DCEnv(gym.Env):
+class BaseEnv(gym.Env):
 
-    def __init__(self, input_dir, output_dir, duration, traffic_file, algorithm, offset, epochs):
-        raise NotImplementedError("Method create_filter not implemented!")
+    def __init__(self, offset):
+        self.epoch = offset
+        self.topo_conf = self.create_and_configure_topo()
+        self.net = self.topo_conf.get_net()
+        self.topo = self.topo_conf.get_topo()
+        self.interfaces = self.topo_conf.get_intf_list()
+        self.num_interfaces = len(self.interfaces)
 
     def step(self, action):
         raise NotImplementedError("Method step not implemented!")
@@ -38,14 +40,11 @@ class DCEnv(gym.Env):
     def render(self, mode='human', close=False):
         print('nothing to draw at the moment')
 
-    def get_intf_list(self, net):
-        switches = net.switches
-        sw_intfs = []
-        for switch in switches:
-            for intf in switch.intfNames():
-                if intf is not 'lo':
-                    sw_intfs.append(intf)
-        return sw_intfs
+    def kill_env(self):
+        raise NotImplementedError("Method kill_env not implemented!")
+
+    def create_and_configure_topo(self):
+        raise NotImplementedError("Method create_net_env not implemented!")
 
     def gen_traffic(self, net, out_dir, input_file, duration):
         if not os.path.exists(out_dir):
@@ -58,7 +57,7 @@ class DCEnv(gym.Env):
         traffic_gen = 'cluster_loadgen/loadgen'
         if not os.path.isfile(traffic_gen):
             error(
-                'The traffic generator doesn\'t exist. \ncd hedera/cluster_loadgen; make\n')
+                'The traffic generator doesn\'t exist. \ncd cluster_loadgen; make\n')
             return
 
         output('*** Starting load-generators\n %s\n' % input_file)
@@ -72,7 +71,7 @@ class DCEnv(gym.Env):
         output('*** Triggering load-generators\n')
         for host in hosts:
             host.cmd('nc -nzv %s %d' % (host.IP(), listen_port))
-        ifaces = self.get_intf_list(net)
+        ifaces = self.topo_conf.get_intf_list()
 
         monitor1 = multiprocessing.Process(
             target=monitor_devs_ng, args=('%s/rate.txt' % out_dir, 0.01))
@@ -93,13 +92,12 @@ class DCEnv(gym.Env):
             host.cmd('killall loadgen')
         net.stop()
 
-    def start_traffic(self):
-        self.pre_folder = "%s_%d" % (self.conf['pre'], self.epoch)
-        input_file = '%s/%s/%s' % (self.input_dir,
-                                   self.conf['tf'], self.tf)
-        out_dir = '%s/%s/%s' % (self.output_dir, self.pre_folder, self.tf)
+    def start_traffic(self, conf, traffic_file, input_dir, output_dir, duration):
+        self.pre_folder = "%s_%d" % (conf['pre'], self.epoch)
+        input_file = '%s/%s/%s' % (input_dir, conf['tf'], traffic_file)
+        out_dir = '%s/%s/%s' % (output_dir, self.pre_folder, traffic_file)
         self.p = FuncThread(self.gen_traffic, self.net,
-                            out_dir, input_file, self.duration)
+                            out_dir, input_file, duration)
         self.p.start()
         self.epoch += 1
         # need to wait until Iroko is started for sure

@@ -2,7 +2,6 @@ import argparse
 import os  # noqa
 import sre_yield
 from iroko_plt import IrokoPlotter
-from iroko_env import IrokoEnv
 
 from tensorforce import TensorForceError
 from tensorforce.agents import Agent, PPOAgent, DDPGAgent
@@ -11,25 +10,14 @@ import numpy as np
 
 
 PARSER = argparse.ArgumentParser()
-# parser.add_argument('--input', '-f', dest='files', required=True, help='Input rates')
-
-PARSER.add_argument('--epoch', '-e', dest='epochs', type=int, default=0,
+PARSER.add_argument('--algo', '-d', dest='algo',
+                    default='iroko', help='Specify the algorithm to run.')
+PARSER.add_argument('--topo', '-to', dest='topo',
+                    default='dumbbell', help='Specify the topology to operate on.')
+PARSER.add_argument('--epoch', '-e', dest='epochs', type=int, default=100,
                     help='Specify the number of epochs Iroko should be trained.')
 PARSER.add_argument('--offset', '-o', dest='offset', type=int, default=0,
                     help='Intended to start epochs from an offset.')
-
-PARSER.add_argument('--plot', '-pl', dest='plot', action='store_true',
-                    default='False', help='Only plot the results for training.')
-PARSER.add_argument('--dumbbell', '-db', dest='dumbbell', action='store_true',
-                    default='False', help='Train on a simple dumbbell topology')
-PARSER.add_argument('--load', default=False,
-                    action='store_true', help='Load agent')
-PARSER.add_argument('--save-dir', dest='save_dir',
-                    default='./model/', help='Model save dir')
-
-PARSER.add_argument('--asEnv', '-env', dest='env', default=False,
-                    action='store_true', help='Flag to use RL environment version')
-
 ARGS = PARSER.parse_args()
 
 
@@ -69,6 +57,29 @@ NONBLOCK_SW = '1001'
 HEDERA_SW = '[0-3]h[0-1]h1'
 FATTREE_SW = '300[1-9]'
 DUMBBELL_SW = '100[1]|1002-eth3'
+
+
+def import_from(module, name):
+    """ Try to import a module and class directly instead of the typical
+        Python method. Allows for dynamic imports. """
+    module = __import__(module, fromlist=[name])
+    return getattr(module, name)
+
+
+class EnvFactory(object):
+    """ Generator class.
+     Returns a target subclass based on the provided target option."""
+    @staticmethod
+    def create(algo, offset):
+        env_name = "env_" + algo
+        env_class = "DCEnv"
+        print("Loading target %s " % env_name)
+        try:
+            BaseEnv = import_from(env_name, env_class)
+        except ImportError as e:
+            print("Problem: ", e)
+            return None
+        return BaseEnv(offset)
 
 
 def get_test_config():
@@ -121,45 +132,27 @@ if __name__ == '__main__':
             os.remove("reward.txt")
         except OSError:
             pass
-
-    algorithms = get_test_config()
-    # Stupid hack, do not like.
-    n = get_num_interfaces(DUMBBELL_SW)
-    # Train on the dumbbell topology
-    if ARGS.dumbbell is True:
-        algorithms = {}
-        algorithms['dumbbell'] = {
-            'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
-        TRAFFIC_FILES = ['incast_2']
-        DURATION = 600
-        # traffic_files = ['incast_4']
-        # traffic_files = ['incast_8']
-        LABELS = ['incast']
-        #ARGS.train = True
-
-    elif ARGS.env is True:
-
-        algorithms = {}
-        algorithms['dumbbell_env'] = {
+    os.system('sudo mn -c')
+    if (ARGS.algo):
+        configs = get_test_config()
+        # Stupid hack, do not like.
+        n = get_num_interfaces(DUMBBELL_SW)
+        configs[ARGS.algo] = {
             'sw': DUMBBELL_SW, 'tf': 'dumbbell', 'pre': 'dumbbell-iroko', 'color': 'green'}
         TRAFFIC_FILES = ['incast_2']
         DURATION = 60
-        # traffic_files = ['incast_4']
-        # traffic_files = ['incast_8']
         LABELS = ['incast']
-        #ARGS.train = True
 
         traffic_file = TRAFFIC_FILES[0]
-        algo, conf = algorithms.items()[0]
-        if ARGS.plot is not True:
-            environment = IrokoEnv(
-                INPUT_DIR, OUTPUT_DIR, DURATION, traffic_file, (algo, conf), ARGS.offset, ARGS.epochs)
-            environment.spawn_collectors()
-            environment.start_traffic()
-            for i in range(0, 100):
-                action = environment.action_space.sample()
-                print(action)
-                environment.step(action)
+        config = configs[ARGS.algo]
+        environment = EnvFactory.create(ARGS.algo, ARGS.offset)
+        environment.start_traffic(
+            config, traffic_file, INPUT_DIR, OUTPUT_DIR, DURATION)
+        for i in range(ARGS.offset, ARGS.epochs):
+            action = environment.action_space.sample()
+            print(action)
+            environment.step(action)
 
     else:
-        print("Doing nothing...\nRun the command with --train to train/ the Iroko agent and/or --test to run benchmarks.")
+        print(
+            "Doing nothing...\nRun the command with --algo iroko to train/ the Iroko agent.")

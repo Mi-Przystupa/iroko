@@ -1,0 +1,9 @@
+{
+    "title": "example glossary",
+    "tf": = traffic_file
+    "algo": = algorithm[0]
+    "conf": = algorithm[1]
+    "input_dir": input_dir
+    "output_dir": = output_dir
+    self.duration = duration
+}

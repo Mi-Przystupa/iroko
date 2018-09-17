@@ -7,32 +7,15 @@ import socket
 import numpy as np
 import time
 
-from topo_dumbbell import TopoEnv
-from dc_env import DCEnv
+from topo_dumbbell import TopoConfig
+from env_base import BaseEnv
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-MAX_QUEUE = 5000
-MAX_CAPACITY = 10e6     # Max bw capacity of link in bytes
-MIN_RATE = 6.25e5       # minimal possible bw of an interface in bytes
-IS_EXPLOIT = False         # do we want to enable an exploit policy?
-ACTIVEAGENT = 'A'       # type of the agent in use
 R_FUN = 'std_dev'   # type of the reward function the agent uses
 FEATURES = 2            # number of statistics we are using
 WAIT = 2                # seconds the agent waits per iteration
-FRAMES = 3              # number of previous matrices to use
-
 ###########################################
-
-I_H_MAP = {'3001-eth3': "192.168.10.1", '3001-eth4': "192.168.10.2", '3002-eth3': "192.168.10.3", '3002-eth4': "192.168.10.4",
-           '3003-eth3': "192.168.10.5", '3003-eth4': "192.168.10.6", '3004-eth3': "192.168.10.7", '3004-eth4': "192.168.10.8",
-           '3005-eth3': "192.168.10.9", '3005-eth4': "192.168.10.10", '3006-eth3': "192.168.10.11", '3006-eth4': "192.168.10.12",
-           '3007-eth3': "192.168.10.13", '3007-eth4': "192.168.10.14", '3008-eth3': "192.168.10.15", '3008-eth4': "192.168.10.16", }
-HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2", "10.3.0.1", "10.3.0.2", "10.4.0.1", "10.4.0.2",
-         "10.5.0.1", "10.5.0.2", "10.6.0.1", "10.6.0.2", "10.7.0.1", "10.7.0.2", "10.8.0.1", "10.8.0.2"]
-I_H_MAP = {'1001-eth1': "192.168.10.1", '1001-eth2': "192.168.10.2",
-           '1002-eth1': "192.168.10.3", '1002-eth2': "192.168.10.4"}
-HOSTS = ["10.1.0.1", "10.1.0.2", "10.2.0.1", "10.2.0.2"]
 
 
 class BandwidthController():
@@ -41,43 +24,32 @@ class BandwidthController():
         self.name = name
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def send_cntrl_pckt(self, interface, txrate):
-        ip = "192.168.10." + I_H_MAP[interface].split('.')[-1]
+    def send_cntrl_pckt(self, ip, txrate):
         port = 20130
         pckt = str(txrate) + '\0'
-        # print("interface: %s, ip: %s, rate: %s") % (interface, ip, txrate)
         self.sock.sendto(pckt, (ip, port))
 
 
-class IrokoEnv(DCEnv):
+class DCEnv(BaseEnv):
 
-    def __init__(self, input_dir, output_dir, duration, traffic_file, algorithm,
-                 offset, epochs):
-        self.epoch = offset
-        self.tf = traffic_file
-        os.system('sudo mn -c')
-        self.algo = algorithm[0]
-        self.conf = algorithm[1]
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-        self.duration = duration
-
-        self.net = self.create_net_env()
+    def __init__(self, offset):
+        BaseEnv.__init__(self, offset)
         # Iroko controller calls
         self.ic = BandwidthController("Iroko")
-        self.interfaces = self.get_intf_list(self.net)
-        time.sleep(2)
-        self.dopamin = RewardFunction(
-            I_H_MAP, self.interfaces, R_FUN, MAX_QUEUE, MAX_CAPACITY)
+        self.dopamin = RewardFunction(self.topo_conf.I_H_MAP, self.interfaces,
+                                      R_FUN, self.topo_conf.MAX_QUEUE,
+                                      self.topo_conf.MAX_CAPACITY)
 
-        self.num_features = FEATURES + len(HOSTS) * 2
-        self.num_interfaces = len(self.interfaces)
-        self.num_actions = len(I_H_MAP)
+        self.num_features = FEATURES + len(self.topo_conf.HOSTS) * 2
+        self.num_actions = len(self.topo_conf.I_H_MAP)
 
         self.action_space = spaces.Box(low=0.0, high=1.0,
                                        shape=(self.num_actions, 1))
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf,
-                                            shape=(self.num_interfaces * self.num_features, 1))
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf,
+            shape=(self.num_interfaces * self.num_features, 1))
+        self.spawn_collectors()
+        self.start_time = time.time()
 
     def step(self, action):
         terminal = False
@@ -93,11 +65,12 @@ class IrokoEnv(DCEnv):
         # perform actions
         pred_bw = {}
         print("Actions:")
-        for i, h_iface in enumerate(I_H_MAP):
-            pred_bw[h_iface] = int(action[i] * MAX_CAPACITY)
+        for i, h_iface in enumerate(self.topo_conf.I_H_MAP):
+            pred_bw[h_iface] = int(action[i] * self.topo_conf.MAX_CAPACITY)
             print("%s: %3f mbit\t" %
-                  (h_iface, pred_bw[h_iface] * 10 / MAX_CAPACITY))
-            self.ic.send_cntrl_pckt(h_iface, pred_bw[h_iface])
+                  (h_iface, pred_bw[h_iface] * 10 / self.topo_conf.MAX_CAPACITY))
+            self.ic.send_cntrl_pckt(
+                self.topo_conf.I_H_MAP[h_iface], pred_bw[h_iface])
         # observe for WAIT seconds minus time needed for computation
         time.sleep(abs(round(WAIT - (time.time() - self.start_time), 3)))
         self.start_time = time.time()
@@ -154,16 +127,16 @@ class IrokoEnv(DCEnv):
         self.flows.terminate()
         self.check_if_dead(self.flows, 3, 1)
 
-    def create_net_env(self):
-        env_topo = TopoEnv(4, MAX_QUEUE)
-        return env_topo.get_net()
+    def create_and_configure_topo(self):
+        topo_conf = TopoConfig(4)
+        return topo_conf
 
     def spawn_collectors(self):
         self.stats = StatsCollector()
         self.stats.daemon = True
         self.stats.start()
         # Launch an asynchronous flow collector
-        self.flows = FlowCollector(HOSTS)
+        self.flows = FlowCollector(self.topo_conf.HOSTS)
         self.flows.daemon = True
         self.flows.start()
 
